@@ -24,7 +24,7 @@
     <UpdatePeriodically>false</UpdatePeriodically>
     <UpdateRequired>false</UpdateRequired>
     <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>6</ApplicationRevision>
+    <ApplicationRevision>9</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
@@ -63,10 +63,11 @@
     <OptionInfer>On</OptionInfer>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>4C8C6E41FCE8336E5FCEF2A6E92A73D4A6A4E31F</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>FC2FE54FCEC31711576474F129CB3D76AFFB0901</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestKeyFile>ADVL_XML_Display_1_TemporaryKey.pfx</ManifestKeyFile>
+    <ManifestKeyFile>
+    </ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
     <GenerateManifests>true</GenerateManifests>
@@ -105,6 +106,12 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="frmEditImage.Designer.vb">
+      <DependentUpon>frmEditImage.vb</DependentUpon>
+    </Compile>
+    <Compile Include="frmEditImage.vb">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="frmEditRtf.Designer.vb">
       <DependentUpon>frmEditRtf.vb</DependentUpon>
     </Compile>
@@ -225,6 +232,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="frmEditImage.resx">
+      <DependentUpon>frmEditImage.vb</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="frmEditRtf.resx">
       <DependentUpon>frmEditRtf.vb</DependentUpon>
     </EmbeddedResource>
@@ -303,7 +313,9 @@
     <None Include="Service References\ServiceReference1\ADVLService2.xsd">
       <SubType>Designer</SubType>
     </None>
-    <None Include="Service References\ServiceReference1\MsgService.wsdl" />
+    <None Include="Service References\ServiceReference1\MsgService.wsdl">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Andorville 16May16 TM Crop Grey.bmp" />
@@ -321,10 +333,14 @@
     <WCFMetadataStorage Include="Service References\ServiceReference1\" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Service References\ServiceReference1\ADVLService.disco" />
+    <None Include="Service References\ServiceReference1\ADVLService.disco">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Service References\ServiceReference1\configuration91.svcinfo" />
+    <None Include="Service References\ServiceReference1\configuration91.svcinfo">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Include="Service References\ServiceReference1\configuration.svcinfo" />
@@ -333,6 +349,7 @@
     <None Include="Service References\ServiceReference1\Reference.svcmap">
       <Generator>WCF Proxy Generator</Generator>
       <LastGenOutput>Reference.vb</LastGenOutput>
+      <SubType>Designer</SubType>
     </None>
   </ItemGroup>
   <ItemGroup>

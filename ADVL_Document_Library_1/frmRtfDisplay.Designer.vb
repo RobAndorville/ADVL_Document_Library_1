@@ -56,7 +56,7 @@ Partial Class frmRtfDisplay
         Me.txtZoomPercent = New System.Windows.Forms.TextBox()
         Me.Label1 = New System.Windows.Forms.Label()
         Me.chkWordWrap = New System.Windows.Forms.CheckBox()
-        Me.btnPasteImage = New System.Windows.Forms.Button()
+        Me.btnEditImage = New System.Windows.Forms.Button()
         Me.ToolTip1 = New System.Windows.Forms.ToolTip(Me.components)
         Me.SuspendLayout()
         '
@@ -351,22 +351,22 @@ Partial Class frmRtfDisplay
         Me.chkWordWrap.Text = "Word Wrap"
         Me.chkWordWrap.UseVisualStyleBackColor = True
         '
-        'btnPasteImage
+        'btnEditImage
         '
-        Me.btnPasteImage.Location = New System.Drawing.Point(494, 13)
-        Me.btnPasteImage.Name = "btnPasteImage"
-        Me.btnPasteImage.Size = New System.Drawing.Size(76, 22)
-        Me.btnPasteImage.TabIndex = 267
-        Me.btnPasteImage.Text = "Paste Image"
-        Me.ToolTip1.SetToolTip(Me.btnPasteImage, "Paste image from clipboard")
-        Me.btnPasteImage.UseVisualStyleBackColor = True
+        Me.btnEditImage.Location = New System.Drawing.Point(494, 13)
+        Me.btnEditImage.Name = "btnEditImage"
+        Me.btnEditImage.Size = New System.Drawing.Size(76, 22)
+        Me.btnEditImage.TabIndex = 267
+        Me.btnEditImage.Text = "Edit Image"
+        Me.ToolTip1.SetToolTip(Me.btnEditImage, "Paste image from clipboard")
+        Me.btnEditImage.UseVisualStyleBackColor = True
         '
         'frmRtfDisplay
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(709, 493)
-        Me.Controls.Add(Me.btnPasteImage)
+        Me.Controls.Add(Me.btnEditImage)
         Me.Controls.Add(Me.chkWordWrap)
         Me.Controls.Add(Me.Label1)
         Me.Controls.Add(Me.txtZoomPercent)
@@ -407,6 +407,6 @@ Partial Class frmRtfDisplay
     Friend WithEvents txtZoomPercent As TextBox
     Friend WithEvents Label1 As Label
     Friend WithEvents chkWordWrap As CheckBox
-    Friend WithEvents btnPasteImage As Button
+    Friend WithEvents btnEditImage As Button
     Friend WithEvents ToolTip1 As ToolTip
 End Class

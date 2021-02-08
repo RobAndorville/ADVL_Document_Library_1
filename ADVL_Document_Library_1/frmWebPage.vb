@@ -54,7 +54,9 @@ Public Class frmWebPage
         End Get
         Set(value As String)
             _fileName = value
-            txtDocumentFile.Text = _fileName
+            txtDocumentFile.Text = _fileName 'Display the document filename on the form.
+            Me.Text = Main.ApplicationInfo.Name & " - Workflow - " & IO.Path.GetFileNameWithoutExtension(_fileName) 'Update the text at the top of the window.
+            RestoreFormSettings() 'Resore the form settings used to display this web page.
         End Set
     End Property
 
@@ -132,14 +134,20 @@ Public Class frmWebPage
 
         'Add code to include other settings to save after the comment line <!---->
 
-        Dim SettingsFileName As String = "FormSettings_" & Main.ApplicationInfo.Name & "_" & Me.Text & ".xml"
+        'Dim SettingsFileName As String = "FormSettings_" & Main.ApplicationInfo.Name & "_" & Me.Text & ".xml"
+
+        'NOTE: After a workflow is loaded, Me.Text is changed to AppName - Workflow - WorkflowName
+        Dim SettingsFileName As String = "FormSettings_" & Me.Text & ".xml"
         Main.Project.SaveXmlSettings(SettingsFileName, settingsData)
     End Sub
 
     Private Sub RestoreFormSettings()
         'Read the form settings from an XML document.
 
-        Dim SettingsFileName As String = "FormSettings_" & Main.ApplicationInfo.Name & "_" & Me.Text & ".xml"
+        'Dim SettingsFileName As String = "FormSettings_" & Main.ApplicationInfo.Name & "_" & Me.Text & ".xml"
+
+        'NOTE: After a workflow is loaded, Me.Text is changed to AppName - Workflow - WorkflowName
+        Dim SettingsFileName As String = "FormSettings_" & Me.Text & ".xml"
 
         If Main.Project.SettingsFileExists(SettingsFileName) Then
             Dim Settings As System.Xml.Linq.XDocument
@@ -157,7 +165,42 @@ Public Class frmWebPage
 
             'Add code to read other saved setting here:
 
+            CheckFormPos()
         End If
+    End Sub
+
+    Private Sub CheckFormPos()
+        'Check that the form can be seen on a screen.
+
+        Dim MinWidthVisible As Integer = 192 'Minimum number of X pixels visible. The form will be moved if this many form pixels are not visible.
+        Dim MinHeightVisible As Integer = 64 'Minimum number of Y pixels visible. The form will be moved if this many form pixels are not visible.
+
+        Dim FormRect As New Rectangle(Me.Left, Me.Top, Me.Width, Me.Height)
+        Dim WARect As Rectangle = Screen.GetWorkingArea(FormRect) 'The Working Area rectangle - the usable area of the screen containing the form.
+
+        ''Check if the top of the form is less than zero:
+        'If Me.Top < 0 Then Me.Top = 0
+
+        'Check if the top of the form is above the top of the Working Area:
+        If Me.Top < WARect.Top Then
+            Me.Top = WARect.Top
+        End If
+
+        'Check if the top of the form is too close to the bottom of the Working Area:
+        If (Me.Top + MinHeightVisible) > (WARect.Top + WARect.Height) Then
+            Me.Top = WARect.Top + WARect.Height - MinHeightVisible
+        End If
+
+        'Check if the left edge of the form is too close to the right edge of the Working Area:
+        If (Me.Left + MinWidthVisible) > (WARect.Left + WARect.Width) Then
+            Me.Left = WARect.Left + WARect.Width - MinWidthVisible
+        End If
+
+        'Check if the right edge of the form is too close to the left edge of the Working Area:
+        If (Me.Left + Me.Width - MinWidthVisible) < WARect.Left Then
+            Me.Left = WARect.Left - Me.Width + MinWidthVisible
+        End If
+
     End Sub
 
     Protected Overrides Sub WndProc(ByRef m As Message) 'Save the form settings before the form is minimised:
@@ -175,10 +218,13 @@ Public Class frmWebPage
 #Region " Form Display Methods - Code used to display this form." '============================================================================================================================
 
     Private Sub Form_Load(sender As Object, e As EventArgs) Handles Me.Load
-        RestoreFormSettings()   'Restore the form settings
+        'RestoreFormSettings()   'Restore the form settings
 
         Me.WebBrowser1.ObjectForScripting = Me
 
+        'Add page title:
+        Me.Text = Main.ApplicationInfo.Name & " - Workflow"
+        RestoreFormSettings()   'Restore the form settings
     End Sub
 
     Private Sub btnExit_Click(sender As Object, e As EventArgs) Handles btnExit.Click
@@ -245,6 +291,21 @@ Public Class frmWebPage
 
         End If
 
+    End Sub
+
+    Private Sub btnEdit_Click(sender As Object, e As EventArgs) Handles btnEdit.Click
+        'Edit the WorkFlow html file.
+
+        Dim FileName As String
+        FileName = txtDocumentFile.Text
+
+        If FileName = "" Then
+            Main.Message.AddWarning("No page selected." & vbCrLf)
+        Else
+            Dim FormNo As Integer = Main.OpenNewWFHtmlDisplayPage()
+            Main.WFHtmlDisplayFormList(FormNo).FileName = FileName
+            Main.WFHtmlDisplayFormList(FormNo).OpenDocument
+        End If
     End Sub
 
 
@@ -395,41 +456,41 @@ Public Class frmWebPage
     End Sub
 
 
-    Private Sub XSeq_Instruction(Info As String, Locn As String) Handles XSeq.Instruction
+    Private Sub XSeq_Instruction(Data As String, Locn As String) Handles XSeq.Instruction
         'Execute each instruction produced by running the XSeq file.
 
         Select Case Locn
             Case "Settings:SendData:LatDegrees" 'REDUNDANT!
-                RestoreSetting("SendData", "LatDegrees", Info)
+                RestoreSetting("SendData", "LatDegrees", Data)
 
             Case "Settings:SendData:LongDegrees" 'REDUNDANT!
-                RestoreSetting("SendData", "LongDegrees", Info)
+                RestoreSetting("SendData", "LongDegrees", Data)
 
             Case "Settings:Form:Name"
-                FormName = Info
+                FormName = Data
 
             Case "Settings:Form:Item:Name"
-                ItemName = Info
+                ItemName = Data
 
             Case "Settings:Form:Item:Value"
-                RestoreSetting(FormName, ItemName, Info)
+                RestoreSetting(FormName, ItemName, Data)
 
             Case "Settings:Form:SelectId"
-                SelectId = Info
+                SelectId = Data
 
             Case "Settings:Form:OptionText"
-                RestoreOption(SelectId, Info)
+                RestoreOption(SelectId, Data)
 
             Case "Settings"
 
             Case "EndOfSequence"
-                'Main.Message.Add("End of processing sequence" & Info & vbCrLf)
+                'Main.Message.Add("End of processing sequence" & Data & vbCrLf)
 
             Case Else
-                'Main.Message.AddWarning("Unknown location: " & Locn & "  Info: " & Info & vbCrLf)
+                'Main.Message.AddWarning("Unknown location: " & Locn & "  Data: " & Data & vbCrLf)
 
                 'If the instructions are not saved web page settings identified above, send them directly to the web page:
-                XMsgInstruction(Info, Locn) 'The JavaScript function (also called XMsgInstruction) will attempt to process this instruction.
+                XMsgInstruction(Data, Locn) 'The JavaScript function (also called XMsgInstruction) will attempt to process this instruction.
 
         End Select
     End Sub
@@ -455,7 +516,6 @@ Public Class frmWebPage
 
     End Sub
 
-
     Public Function GetFormNo() As String
         'Return the Form Number of the current instance of the WebView form.
         Return FormNo.ToString
@@ -477,7 +537,28 @@ Public Class frmWebPage
     End Function
 
     'Public Sub SendXMessage(ByVal ConnName As String, ByVal XMsg As String)
-    Public Sub SendXMessage(ByVal AppNetName As String, ByVal ConnName As String, ByVal XMsg As String) 'UPDATED 2Feb19
+    'Public Sub SendXMessage(ByVal AppNetName As String, ByVal ConnName As String, ByVal XMsg As String) 'UPDATED 2Feb19
+    'Public Sub SendXMessage(ByVal ProNetName As String, ByVal ConnName As String, ByVal XMsg As String)
+    '    'Send the XMsg to the application with the connection name ConnName.
+    '    If IsNothing(Main.client) Then
+    '        Main.Message.Add("No client connection available!" & vbCrLf)
+    '    Else
+    '        If Main.client.State = ServiceModel.CommunicationState.Faulted Then
+    '            Main.Message.Add("client state is faulted. Message not sent!" & vbCrLf)
+    '        Else
+    '            'Main.client.SendMessageAsync(AppNetName, ConnName, XMsg) 'UPDATED 2Feb19
+    '            Main.client.SendMessageAsync(ProNetName, ConnName, XMsg)
+    '            'Main.Message.XAddText("Message sent to " & ConnName & " (AppNet: " & AppNetName & ") " & ":" & vbCrLf, "XmlSentNotice") 'UPDATED 2Feb19
+    '            'Main.Message.XAddText("Message sent to " & ConnName & " (ProNet: " & ProNetName & ") " & ":" & vbCrLf, "XmlSentNotice")
+    '            Main.Message.XAddText("Message sent to [" & ProNetName & "]." & ConnName & ":" & vbCrLf, "XmlSentNotice")
+    '            Main.Message.XAddXml(XMsg)
+    '            Main.Message.XAddText(vbCrLf, "Normal") 'Add extra line
+    '        End If
+    '    End If
+
+    'End Sub
+
+    Public Sub SendXMessage(ByVal ConnName As String, ByVal XMsg As String)
         'Send the XMsg to the application with the connection name ConnName.
         If IsNothing(Main.client) Then
             Main.Message.Add("No client connection available!" & vbCrLf)
@@ -485,14 +566,152 @@ Public Class frmWebPage
             If Main.client.State = ServiceModel.CommunicationState.Faulted Then
                 Main.Message.Add("client state is faulted. Message not sent!" & vbCrLf)
             Else
-                Main.client.SendMessageAsync(AppNetName, ConnName, XMsg) 'UPDATED 2Feb19
-                Main.Message.XAddText("Message sent to " & ConnName & " (AppNet: " & AppNetName & ") " & ":" & vbCrLf, "XmlSentNotice") 'UPDATED 2Feb19
-                Main.Message.XAddXml(XMsg)
-                Main.Message.XAddText(vbCrLf, "Normal") 'Add extra line
+                If Main.bgwSendMessage.IsBusy Then
+                    Main.Message.AddWarning("Send Message backgroundworker is busy." & vbCrLf)
+                Else
+                    Dim SendMessageParams As New Main.clsSendMessageParams
+                    SendMessageParams.ProjectNetworkName = Main.ProNetName
+                    SendMessageParams.ConnectionName = ConnName
+                    SendMessageParams.Message = XMsg
+                    Main.bgwSendMessage.RunWorkerAsync(SendMessageParams)
+                    'Main.Message.XAddText("Message sent to " & "[" & Main.ProNetName & "]." & ConnName & ":" & vbCrLf, "XmlSentNotice")
+                    'Main.Message.XAddXml(XMsg)
+                    'Main.Message.XAddText(vbCrLf, "Normal") 'Add extra line
+                    If Main.ShowXMessages Then
+                        Main.Message.XAddText("Message sent to " & "[" & Main.ProNetName & "]." & ConnName & ":" & vbCrLf, "XmlSentNotice")
+                        Main.Message.XAddXml(XMsg)
+                        Main.Message.XAddText(vbCrLf, "Normal") 'Add extra line
+                    End If
+                End If
             End If
         End If
-
     End Sub
+
+    Public Sub SendXMessageExt(ByVal ProNetName As String, ByVal ConnName As String, ByVal XMsg As String)
+        'Send the XMsg to the application with the connection name ConnName and Project Network Name ProNetname.
+        'This version can send the XMessage to a connection external to the current Project Network.
+        If IsNothing(Main.client) Then
+            Main.Message.Add("No client connection available!" & vbCrLf)
+        Else
+            If Main.client.State = ServiceModel.CommunicationState.Faulted Then
+                Main.Message.Add("client state is faulted. Message not sent!" & vbCrLf)
+            Else
+                If Main.bgwSendMessage.IsBusy Then
+                    Main.Message.AddWarning("Send Message backgroundworker is busy." & vbCrLf)
+                Else
+                    Dim SendMessageParams As New Main.clsSendMessageParams
+                    SendMessageParams.ProjectNetworkName = ProNetName
+                    SendMessageParams.ConnectionName = ConnName
+                    SendMessageParams.Message = XMsg
+                    Main.bgwSendMessage.RunWorkerAsync(SendMessageParams)
+                    'Main.Message.XAddText("Message sent to " & "[" & ProNetName & "]." & ConnName & ":" & vbCrLf, "XmlSentNotice")
+                    'Main.Message.XAddXml(XMsg)
+                    'Main.Message.XAddText(vbCrLf, "Normal") 'Add extra line
+                    If Main.ShowXMessages Then
+                        Main.Message.XAddText("Message sent to " & "[" & ProNetName & "]." & ConnName & ":" & vbCrLf, "XmlSentNotice")
+                        Main.Message.XAddXml(XMsg)
+                        Main.Message.XAddText(vbCrLf, "Normal") 'Add extra line
+                    End If
+                End If
+            End If
+        End If
+    End Sub
+
+    Public Sub SendXMessageWait(ByVal ConnName As String, ByVal XMsg As String)
+        'Send the XMsg to the application with the connection name ConnName.
+        'Wait for the connection to be made.
+        If IsNothing(Main.client) Then
+            Main.Message.Add("No client connection available!" & vbCrLf)
+        Else
+            Try
+                Application.DoEvents()
+
+                If Main.client.State = ServiceModel.CommunicationState.Faulted Then
+                    Main.Message.Add("client state is faulted. Message not sent!" & vbCrLf)
+                Else
+                    Dim StartTime As Date = Now
+                    Dim Duration As TimeSpan
+                    'Wait up to 16 seconds for the connection ConnName to be established
+                    While Main.client.ConnectionExists(Main.ProNetName, ConnName) = False 'Wait until the required connection is made.
+                        System.Threading.Thread.Sleep(1000) 'Pause for 1000ms
+                        Duration = Now - StartTime
+                        If Duration.Seconds > 16 Then Exit While
+                    End While
+
+                    If Main.client.ConnectionExists(Main.ProNetName, ConnName) = False Then
+                        Main.Message.AddWarning("Connection not available: " & ConnName & " in application network: " & Main.ProNetName & vbCrLf)
+                    Else
+                        If Main.bgwSendMessage.IsBusy Then
+                            Main.Message.AddWarning("Send Message backgroundworker is busy." & vbCrLf)
+                        Else
+                            Dim SendMessageParams As New Main.clsSendMessageParams
+                            SendMessageParams.ProjectNetworkName = Main.ProNetName
+                            SendMessageParams.ConnectionName = ConnName
+                            SendMessageParams.Message = XMsg
+                            Main.bgwSendMessage.RunWorkerAsync(SendMessageParams)
+                            'Main.Message.XAddText("Message sent to " & "[" & Main.ProNetName & "]." & ConnName & ":" & vbCrLf, "XmlSentNotice")
+                            'Main.Message.XAddXml(XMsg)
+                            'Main.Message.XAddText(vbCrLf, "Normal") 'Add extra line
+                            If Main.ShowXMessages Then
+                                Main.Message.XAddText("Message sent to " & "[" & Main.ProNetName & "]." & ConnName & ":" & vbCrLf, "XmlSentNotice")
+                                Main.Message.XAddXml(XMsg)
+                                Main.Message.XAddText(vbCrLf, "Normal") 'Add extra line
+                            End If
+                        End If
+                    End If
+                End If
+            Catch ex As Exception
+                Main.Message.AddWarning(ex.Message & vbCrLf)
+            End Try
+        End If
+    End Sub
+
+    Public Sub SendXMessageExtWait(ByVal ProNetName As String, ByVal ConnName As String, ByVal XMsg As String)
+        'Send the XMsg to the application with the connection name ConnName and Project Network Name ProNetName.
+        'Wait for the connection to be made.
+        'This version can send the XMessage to a connection external to the current Project Network.
+        If IsNothing(Main.client) Then
+            Main.Message.Add("No client connection available!" & vbCrLf)
+        Else
+            If Main.client.State = ServiceModel.CommunicationState.Faulted Then
+                Main.Message.Add("client state is faulted. Message not sent!" & vbCrLf)
+            Else
+                Dim StartTime As Date = Now
+                Dim Duration As TimeSpan
+                'Wait up to 16 seconds for the connection ConnName to be established
+                While Main.client.ConnectionExists(ProNetName, ConnName) = False
+                    System.Threading.Thread.Sleep(1000) 'Pause for 1000ms
+                    Duration = Now - StartTime
+                    If Duration.Seconds > 16 Then Exit While
+                End While
+
+                If Main.client.ConnectionExists(ProNetName, ConnName) = False Then
+                    Main.Message.AddWarning("Connection not available: " & ConnName & " in application network: " & ProNetName & vbCrLf)
+                Else
+                    If Main.bgwSendMessage.IsBusy Then
+                        Main.Message.AddWarning("Send Message backgroundworker is busy." & vbCrLf)
+                    Else
+                        Dim SendMessageParams As New Main.clsSendMessageParams
+                        SendMessageParams.ProjectNetworkName = ProNetName
+                        SendMessageParams.ConnectionName = ConnName
+                        SendMessageParams.Message = XMsg
+                        Main.bgwSendMessage.RunWorkerAsync(SendMessageParams)
+                        'Main.Message.XAddText("Message sent to " & "[" & ProNetName & "]." & ConnName & ":" & vbCrLf, "XmlSentNotice")
+                        'Main.Message.XAddXml(XMsg)
+                        'Main.Message.XAddText(vbCrLf, "Normal") 'Add extra line
+                        If Main.ShowXMessages Then
+                            Main.Message.XAddText("Message sent to " & "[" & ProNetName & "]." & ConnName & ":" & vbCrLf, "XmlSentNotice")
+                            Main.Message.XAddXml(XMsg)
+                            Main.Message.XAddText(vbCrLf, "Normal") 'Add extra line
+                        End If
+                    End If
+                End If
+            End If
+        End If
+    End Sub
+
+
+
 
     Public Sub AddText(ByVal Msg As String, ByVal TextType As String)
         Main.Message.AddText(Msg, TextType)
@@ -526,19 +745,132 @@ Public Class frmWebPage
 
     End Sub
 
-    Private Sub btnEdit_Click(sender As Object, e As EventArgs) Handles btnEdit.Click
-        'Edit the WorkFlow html file.
 
-        Dim FileName As String
-        FileName = txtDocumentFile.Text
 
-        If FileName = "" Then
-            Main.Message.AddWarning("No page selected." & vbCrLf)
+    Public Sub ParentProjectName(ByVal FormName As String, ByVal ItemName As String)
+        'Return the Parent Project name:
+        RestoreSetting(FormName, ItemName, Main.Project.ParentProjectName)
+    End Sub
+
+    Public Sub ParentProjectPath(ByVal FormName As String, ByVal ItemName As String)
+        'Return the Parent Project path:
+        RestoreSetting(FormName, ItemName, Main.Project.ParentProjectPath)
+    End Sub
+
+    Public Sub ParentProjectParameterValue(ByVal FormName As String, ByVal ItemName As String, ByVal ParameterName As String)
+        'Return the specified Parent Project parameter value:
+        RestoreSetting(FormName, ItemName, Main.Project.ParentParameter(ParameterName).Value)
+    End Sub
+
+    Public Sub ProjectParameterValue(ByVal FormName As String, ByVal ItemName As String, ByVal ParameterName As String)
+        'Return the specified Project parameter value:
+        RestoreSetting(FormName, ItemName, Main.Project.Parameter(ParameterName).Value)
+    End Sub
+
+    'Public Sub ApplicationNetworkName(ByVal FormName As String, ByVal ItemName As String)
+    '    'Return the name of the Application Network:
+    '    RestoreSetting(FormName, ItemName, Main.Project.Parameter("AppNetName").Value)
+    'End Sub
+
+    Public Sub ProjectNetworkName(ByVal FormName As String, ByVal ItemName As String)
+        'Return the name of the Application Network:
+        RestoreSetting(FormName, ItemName, Main.Project.Parameter("ProNetName").Value)
+    End Sub
+
+    'Public Sub OpenProjectAtAppNetPath(ByVal RelativePath As String, ByVal ConnectionName As String)
+    Public Sub OpenProjectAtProNetPath(ByVal RelativePath As String, ByVal ConnectionName As String)
+        'Open the Project at the specified Path (relative to the ProNet Path) using the specified Connection Name.
+
+        Dim ProjectPath As String
+        If RelativePath.StartsWith("\") Then
+            'If Main.Project.ParameterExists("AppNetPath") Then
+            If Main.Project.ParameterExists("ProNetPath") Then
+                'ProjectPath = Main.Project.GetParameter("AppNetPath") & RelativePath
+                ProjectPath = Main.Project.GetParameter("ProNetPath") & RelativePath
+                Main.client.StartProjectAtPath(ProjectPath, ConnectionName)
+            Else
+                'Main.Message.AddWarning("The Application Network Path is not known." & vbCrLf)
+                Main.Message.AddWarning("The Project Network Path is not known." & vbCrLf)
+            End If
         Else
-            Dim FormNo As Integer = Main.OpenNewWFHtmlDisplayPage()
-            Main.WFHtmlDisplayFormList(FormNo).FileName = FileName
-            Main.WFHtmlDisplayFormList(FormNo).OpenDocument
+            'If Main.Project.ParameterExists("AppNetPath") Then
+            If Main.Project.ParameterExists("ProNetPath") Then
+                'ProjectPath = Main.Project.GetParameter("AppNetPath") & "\" & RelativePath
+                ProjectPath = Main.Project.GetParameter("ProNetPath") & "\" & RelativePath
+                Main.client.StartProjectAtPath(ProjectPath, ConnectionName)
+            Else
+                'Main.Message.AddWarning("The Application Network Path is not known." & vbCrLf)
+                Main.Message.AddWarning("The Project Network Path is not known." & vbCrLf)
+            End If
         End If
+    End Sub
+
+    'Public Sub CheckOpenProjectAtAppNetPath(ByVal RelativePath As String, ByVal ConnectionName As String)
+    Public Sub CheckOpenProjectAtProNetPath(ByVal RelativePath As String, ByVal ConnectionName As String)
+        'Check if the project at the specified Path (relative to the ProNet Path) is open.
+        'Open it if it is not already open.
+        'Open the Project at the specified Path using the specified Connection Name.
+
+        Dim ProjectPath As String
+        If RelativePath.StartsWith("\") Then
+            'If Main.Project.ParameterExists("AppNetPath") Then
+            If Main.Project.ParameterExists("ProNetPath") Then
+                'ProjectPath = Main.Project.GetParameter("AppNetPath") & RelativePath
+                ProjectPath = Main.Project.GetParameter("ProNetPath") & RelativePath
+                Main.client.StartProjectAtPath(ProjectPath, ConnectionName)
+                If Main.client.ProjectOpen(ProjectPath) Then
+                    'Project is already open.
+                Else
+                    Main.client.StartProjectAtPath(ProjectPath, ConnectionName)
+                End If
+            Else
+                'Main.Message.AddWarning("The Application Network Path is not known." & vbCrLf)
+                Main.Message.AddWarning("The Project Network Path is not known." & vbCrLf)
+            End If
+        Else
+            'If Main.Project.ParameterExists("AppNetPath") Then
+            If Main.Project.ParameterExists("ProNetPath") Then
+                'ProjectPath = Main.Project.GetParameter("AppNetPath") & "\" & RelativePath
+                ProjectPath = Main.Project.GetParameter("ProNetPath") & "\" & RelativePath
+                Main.client.StartProjectAtPath(ProjectPath, ConnectionName)
+                If Main.client.ProjectOpen(ProjectPath) Then
+                    'Project is already open.
+                Else
+                    Main.client.StartProjectAtPath(ProjectPath, ConnectionName)
+                End If
+            Else
+                'Main.Message.AddWarning("The Application Network Path is not known." & vbCrLf)
+                Main.Message.AddWarning("The Project Network Path is not known." & vbCrLf)
+            End If
+        End If
+    End Sub
+
+    Public Sub CheckOpenProjectAtRelativePath(ByVal RelativePath As String, ByVal ConnectionName As String)
+        'Check if the project at the specified Relative Path is open.
+        'Open it if it is not already open.
+        'Open the Project at the specified Relative Path using the specified Connection Name.
+        Try
+            Application.DoEvents()
+            Dim ProjectPath As String
+            If RelativePath.StartsWith("\") Then
+                ProjectPath = Main.Project.Path & RelativePath
+                If Main.client.ProjectOpen(ProjectPath) Then
+                    'Project is already open.
+                Else
+                    Main.client.StartProjectAtPath(ProjectPath, ConnectionName)
+                End If
+            Else
+                ProjectPath = Main.Project.Path & "\" & RelativePath
+                If Main.client.ProjectOpen(ProjectPath) Then 'An exception of type 'System.InvalidOperationException' occurred in mscorlib.dll but was not handled in user code
+                    'Additional Information: This operation would deadlock because the reply cannot be received until the current Message completes processing. If you want To allow out-Of-order message processing, specify ConcurrencyMode of Reentrant Or Multiple on CallbackBehaviorAttribute.
+                    'Project is already open.
+                Else
+                    Main.client.StartProjectAtPath(ProjectPath, ConnectionName)
+                End If
+            End If
+        Catch ex As Exception
+            Main.Message.AddWarning(ex.Message & vbCrLf)
+        End Try
     End Sub
 
 #End Region 'Methods Called by JavaScript -----------------------------------------------------------------------------------------------------------------------------------------------------

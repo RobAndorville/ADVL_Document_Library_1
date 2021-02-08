@@ -3,6 +3,8 @@
 
 #Region " Variable Declarations - All the variables used in this form and this application." '=================================================================================================
 
+    'Public WithEvents EditImage As frmEditImage
+
 #End Region 'Variable Declarations ------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -52,8 +54,42 @@
 
             'Add code to read other saved setting here:
             If Settings.<FormSettings>.<SelectedTabIndex>.Value <> Nothing Then TabControl1.SelectedIndex = Settings.<FormSettings>.<SelectedTabIndex>.Value
-
+            CheckFormPos()
         End If
+    End Sub
+
+    Private Sub CheckFormPos()
+        'Check that the form can be seen on a screen.
+
+        Dim MinWidthVisible As Integer = 192 'Minimum number of X pixels visible. The form will be moved if this many form pixels are not visible.
+        Dim MinHeightVisible As Integer = 64 'Minimum number of Y pixels visible. The form will be moved if this many form pixels are not visible.
+
+        Dim FormRect As New Rectangle(Me.Left, Me.Top, Me.Width, Me.Height)
+        Dim WARect As Rectangle = Screen.GetWorkingArea(FormRect) 'The Working Area rectangle - the usable area of the screen containing the form.
+
+        ''Check if the top of the form is less than zero:
+        'If Me.Top < 0 Then Me.Top = 0
+
+        'Check if the top of the form is above the top of the Working Area:
+        If Me.Top < WARect.Top Then
+            Me.Top = WARect.Top
+        End If
+
+        'Check if the top of the form is too close to the bottom of the Working Area:
+        If (Me.Top + MinHeightVisible) > (WARect.Top + WARect.Height) Then
+            Me.Top = WARect.Top + WARect.Height - MinHeightVisible
+        End If
+
+        'Check if the left edge of the form is too close to the right edge of the Working Area:
+        If (Me.Left + MinWidthVisible) > (WARect.Left + WARect.Width) Then
+            Me.Left = WARect.Left + WARect.Width - MinWidthVisible
+        End If
+
+        'Check if the right edge of the form is too close to the left edge of the Working Area:
+        If (Me.Left + Me.Width - MinWidthVisible) < WARect.Left Then
+            Me.Left = WARect.Left - Me.Width + MinWidthVisible
+        End If
+
     End Sub
 
     Protected Overrides Sub WndProc(ByRef m As Message) 'Save the form settings before the form is minimised:
@@ -96,11 +132,32 @@
         Else
             'Dont save settings if the form is minimised.
         End If
+
+        'If IsNothing(EditImage) Then
+        '    'The EditImage form is already closed.
+        'Else
+        '    'Close the EditImage form:
+        '    EditImage.Close()
+        'End If
     End Sub
 
 #End Region 'Form Display Methods -------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 #Region " Open and Close Forms - Code used to open and close other forms." '===================================================================================================================
+
+    'Private Sub btnEditImage_Click(sender As Object, e As EventArgs) Handles btnEditImage.Click
+    '    'Open the Edit Image form:
+    '    If IsNothing(EditImage) Then
+    '        EditImage = New frmEditImage
+    '        EditImage.Show()
+    '    Else
+    '        EditImage.Show()
+    '    End If
+    'End Sub
+
+    'Private Sub EditImage_FormClosed(sender As Object, e As FormClosedEventArgs) Handles EditImage.FormClosed
+    '    EditImage = Nothing
+    'End Sub
 
 #End Region 'Open and Close Forms -------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -123,9 +180,11 @@
     Private Sub btnInsert_Click(sender As Object, e As EventArgs) Handles btnInsert.Click
 
         If cmbTextType.Text = "XML" Then
-            Main.XmlHtmDisplay1.SelectedRtf = Main.XmlHtmDisplay1.XmlToRtf(txtNewText.Text, False)
+            'Main.XmlHtmDisplay1.SelectedRtf = Main.XmlHtmDisplay1.XmlToRtf(txtNewText.Text, False)
+            RaiseEvent InsertXml(txtNewText.Text)
         Else
-            Main.XmlHtmDisplay1.SelectedRtf = Main.XmlHtmDisplay1.TextToRtf(txtNewText.Text, cmbTextType.Text)
+            'Main.XmlHtmDisplay1.SelectedRtf = Main.XmlHtmDisplay1.TextToRtf(txtNewText.Text, cmbTextType.Text)
+            RaiseEvent InsertText(txtNewText.Text, cmbTextType.Text)
         End If
     End Sub
 
@@ -264,6 +323,10 @@
 
     Event InsertChar(ByVal CharCode As Integer)
 
+    Event InsertXml(ByVal XmlText As String)
+
+    Event InsertText(ByVal InputText As String, ByVal TypeName As String)
+
     Private Sub rbSelect_CheckedChanged(sender As Object, e As EventArgs) Handles rbSelect.CheckedChanged
         'Select symbol from the list.
         RichTextBox2.Focus()
@@ -336,4 +399,11 @@
     Private Sub LinkLabel3_LinkClicked(sender As Object, e As LinkLabelLinkClickedEventArgs) Handles LinkLabel3.LinkClicked
         System.Diagnostics.Process.Start("https://www.fatcow.com/free-icons")
     End Sub
+
+    'Private Sub EditImage_InsertImage(ByRef myImage As Image) Handles EditImage.InsertImage
+    '    RaiseEvent InsertImage(myImage)
+    'End Sub
+
+    'Event InsertImage(ByRef myImage As Image)
+
 End Class

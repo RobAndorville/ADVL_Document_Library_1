@@ -55,6 +55,11 @@
             Return _fileName
         End Get
         Set(value As String)
+            'UPDATE: DataDirLocn is not used for pdf files - the following lines are no longer needed:
+            'If FileCopyUsed Then
+            '    DeleteProjFile(_fileName)
+            '    FileCopyUsed = False
+            'End If
             _fileName = value
             txtFileName.Text = _fileName
         End Set
@@ -135,6 +140,16 @@
         End Set
     End Property
 
+    'UPDATE: DataDirLocn is not used for pdf files - the following property is longer needed:
+    'Private _fileCopyUsed As Boolean = False 'If True delete the copy of the file in the Project directory before exiting or opening a nerw file.
+    'Property FileCopyUsed As Boolean
+    '    Get
+    '        Return _fileCopyUsed
+    '    End Get
+    '    Set(value As Boolean)
+    '        _fileCopyUsed = value
+    '    End Set
+    'End Property
 
 #End Region 'Properties -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -192,8 +207,42 @@
                 End Select
             End If
             If Settings.<FormSettings>.<LastFileDirectory>.Value <> Nothing Then LastFileDirectory = Settings.<FormSettings>.<LastFileDirectory>.Value
-
+            CheckFormPos()
         End If
+    End Sub
+
+    Private Sub CheckFormPos()
+        'Check that the form can be seen on a screen.
+
+        Dim MinWidthVisible As Integer = 192 'Minimum number of X pixels visible. The form will be moved if this many form pixels are not visible.
+        Dim MinHeightVisible As Integer = 64 'Minimum number of Y pixels visible. The form will be moved if this many form pixels are not visible.
+
+        Dim FormRect As New Rectangle(Me.Left, Me.Top, Me.Width, Me.Height)
+        Dim WARect As Rectangle = Screen.GetWorkingArea(FormRect) 'The Working Area rectangle - the usable area of the screen containing the form.
+
+        ''Check if the top of the form is less than zero:
+        'If Me.Top < 0 Then Me.Top = 0
+
+        'Check if the top of the form is above the top of the Working Area:
+        If Me.Top < WARect.Top Then
+            Me.Top = WARect.Top
+        End If
+
+        'Check if the top of the form is too close to the bottom of the Working Area:
+        If (Me.Top + MinHeightVisible) > (WARect.Top + WARect.Height) Then
+            Me.Top = WARect.Top + WARect.Height - MinHeightVisible
+        End If
+
+        'Check if the left edge of the form is too close to the right edge of the Working Area:
+        If (Me.Left + MinWidthVisible) > (WARect.Left + WARect.Width) Then
+            Me.Left = WARect.Left + WARect.Width - MinWidthVisible
+        End If
+
+        'Check if the right edge of the form is too close to the left edge of the Working Area:
+        If (Me.Left + Me.Width - MinWidthVisible) < WARect.Left Then
+            Me.Left = WARect.Left - Me.Width + MinWidthVisible
+        End If
+
     End Sub
 
     Protected Overrides Sub WndProc(ByRef m As Message) 'Save the form settings before the form is minimised:
@@ -218,6 +267,11 @@
     Private Sub btnExit_Click(sender As Object, e As EventArgs) Handles btnExit.Click
         'Exit the Form
 
+        'UPDATE: DataDirLocn is not used for pdf files - the following lines are no longer needed:
+        'If FileCopyUsed Then
+        '    DeleteProjFile(FileName)
+        'End If
+
         Main.ClosedFormNo = FormNo 'The Main form property ClosedFormNo is set to this form number. This is used in the RtfDisplayFormClosed method to select the correct form to set to nothing.
         'If FilePath <> "" Then
         If FileName <> "" Then
@@ -241,9 +295,10 @@
     Private Sub btnOpen_Click(sender As Object, e As EventArgs) Handles btnOpen.Click
 
 
-        If Main.rbFileInProject.Checked = True Then 'Open an RTF file in the current Project.
+        If Main.rbFileInProject.Checked = True Then 'Open a PDF file in the current Project.
             'Dim SelectedFile As String = Main.Project.SelectDataFile("Rich text format", "rtf")
-            Dim SelectedFile As String = Main.Project.SelectDataFile("Portable Document format", "pdf")
+            'Dim SelectedFile As String = Main.Project.SelectDataFile("Portable Document format", "pdf")
+            Dim SelectedFile As String = Main.Project.SelectDataDirFile("Portable Document format", "pdf")
             If SelectedFile = "" Then
                 'No file selected!
             Else
@@ -251,13 +306,12 @@
                 FileLocationType = LocationTypes.Project
                 FileDirectory = ""
                 OpenDocument()
-
             End If
 
-        Else 'Open an RTF file in the File System.
+        Else 'Open a PDF file in the File System.
             If LastFileName = "" Then 'There is no last XML file saved.
 
-            Else 'The last RTF file path was saved.
+            Else 'The last PDF file path was saved.
                 OpenFileDialog1.InitialDirectory = LastFileDirectory
                 OpenFileDialog1.FileName = LastFileName
             End If
@@ -269,10 +323,8 @@
                 FileLocationType = LocationTypes.FileSystem
                 FileDirectory = System.IO.Path.GetDirectoryName(OpenFileDialog1.FileName)
                 OpenDocument()
-
             End If
         End If
-
     End Sub
 
 
@@ -289,17 +341,50 @@
         'Open the document specified by FileName, FileLocationType and FileDirectory.
 
         If FileLocationType = LocationTypes.Project Then
+            'Check the Project Type: None, Directory, Hybrid or Archive.
             If Main.Project.Type = ADVL_Utilities_Library_1.Project.Types.Archive Then
+                'Write code later. Need to select a directory to temporarily store the extracted pdf file. (Maybe the Application directory?)
 
-            Else
-                Dim DataLocnPath As String = Main.Project.DataLocn.Path
-                AxAcroPDF1.LoadFile(DataLocnPath & "\" & FileName)
+                'ElseIf Main.Project.Type = ADVL_Utilities_Library_1.Project.Types.Hybrid Then
+                '    'A Hybrid Project will have either a Directory or Archive data location
+                '    If Main.Project.DataLocn.Type = ADVL_Utilities_Library_1.FileLocation.Types.Archive Then
+                '        Main.Project.CopyArchiveDataToProject(FileName)
+                '        FileCopyUsed = True
+                '        Try
+                '            AxAcroPDF1.LoadFile(Main.Project.Path & "\" & FileName)
+                '            AxAcroPDF1.Focus()
+                '        Catch ex As Exception
+                '            Main.Message.AddWarning("Error opening pdf document: " & ex.Message & vbCrLf)
+                '        End Try
+                '    Else
+                '        AxAcroPDF1.LoadFile(Main.Project.DataLocn.Path & "\" & FileName)
+                '        AxAcroPDF1.Focus()
+                '    End If
+            Else 'Project Type is either None or Directory. The following code will work for both:
+                ''Dim DataLocnPath As String = Main.Project.DataLocn.Path
+                ''AxAcroPDF1.LoadFile(DataLocnPath & "\" & FileName)
+                'AxAcroPDF1.LoadFile(Main.Project.DataLocn.Path & "\" & FileName)
+                'AxAcroPDF1.Focus()
+
+                'UPDATE: .pdf files are now always stored in the DataDirLocn, which will always be a directory except for an Archive project - handled in the earlier cose section.
+                AxAcroPDF1.LoadFile(Main.Project.DataDirLocn.Path & "\" & FileName)
                 AxAcroPDF1.Focus()
             End If
         Else
             AxAcroPDF1.LoadFile(FileDirectory & "\" & FileName)
         End If
     End Sub
+
+    'UPDATE: The following method is no longer needed:
+    'Private Sub DeleteProjFile(ByVal CopyName As String)
+    '    'Delete the copy of the Data File in the Project directory
+    '    'If Main.Project.DataFileExists(CopyName) Then
+    '    If Main.Project.ProjectFileExists(CopyName) Then
+    '        Main.Project.DeleteProjectFile(CopyName)
+    '    Else
+    '        'The Data File was not found.
+    '    End If
+    'End Sub
 
 #End Region 'Form Methods ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 

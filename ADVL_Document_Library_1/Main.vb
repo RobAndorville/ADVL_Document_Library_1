@@ -16,6 +16,7 @@
 '
 '----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+Imports System.ComponentModel
 Imports System.Security.Permissions
 <PermissionSet(SecurityAction.Demand, Name:="FullTrust")>
 <System.Runtime.InteropServices.ComVisibleAttribute(True)>
@@ -45,6 +46,7 @@ Public Class Main
     'Run the ADVL_Application_Network_1 application to start the Application Network message service.
     'In Microsoft Visual Studio select: Project \ Add Service Reference
     'Enter the address: http://localhost:8733/ADVLService
+    'UPDATE: Enter the address: http://localhost:8734/ADVLService
     'Press the Go button.
     'MsgService is found.
     'Press OK to add ServiceReference1 to the project.
@@ -122,12 +124,12 @@ Public Class Main
     Public PdfDisplayFormList As New ArrayList 'Used for displaying multiple PdfDisplay forms.
 
 
-    'Declare objects used to connect to the Application Network:
+    'Declare objects used to connect to the Message Service:
     Public client As ServiceReference1.MsgServiceClient
     Public WithEvents XMsg As New ADVL_Utilities_Library_1.XMessage
     Dim XDoc As New System.Xml.XmlDocument
     Public Status As New System.Collections.Specialized.StringCollection
-    Dim ClientAppNetName As String = "" 'The name of thge client Application Network requesting service. ADDED 2Feb19.
+    Dim ClientProNetName As String = "" 'The name of the client Project Network requesting service. 
     Dim ClientAppName As String = "" 'The name of the client requesting service
     Dim ClientConnName As String = "" 'The name of the client connection requesting service
     Dim MessageXDoc As System.Xml.Linq.XDocument
@@ -135,15 +137,27 @@ Public Class Main
     Dim xlocns As New List(Of XElement) 'A list of locations. Each location forms part of the reply message. The information in the reply message will be sent to the specified location in the client application.
     Dim MessageText As String = "" 'The text of a message sent through the Application Network.
 
-    Public ConnectionName As String = "" 'The name of the connection used to connect this application to the AppNet.
-    Public AppNetName As String = "" 'Added 2Fab19
+    'Dim CompletionInstruction As String = "Stop" 'The last instruction returned on completion of the processing of an XMessage.
+    Public OnCompletionInstruction As String = "Stop" 'The last instruction returned in <EndInstruction> on completion of the processing of an XMessage.
+    Public EndInstruction As String = "Stop" 'Another method of specifying the last instruction. This is processed in the EndOfSequence section of XMsg.Instructions.
 
-    Public MsgServiceAppPath As String = "" 'The application path of the Message Service application (ComNet). This is where the "Application.Lock" file will be while ComNet is running
-    Public MsgServiceExePath As String = "" 'The executable path of the Message Service.
+    Public ConnectionName As String = "" 'The name of the connection used to connect this application to the ComNet (Message Service).
+
+    Public ProNetName As String = "" 'The name of the Project Network
+    Public ProNetPath As String = "" 'The path of the Project Network
+
+    Public AdvlNetworkAppPath As String = "" 'The application path of the ADVL Network application (ComNet). This is where the "Application.Lock" file will be while ComNet is running
+    Public AdvlNetworkExePath As String = "" 'The executable path of the ADVL Network.
+
+    'Variable for local processing of an XMessage:
+    Public WithEvents XMsgLocal As New ADVL_Utilities_Library_1.XMessage
+    Dim XDocLocal As New System.Xml.XmlDocument
+    Public StatusLocal As New System.Collections.Specialized.StringCollection
 
     Dim WithEvents Zip As ADVL_Utilities_Library_1.ZipComp
 
-    Dim ItemInfo As New Dictionary(Of String, clsItemInfo) 'Dictionary of information about each item (document or collection) in the library.
+    'Dim ItemInfo As New Dictionary(Of String, clsItemInfo) 'Dictionary of information about each item (document or collection) in the library.
+    Public ItemInfo As New Dictionary(Of String, clsItemInfo) 'Dictionary of information about each item (document or collection) in the library.
 
 
     'The following variables are used to run JavaScript in Web Pages loaded into the Document View: -------------------
@@ -166,6 +180,21 @@ Public Class Main
     Dim ProjectSelected As Boolean = False 'If True, a project has been selected using Command Arguments. Used in Main.Load.
     Dim StartupConnectionName As String = "" 'If not "" the application will be connected to the AppNet using this connection name in  Main.Load.
 
+    'Search variables:
+    Dim SearchFileName As String = "" 'File Name of the document to be searched.
+    Dim SearchText As String = "" 'The string to tbe searched form
+    Dim SearchHighlight As Boolean = True 'If True, the found string will be highlighted in the document view.
+    Dim SearchFindFirst As Boolean = True 'If True, the first instance of the string will be found.
+
+    Private WithEvents bgwComCheck As New System.ComponentModel.BackgroundWorker 'Used to perform communication checks on a separate thread.
+
+    Public WithEvents bgwSendMessage As New System.ComponentModel.BackgroundWorker 'Used to send a message through the Message Service.
+    Dim SendMessageParams As New clsSendMessageParams 'This hold the Send Message parameters: .ProjectNetworkName, .ConnectionName & .Message
+
+    'Alternative SendMessage background worker - needed to send a message while instructions are being processed.
+    Public WithEvents bgwSendMessageAlt As New System.ComponentModel.BackgroundWorker 'Used to send a message through the Message Service - alternative backgound worker.
+    Dim SendMessageParamsAlt As New clsSendMessageParams 'This hold the Send Message parameters: .ProjectNetworkName, .ConnectionName & .Message - for the alternative background worker.
+
 #End Region 'Variable Declarations ------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 #Region " Properties - All the properties used in this form and this application" '============================================================================================================
@@ -181,7 +210,7 @@ Public Class Main
     End Property
 
     Private _connectedToComNet As Boolean = False  'True if the application is connected to the Communication Network (Message Service).
-    Property ConnectedToComnet As Boolean
+    Property ConnectedToComNet As Boolean
         Get
             Return _connectedToComNet
         End Get
@@ -201,48 +230,192 @@ Public Class Main
                 Message.Add("Empty message received!")
             Else
                 _instrReceived = value
-                'Add the message to the XMessages window:
-                Message.XAddText("Message received: " & vbCrLf, "XmlReceivedNotice")
-                If _instrReceived.StartsWith("<XMsg>") Then 'This is an XMessage set of instructions.
-                    Try
-                        'Inititalise the reply message:
-                        Dim Decl As New XDeclaration("1.0", "utf-8", "yes")
-                        MessageXDoc = New XDocument(Decl, Nothing) 'Reply message - this will be sent to the Client App.
-                        xmessage = New XElement("XMsg")
-                        xlocns.Add(New XElement("Main")) 'Initially set the location in the Client App to Main.
-
-                        'Run the received message:
-                        Dim XmlHeader As String = "<?xml version=""1.0"" encoding=""utf-8"" standalone=""yes""?>"
-                        XDoc.LoadXml(XmlHeader & vbCrLf & _instrReceived)
-                        Message.XAddXml(XDoc)
-                        Message.XAddText(vbCrLf, "Normal") 'Add extra line
-                        XMsg.Run(XDoc, Status)
-                    Catch ex As Exception
-                        Message.Add("Error running XMsg: " & ex.Message & vbCrLf)
-                    End Try
-
-                    'XMessage has been run.
-                    'Reply to this message:
-                    'Add the message reply to the XMessages window:
-                    'Complete the MessageXDoc:
-                    xmessage.Add(xlocns(xlocns.Count - 1)) 'Add the last location reply instructions to the message.
-                    MessageXDoc.Add(xmessage)
-                    MessageText = MessageXDoc.ToString
-
-                    If ClientConnName = "" Then
-                        'No client to send a message to!
-                    Else
-                        Message.XAddText("Message sent to " & ClientConnName & ":" & vbCrLf, "XmlSentNotice")
-                        Message.XAddXml(MessageText)
-                        Message.XAddText(vbCrLf, "Message") 'Add extra line
-                        'SendMessage sends the contents of MessageText to MessageDest.
-                        SendMessage() 'This subroutine triggers the timer to send the message after a short delay.
-                    End If
-                Else 'This is not an XMessage!
-                    Message.XAddText("The message is not an XMessage: " & _instrReceived & vbCrLf, "Normal")
-                End If
+                ProcessInstructions(_instrReceived)
             End If
+        End Set
+    End Property
 
+    Private Sub ProcessInstructions(ByVal Instructions As String)
+        'Process the XMessage instructions.
+
+        Dim MsgType As String
+        If Instructions.StartsWith("<XMsg>") Then
+            MsgType = "XMsg"
+            If ShowXMessages Then
+                'Add the message header to the XMessages window:
+                Message.XAddText("Message received: " & vbCrLf, "XmlReceivedNotice")
+            End If
+        ElseIf Instructions.StartsWith("<XSys>") Then
+            MsgType = "XSys"
+            If ShowSysMessages Then
+                'Add the message header to the XMessages window:
+                Message.XAddText("System Message received: " & vbCrLf, "XmlReceivedNotice")
+            End If
+        Else
+            MsgType = "Unknown"
+        End If
+
+        'If ShowXMessages Then
+        '    'Add the message header to the XMessages window:
+        '    Message.XAddText("Message received: " & vbCrLf, "XmlReceivedNotice")
+        'End If
+
+        'If Instructions.StartsWith("<XMsg>") Then 'This is an XMessage set of instructions.
+        If MsgType = "XMsg" Or MsgType = "XSys" Then 'This is an XMessage or XSystem set of instructions.
+                Try
+                    'Inititalise the reply message:
+                    ClientProNetName = ""
+                    ClientConnName = ""
+                    ClientAppName = ""
+                xlocns.Clear() 'Clear the list of locations in the reply message.
+
+                Dim Decl As New XDeclaration("1.0", "utf-8", "yes")
+                    MessageXDoc = New XDocument(Decl, Nothing) 'Reply message - this will be sent to the Client App.
+                'xmessage = New XElement("XMsg")
+                xmessage = New XElement(MsgType)
+                xlocns.Add(New XElement("Main")) 'Initially set the location in the Client App to Main.
+
+                    'Run the received message:
+                    Dim XmlHeader As String = "<?xml version=""1.0"" encoding=""utf-8"" standalone=""yes""?>"
+
+                    XDoc.LoadXml(XmlHeader & vbCrLf & Instructions.Replace("&", "&amp;")) 'Replace "&" with "&amp:" before loading the XML text.
+                'If ShowXMessages Then
+                '    Message.XAddXml(XDoc)   'Add the message to the XMessages window.
+                '    Message.XAddText(vbCrLf, "Normal") 'Add extra line
+                'End If
+                If (MsgType = "XMsg") And ShowXMessages Then
+                    Message.XAddXml(XDoc)  'Add the message to the XMessages window.
+                    Message.XAddText(vbCrLf, "Normal") 'Add extra line
+                ElseIf (MsgType = "XSys") And ShowSysMessages Then
+                    Message.XAddXml(XDoc)  'Add the message to the XMessages window.
+                    Message.XAddText(vbCrLf, "Normal") 'Add extra line
+                End If
+                XMsg.Run(XDoc, Status)
+                Catch ex As Exception
+                    Message.Add("Error running XMsg: " & ex.Message & vbCrLf)
+                End Try
+
+                'XMessage has been run.
+                'Reply to this message:
+                'Add the message reply to the XMessages window:
+                'Complete the MessageXDoc:
+                xmessage.Add(xlocns(xlocns.Count - 1)) 'Add the last location reply instructions to the message.
+                MessageXDoc.Add(xmessage)
+                MessageText = MessageXDoc.ToString
+
+                If ClientConnName = "" Then
+                'No client to send a message to - process the message locally.
+                'If ShowXMessages Then
+                '    Message.XAddText("Message processed locally:" & vbCrLf, "XmlSentNotice")
+                '    Message.XAddXml(MessageText)
+                '    Message.XAddText(vbCrLf, "Normal") 'Add extra line
+                'End If
+                If (MsgType = "XMsg") And ShowXMessages Then
+                    Message.XAddText("Message processed locally:" & vbCrLf, "XmlSentNotice")
+                    Message.XAddXml(MessageText)
+                    Message.XAddText(vbCrLf, "Normal") 'Add extra line
+                ElseIf (MsgType = "XSys") And ShowSysMessages Then
+                    Message.XAddText("System Message processed locally:" & vbCrLf, "XmlSentNotice")
+                    Message.XAddXml(MessageText)
+                    Message.XAddText(vbCrLf, "Normal") 'Add extra line
+                End If
+                ProcessLocalInstructions(MessageText)
+                Else
+                'If ShowXMessages Then
+                '    Message.XAddText("Message sent to [" & ClientProNetName & "]." & ClientConnName & ":" & vbCrLf, "XmlSentNotice")
+                '    Message.XAddXml(MessageText)
+                '    Message.XAddText(vbCrLf, "Normal") 'Add extra line
+                'End If
+                If (MsgType = "XMsg") And ShowXMessages Then
+                    Message.XAddText("Message sent to [" & ClientProNetName & "]." & ClientConnName & ":" & vbCrLf, "XmlSentNotice")   'NOTE: There is no SendMessage code in the Message Service application!
+                    Message.XAddXml(MessageText)
+                    Message.XAddText(vbCrLf, "Normal") 'Add extra line
+                ElseIf (MsgType = "XSys") And ShowSysMessages Then
+                    Message.XAddText("System Message sent to [" & ClientProNetName & "]." & ClientConnName & ":" & vbCrLf, "XmlSentNotice")   'NOTE: There is no SendMessage code in the Message Service application!
+                    Message.XAddXml(MessageText)
+                    Message.XAddText(vbCrLf, "Normal") 'Add extra line
+                End If
+
+                'Send Message on a new thread:
+                SendMessageParams.ProjectNetworkName = ClientProNetName
+                    SendMessageParams.ConnectionName = ClientConnName
+                    SendMessageParams.Message = MessageText
+                    If bgwSendMessage.IsBusy Then
+                        Message.AddWarning("Send Message backgroundworker is busy." & vbCrLf)
+                    Else
+                        bgwSendMessage.RunWorkerAsync(SendMessageParams)
+                    End If
+                End If
+
+            Else 'This is not an XMessage!
+                If Instructions.StartsWith("<XMsgBlk>") Then 'This is an XMessageBlock.
+                'Process the received message:
+                Dim XmlHeader As String = "<?xml version=""1.0"" encoding=""utf-8"" standalone=""yes""?>"
+                XDoc.LoadXml(XmlHeader & vbCrLf & Instructions.Replace("&", "&amp;")) 'Replace "&" with "&amp:" before loading the XML text.
+                'NOTE: The message is an <XMsgBlk> - use the ShowXMessages property to determine if the message is shown:
+                If ShowXMessages Then
+                    Message.XAddXml(XDoc)   'Add the message to the XMessages window.
+                    Message.XAddText(vbCrLf, "Normal") 'Add extra line
+                End If
+                'If (MsgType = "XMsg") And ShowXMessages Then
+                '    Message.XAddXml(XDoc)   'Add the message to the XMessages window.
+                '    Message.XAddText(vbCrLf, "Normal") 'Add extra line
+                'ElseIf (MsgType = "XSys") And ShowSysMessages Then
+                '    Message.XAddXml(XDoc)   'Add the message to the XMessages window.
+                '    Message.XAddText(vbCrLf, "Normal") 'Add extra line
+                'End If
+
+                'Process the XMessageBlock:
+                Dim XMsgBlkLocn As String
+                XMsgBlkLocn = XDoc.GetElementsByTagName("ClientLocn")(0).InnerText
+                Select Case XMsgBlkLocn
+                    Case "TestLocn" 'Replace this with the required location name.
+                        Dim XInfo As Xml.XmlNodeList = XDoc.GetElementsByTagName("XInfo") 'Get the XInfo node list
+                        Dim InfoXDoc As New Xml.Linq.XDocument 'Create an XDocument to hold the information contained in XInfo 
+                        InfoXDoc = XDocument.Parse("<?xml version=""1.0"" encoding=""utf-8"" standalone=""yes""?>" & vbCrLf & XInfo(0).InnerXml) 'Read the information into InfoXDoc
+                        'Add processing instructions here - The information in the InfoXDoc is usually stored in an XDocument in the application or as an XML file in the project.
+
+                    Case Else
+                        Message.AddWarning("Unknown XInfo Message location: " & XMsgBlkLocn & vbCrLf)
+                End Select
+            Else
+                Message.XAddText("The message is not an XMessage or XMessageBlock: " & vbCrLf & Instructions & vbCrLf & vbCrLf, "Normal")
+            End If
+            'Message.XAddText("The message is not an XMessage: " & Instructions & vbCrLf, "Normal")
+        End If
+    End Sub
+
+    Private Sub ProcessLocalInstructions(ByVal Instructions As String)
+        'Process the XMessage instructions locally.
+
+        'If Instructions.StartsWith("<XMsg>") Then 'This is an XMessage set of instructions.
+        If Instructions.StartsWith("<XMsg>") Or Instructions.StartsWith("<XSys>") Then 'This is an XMessage set of instructions.
+            'Run the received message:
+            Dim XmlHeader As String = "<?xml version=""1.0"" encoding=""utf-8"" standalone=""yes""?>"
+            XDocLocal.LoadXml(XmlHeader & vbCrLf & Instructions)
+            XMsgLocal.Run(XDocLocal, StatusLocal)
+        Else 'This is not an XMessage!
+            Message.XAddText("The message is not an XMessage: " & Instructions & vbCrLf, "Normal")
+        End If
+    End Sub
+
+    Private _showXMessages As Boolean = True 'If True, XMessages that are sent or received will be shown in the Messages window.
+    Property ShowXMessages As Boolean
+        Get
+            Return _showXMessages
+        End Get
+        Set(value As Boolean)
+            _showXMessages = value
+        End Set
+    End Property
+
+    Private _showSysMessages As Boolean = True 'If True, System messages that are sent or received will be shown in the messages window.
+    Property ShowSysMessages As Boolean
+        Get
+            Return _showSysMessages
+        End Get
+        Set(value As Boolean)
+            _showSysMessages = value
         End Set
     End Property
 
@@ -308,6 +481,10 @@ Public Class Main
         TXT
         HTML
         PDF
+        XLS
+        FolderLink
+        XMsg
+        XSeq
     End Enum
 
     Private _newItemType As NewItemTypes = NewItemTypes.Collection
@@ -329,6 +506,14 @@ Public Class Main
                 rbXml.Checked = True
             ElseIf _newItemType = NewItemTypes.PDF Then
                 rbPdf.Checked = True
+            ElseIf _newItemType = NewItemTypes.XLS Then
+                rbXls.Checked = True
+            ElseIf _newItemType = NewItemTypes.FolderLink Then
+                rbFolderLink.Checked = True
+            ElseIf _newItemType = NewItemTypes.XMsg Then
+                rbXMsg.Checked = True
+            ElseIf _newItemType = NewItemTypes.XSeq Then
+                rbXSeq.Checked = True
             End If
         End Set
     End Property
@@ -365,6 +550,10 @@ Public Class Main
         TXT
         HTML
         PDF
+        XLS
+        FolderLink
+        XMsg
+        XSeq
     End Enum
 
     'File Properties ======================================================================================================
@@ -376,7 +565,8 @@ Public Class Main
         End Get
         Set(value As FileTypes)
             _fileTypeSelection = value
-            cmbDocType.SelectedIndex = cmbDocType.FindStringExact(_fileTypeSelection.ToString)
+            'cmbDocType.SelectedIndex = cmbDocType.FindStringExact(_fileTypeSelection.ToString)
+            txtDocType.Text = _fileTypeSelection.ToString
         End Set
     End Property
 
@@ -389,6 +579,8 @@ Public Class Main
             _fileType = value
             txtFileType.Text = _fileType.ToString
             txtFileType2.Text = _fileType.ToString
+            'cmbDocType.SelectedIndex = cmbDocType.FindStringExact(_fileType.ToString)
+            txtDocType.Text = _fileType.ToString
         End Set
     End Property
 
@@ -856,13 +1048,23 @@ Public Class Main
     End Property
 
 
-    Private _startPageFileName As String = "" 'The file name of the html document displayed in the Start Page tab.
-    Public Property StartPageFileName As String
+    'Private _startPageFileName As String = "" 'The file name of the html document displayed in the Start Page tab.
+    'Public Property StartPageFileName As String
+    '    Get
+    '        Return _startPageFileName
+    '    End Get
+    '    Set(value As String)
+    '        _startPageFileName = value
+    '    End Set
+    'End Property
+
+    Private _workflowFileName As String = "" 'The file name of the html document displayed in the Workflow tab.
+    Public Property WorkflowFileName As String
         Get
-            Return _startPageFileName
+            Return _workflowFileName
         End Get
         Set(value As String)
-            _startPageFileName = value
+            _workflowFileName = value
         End Set
     End Property
 
@@ -881,8 +1083,10 @@ Public Class Main
                                <Top><%= Me.Top %></Top>
                                <Width><%= Me.Width %></Width>
                                <Height><%= Me.Height %></Height>
-                               <MsgServiceAppPath><%= MsgServiceAppPath %></MsgServiceAppPath>
-                               <MsgServiceExePath><%= MsgServiceExePath %></MsgServiceExePath>
+                               <AdvlNetworkAppPath><%= AdvlNetworkAppPath %></AdvlNetworkAppPath>
+                               <AdvlNetworkExePath><%= AdvlNetworkExePath %></AdvlNetworkExePath>
+                               <ShowXMessages><%= ShowXMessages %></ShowXMessages>
+                               <ShowSysMessages><%= ShowSysMessages %></ShowSysMessages>
                                <!---->
                                <LibraryFileName><%= LibraryFileName %></LibraryFileName>
                                <NewItemType><%= NewItemType.ToString %></NewItemType>
@@ -905,14 +1109,19 @@ Public Class Main
                                <!---->
                            </FormSettings>
 
-        Dim SettingsFileName As String = "FormSettings_" & ApplicationInfo.Name & "_" & Me.Text & ".xml"
+        '<MsgServiceAppPath><%= MsgServiceAppPath %></MsgServiceAppPath>
+        '<MsgServiceExePath><%= MsgServiceExePath %></MsgServiceExePath>
+
+        'Dim SettingsFileName As String = "FormSettings_" & ApplicationInfo.Name & "_" & Me.Text & ".xml"
+        Dim SettingsFileName As String = "FormSettings_" & ApplicationInfo.Name & " - Main.xml"
         Project.SaveXmlSettings(SettingsFileName, settingsData)
     End Sub
 
     Private Sub RestoreFormSettings()
         'Read the form settings from an XML document.
 
-        Dim SettingsFileName As String = "FormSettings_" & ApplicationInfo.Name & "_" & Me.Text & ".xml"
+        'Dim SettingsFileName As String = "FormSettings_" & ApplicationInfo.Name & "_" & Me.Text & ".xml"
+        Dim SettingsFileName As String = "FormSettings_" & ApplicationInfo.Name & " - Main.xml"
 
         If Project.SettingsFileExists(SettingsFileName) Then
             Dim Settings As System.Xml.Linq.XDocument
@@ -928,8 +1137,13 @@ Public Class Main
             If Settings.<FormSettings>.<Height>.Value <> Nothing Then Me.Height = Settings.<FormSettings>.<Height>.Value
             If Settings.<FormSettings>.<Width>.Value <> Nothing Then Me.Width = Settings.<FormSettings>.<Width>.Value
 
-            If Settings.<FormSettings>.<MsgServiceAppPath>.Value <> Nothing Then MsgServiceAppPath = Settings.<FormSettings>.<MsgServiceAppPath>.Value
-            If Settings.<FormSettings>.<MsgServiceExePath>.Value <> Nothing Then MsgServiceExePath = Settings.<FormSettings>.<MsgServiceExePath>.Value
+            'If Settings.<FormSettings>.<MsgServiceAppPath>.Value <> Nothing Then MsgServiceAppPath = Settings.<FormSettings>.<MsgServiceAppPath>.Value
+            'If Settings.<FormSettings>.<MsgServiceExePath>.Value <> Nothing Then MsgServiceExePath = Settings.<FormSettings>.<MsgServiceExePath>.Value
+            If Settings.<FormSettings>.<AdvlNetworkAppPath>.Value <> Nothing Then AdvlNetworkAppPath = Settings.<FormSettings>.<AdvlNetworkAppPath>.Value
+            If Settings.<FormSettings>.<AdvlNetworkExePath>.Value <> Nothing Then AdvlNetworkExePath = Settings.<FormSettings>.<AdvlNetworkExePath>.Value
+
+            If Settings.<FormSettings>.<ShowXMessages>.Value <> Nothing Then ShowXMessages = Settings.<FormSettings>.<ShowXMessages>.Value
+            If Settings.<FormSettings>.<ShowSysMessages>.Value <> Nothing Then ShowSysMessages = Settings.<FormSettings>.<ShowSysMessages>.Value
 
             'Add code to read other saved setting here:
             If Settings.<FormSettings>.<SelectedTabIndex>.Value <> Nothing Then TabControl1.SelectedIndex = Settings.<FormSettings>.<SelectedTabIndex>.Value
@@ -1033,7 +1247,45 @@ Public Class Main
 
             If Settings.<FormSettings>.<LibraryTabSplitDistance>.Value <> Nothing Then SplitContainer1.SplitterDistance = Settings.<FormSettings>.<LibraryTabSplitDistance>.Value
 
+            CheckFormPos()
         End If
+    End Sub
+
+    Private Sub CheckFormPos()
+        'Check that the form can be seen on a screen.
+
+        'Dim MinWidthVisible As Integer = 48 'Minimum number of X pixels visible. The form will be moved if this many form pixels are not visible.
+        'Dim MinWidthVisible As Integer = 128 'Minimum number of X pixels visible. The form will be moved if this many form pixels are not visible.
+        Dim MinWidthVisible As Integer = 192 'Minimum number of X pixels visible. The form will be moved if this many form pixels are not visible.
+        'Dim MinHeightVisible As Integer = 48 'Minimum number of Y pixels visible. The form will be moved if this many form pixels are not visible.
+        Dim MinHeightVisible As Integer = 64 'Minimum number of Y pixels visible. The form will be moved if this many form pixels are not visible.
+
+        Dim FormRect As New Rectangle(Me.Left, Me.Top, Me.Width, Me.Height)
+        Dim WARect As Rectangle = Screen.GetWorkingArea(FormRect) 'The Working Area rectangle - the usable area of the screen containing the form.
+
+        ''Check if the top of the form is less than zero:
+        'If Me.Top < 0 Then Me.Top = 0
+
+        'Check if the top of the form is above the top of the Working Area:
+        If Me.Top < WARect.Top Then
+            Me.Top = WARect.Top
+        End If
+
+        'Check if the top of the form is too close to the bottom of the Working Area:
+        If (Me.Top + MinHeightVisible) > (WARect.Top + WARect.Height) Then
+            Me.Top = WARect.Top + WARect.Height - MinHeightVisible
+        End If
+
+        'Check if the left edge of the form is too close to the right edge of the Working Area:
+        If (Me.Left + MinWidthVisible) > (WARect.Left + WARect.Width) Then
+            Me.Left = WARect.Left + WARect.Width - MinWidthVisible
+        End If
+
+        'Check if the right edge of the form is too close to the left edge of the Working Area:
+        If (Me.Left + Me.Width - MinWidthVisible) < WARect.Left Then
+            Me.Left = WARect.Left - Me.Width + MinWidthVisible
+        End If
+
     End Sub
 
     Private Sub ReadApplicationInfo()
@@ -1042,8 +1294,9 @@ Public Class Main
         If ApplicationInfo.FileExists Then
             ApplicationInfo.ReadFile()
         Else
-            'There is no Application_Info.xml file.
-            DefaultAppProperties() 'Create a new Application Info file with default application properties:
+            'There is no Application_Info_ADVL_2.xml file.
+            DefaultAppProperties() 'Create a new Application Info file with default application properties.
+            ApplicationInfo.WriteFile() 'Write the file now. The file information may be used by other applications.
         End If
     End Sub
 
@@ -1362,6 +1615,11 @@ Public Class Main
 
         'Read the Application Information file: ---------------------------------------------
         ApplicationInfo.ApplicationDir = My.Application.Info.DirectoryPath.ToString 'Set the Application Directory property
+        'Get the Application Version Information:
+        ApplicationInfo.Version.Major = My.Application.Info.Version.Major
+        ApplicationInfo.Version.Minor = My.Application.Info.Version.Minor
+        ApplicationInfo.Version.Build = My.Application.Info.Version.Build
+        ApplicationInfo.Version.Revision = My.Application.Info.Version.Revision
 
         If ApplicationInfo.ApplicationLocked Then
             MessageBox.Show("The application is locked. If the application is not already in use, remove the 'Application_Info.lock file from the application directory: " & ApplicationInfo.ApplicationDir, "Notice", MessageBoxButtons.OK)
@@ -1383,7 +1641,7 @@ Public Class Main
         ApplicationUsage.RestoreUsageInfo()
 
         'Restore Project information: -------------------------------------------------------
-        Project.ApplicationName = ApplicationInfo.Name
+        Project.Application.Name = ApplicationInfo.Name
 
         'Set up Message object:
         Message.ApplicationName = ApplicationInfo.Name
@@ -1416,9 +1674,9 @@ Public Class Main
             Project.ReadLastProjectInfo()
             'The Last_Project_Info.xml file contains:
             '  Project Name and Description. Settings Location Type and Settings Location Path.
-            Message.Add("Last project info has been read." & vbCrLf)
-            Message.Add("Project.SettingsLocn.Type  " & Project.SettingsLocn.Type.ToString & vbCrLf)
-            Message.Add("Project.SettingsLocn.Path  " & Project.SettingsLocn.Path & vbCrLf)
+            Message.Add("Last project details:" & vbCrLf)
+            Message.Add("Project Type:  " & Project.Type.ToString & vbCrLf)
+            Message.Add("Project Path:  " & Project.Path & vbCrLf)
 
             'At this point read the application start arguments, if any.
             'The selected project may be changed here.
@@ -1434,15 +1692,21 @@ Public Class Main
                     'Read the Project Information file: -------------------------------------------------
                     Message.Add("Reading project info." & vbCrLf)
                     Project.ReadProjectInfoFile()     'Read the file in the SettingsLocation: ADVL_Project_Info.xml
-
                     Project.ReadParameters()
                     Project.ReadParentParameters()
-                    If Project.ParentParameterExists("AppNetName") Then
-                        Project.AddParameter("AppNetName", Project.ParentParameter("AppNetName").Value, Project.ParentParameter("AppNetName").Description) 'AddParameter will update the parameter if it already exists.
-                        AppNetName = Project.Parameter("AppNetName").Value
+                    If Project.ParentParameterExists("ProNetName") Then
+                        Project.AddParameter("ProNetName", Project.ParentParameter("ProNetName").Value, Project.ParentParameter("ProNetName").Description) 'AddParameter will update the parameter if it already exists.
+                        ProNetName = Project.Parameter("ProNetName").Value
                     Else
-                        AppNetName = Project.GetParameter("AppNetName")
+                        ProNetName = Project.GetParameter("ProNetName")
                     End If
+                    If Project.ParentParameterExists("ProNetPath") Then 'Get the parent parameter value - it may have been updated.
+                        Project.AddParameter("ProNetPath", Project.ParentParameter("ProNetPath").Value, Project.ParentParameter("ProNetPath").Description) 'AddParameter will update the parameter if it already exists.
+                        ProNetPath = Project.Parameter("ProNetPath").Value
+                    Else
+                        ProNetPath = Project.GetParameter("ProNetPath") 'If the parameter does not exist, the value is set to ""
+                    End If
+                    Project.SaveParameters() 'These should be saved now - child projects look for parent parameters in the parameter file.
 
                     Project.LockProject() 'Lock the project while it is open in this application.
                     'Set the project start time. This is used to track project usage.
@@ -1450,6 +1714,7 @@ Public Class Main
                     ApplicationInfo.SettingsLocn = Project.SettingsLocn
                     'Set up the Message object:
                     Message.SettingsLocn = Project.SettingsLocn
+                    Message.Show() 'Added 18May19
                 Else
                     'Continue without any project selected.
                     Project.Name = ""
@@ -1463,15 +1728,21 @@ Public Class Main
                 'Read the Project Information file: -------------------------------------------------
                 Message.Add("Reading project info." & vbCrLf)
                 Project.ReadProjectInfoFile()    'Read the file in the SettingsLocation: ADVL_Project_Info.xml
-
                 Project.ReadParameters()
                 Project.ReadParentParameters()
-                If Project.ParentParameterExists("AppNetName") Then
-                    Project.AddParameter("AppNetName", Project.ParentParameter("AppNetName").Value, Project.ParentParameter("AppNetName").Description) 'AddParameter will update the parameter if it already exists.
-                    AppNetName = Project.Parameter("AppNetName").Value
+                If Project.ParentParameterExists("ProNetName") Then
+                    Project.AddParameter("ProNetName", Project.ParentParameter("ProNetName").Value, Project.ParentParameter("ProNetName").Description) 'AddParameter will update the parameter if it already exists.
+                    ProNetName = Project.Parameter("ProNetName").Value
                 Else
-                    AppNetName = Project.GetParameter("AppNetName")
+                    ProNetName = Project.GetParameter("ProNetName")
                 End If
+                If Project.ParentParameterExists("ProNetPath") Then 'Get the parent parameter value - it may have been updated.
+                    Project.AddParameter("ProNetPath", Project.ParentParameter("ProNetPath").Value, Project.ParentParameter("ProNetPath").Description) 'AddParameter will update the parameter if it already exists.
+                    ProNetPath = Project.Parameter("ProNetPath").Value
+                Else
+                    ProNetPath = Project.GetParameter("ProNetPath") 'If the parameter does not exist, the value is set to ""
+                End If
+                Project.SaveParameters() 'These should be saved now - child projects look for parent parameters in the parameter file.
 
                 Project.LockProject() 'Lock the project while it is open in this application.
                 'Set the project start time. This is used to track project usage.
@@ -1479,22 +1750,35 @@ Public Class Main
                 ApplicationInfo.SettingsLocn = Project.SettingsLocn
                 'Set up the Message object:
                 Message.SettingsLocn = Project.SettingsLocn
+                Message.Show() 'Added 18May19
             End If
         Else 'Project has been opened using Command Line arguments.
             Project.ReadParameters()
             Project.ReadParentParameters()
-            If Project.ParentParameterExists("AppNetName") Then
-                Project.AddParameter("AppNetName", Project.ParentParameter("AppNetName").Value, Project.ParentParameter("AppNetName").Description) 'AddParameter will update the parameter if it already exists.
-                AppNetName = Project.Parameter("AppNetName").Value
+            If Project.ParentParameterExists("ProNetName") Then
+                Project.AddParameter("ProNetName", Project.ParentParameter("ProNetName").Value, Project.ParentParameter("ProNetName").Description) 'AddParameter will update the parameter if it already exists.
+                ProNetName = Project.Parameter("ProNetName").Value
             Else
-                AppNetName = Project.GetParameter("AppNetName")
+                ProNetName = Project.GetParameter("ProNetName")
             End If
+            If Project.ParentParameterExists("ProNetPath") Then 'Get the parent parameter value - it may have been updated.
+                Project.AddParameter("ProNetPath", Project.ParentParameter("ProNetPath").Value, Project.ParentParameter("ProNetPath").Description) 'AddParameter will update the parameter if it already exists.
+                ProNetPath = Project.Parameter("ProNetPath").Value
+            Else
+                ProNetPath = Project.GetParameter("ProNetPath") 'If the parameter does not exist, the value is set to ""
+            End If
+            Project.SaveParameters() 'These should be saved now - child projects look for parent parameters in the parameter file.
 
             Project.LockProject() 'Lock the project while it is open in this application.
             ProjectSelected = False 'Reset the Project Selected flag.
+
+            'Set up the Message object:
+            Message.SettingsLocn = Project.SettingsLocn
+            Message.Show() 'Added 18May19
         End If
 
         'Initialise the form: ===============================================================
+        Project.CreateDataDir() 'This project may need a Data Directory to store .pdf and .xlsx files.
 
         Me.WebBrowser2.ObjectForScripting = Me
 
@@ -1573,11 +1857,15 @@ Public Class Main
 
         DataGridView1.AllowUserToAddRows = True
 
-        cmbDocType.Items.Clear()
-        cmbDocType.Items.Add("RTF")
-        cmbDocType.Items.Add("XML")
-        cmbDocType.Items.Add("TXT")
-        cmbDocType.Items.Add("HTML")
+        'NOTE: cmbDocType is no longer used.
+        'cmbDocType.Items.Clear()
+        'cmbDocType.Items.Add("RTF")
+        'cmbDocType.Items.Add("XML")
+        'cmbDocType.Items.Add("TXT")
+        'cmbDocType.Items.Add("HTML")
+        'cmbDocType.Items.Add("PDF")
+        'cmbDocType.Items.Add("XLS")
+        'cmbDocType.Items.Add("FolderLink")
 
         rbFileInProject.Checked = True 'Default: open new file from Project.
 
@@ -1593,6 +1881,10 @@ Public Class Main
         pbIconHtml.Image = ImageList1.Images(8)
         pbIconTxt.Image = ImageList1.Images(10)
         pbIconPdf.Image = ImageList1.Images(12)
+        pbIconFolder.Image = ImageList1.Images(16)
+        pbIconXls.Image = ImageList1.Images(14)
+        pbIconXmsg.Image = ImageList1.Images(18)
+        pbIconXSeq.Image = ImageList1.Images(20)
 
         rbCollection.Checked = True 'Select collection in the Add Item groupbox by default.
 
@@ -1602,11 +1894,31 @@ Public Class Main
         btnCodeView.Enabled = False
         btnWebView.Enabled = False
 
+        'Set up dgvDocList
+        dgvDocList.ColumnHeadersDefaultCellStyle.Font = New Font(dgvDocList.Font, FontStyle.Bold) 'Use bold font for the column headers
+        dgvDocList.ColumnCount = 5
+        dgvDocList.Columns(0).HeaderText = "Document Title"
+        dgvDocList.Columns(1).HeaderText = "Type"
+        'dgvDocList.Columns(2).HeaderText = "File Name"
+        dgvDocList.Columns(2).HeaderText = "Creation Date"
+        dgvDocList.Columns(2).ValueType = GetType(Date)
+        dgvDocList.Columns(2).DefaultCellStyle.Format = "d-MMM-yyyy H:mm:ss"
+
+        dgvDocList.Columns(3).HeaderText = "Last Edit Date"
+        'dgvDocList.Columns(4).ValueType = GetType(DateTime)
+        dgvDocList.Columns(3).ValueType = GetType(Date)
+        dgvDocList.Columns(3).DefaultCellStyle.Format = "d-MMM-yyyy H:mm:ss"
+
+        'dgvDocList.Columns(5).HeaderText = "Document Description"
+        dgvDocList.Columns(4).HeaderText = "File Name"
+
         InitialiseForm() 'Initialise the form for a new project.
 
         '------------------------------------------------------------------------------------
 
         RestoreFormSettings() 'Restore the form settings
+        Message.ShowXMessages = ShowXMessages
+        Message.ShowSysMessages = ShowSysMessages
         RestoreProjectSettings() 'Restore the Project settings
 
         ShowProjectInfo()
@@ -1626,12 +1938,6 @@ Public Class Main
             ConnectToComNet(StartupConnectionName)
         End If
 
-        'Start the timer to keep the connection awake:
-        'Timer3.Interval = 10000 '10 seconds - for testing
-        Timer3.Interval = TimeSpan.FromMinutes(55).TotalMilliseconds '55 minute interval
-        Timer3.Enabled = True
-        Timer3.Start()
-
     End Sub
 
     Private Sub InitialiseForm()
@@ -1643,7 +1949,7 @@ Public Class Main
         'Show the project information:
 
         txtParentProject.Text = Project.ParentProjectName
-        txtAppNetName.Text = Project.GetParameter("AppNetName")
+        txtProNetName.Text = Project.GetParameter("ProNetName")
         txtProjectName.Text = Project.Name
         txtProjectDescription.Text = Project.Description
         Select Case Project.Type
@@ -1712,6 +2018,52 @@ Public Class Main
     Private Sub btnExit_Click(sender As Object, e As EventArgs) Handles btnExit.Click
         'Exit the Application
 
+        'Save any open documents:
+        'For Each formItem In RtfDisplayFormList
+        '    If formItem Is Nothing Then
+        '        'The form is already closed
+        '    Else
+        '        formItem.Close
+        '    End If
+        'Next
+        'For Each formItem In HtmlDisplayFormList
+        '    If formItem Is Nothing Then
+        '        'The form is already closed
+        '    Else
+        '        formItem.Close
+        '    End If
+        'Next
+        'For Each formItem In TextDisplayFormList
+        '    If formItem Is Nothing Then
+        '        'The form is already closed
+        '    Else
+        '        formItem.Close
+        '    End If
+        'Next
+
+        Dim I As Integer
+        For I = RtfDisplayFormList.Count - 1 To 0 Step -1
+            If RtfDisplayFormList(I) Is Nothing Then
+                'The form is already closed
+            Else
+                RtfDisplayFormList(I).Close
+            End If
+        Next
+        For I = HtmlDisplayFormList.Count - 1 To 0 Step -1
+            If HtmlDisplayFormList(I) Is Nothing Then
+                'The form is already closed
+            Else
+                HtmlDisplayFormList(I).Close
+            End If
+        Next
+        For I = TextDisplayFormList.Count - 1 To 0 Step -1
+            If TextDisplayFormList(I) Is Nothing Then
+                'The form is already closed
+            Else
+                TextDisplayFormList(I).Close
+            End If
+        Next
+
         DisconnectFromComNet() 'Disconnect from the Application Network.
 
         SaveProjectSettings() 'Save project settings.
@@ -1750,30 +2102,30 @@ Public Class Main
 
 #Region " Open and Close Forms - Code used to open and close other forms." '===================================================================================================================
 
-    Private Sub btnEdit_Click(sender As Object, e As EventArgs) Handles btnEdit.Click
+    'Private Sub btnEdit_Click(sender As Object, e As EventArgs) Handles btnEdit.Click
 
-        Select Case FileTypeSelection
-            Case FileTypes.RTF
-                If IsNothing(EditRtf) Then
-                    EditRtf = New frmEditRtf
-                    EditRtf.Show()
-                Else
-                    EditRtf.Show()
-                End If
+    '    Select Case FileTypeSelection
+    '        Case FileTypes.RTF
+    '            If IsNothing(EditRtf) Then
+    '                EditRtf = New frmEditRtf
+    '                EditRtf.Show()
+    '            Else
+    '                EditRtf.Show()
+    '            End If
 
-            Case FileTypes.TXT
+    '        Case FileTypes.TXT
 
-            Case FileTypes.XML
-                If IsNothing(EditXml) Then
-                    EditXml = New frmEditXml
-                    EditXml.Show()
-                Else
-                    EditXml.Show()
-                End If
+    '        Case FileTypes.XML
+    '            If IsNothing(EditXml) Then
+    '                EditXml = New frmEditXml
+    '                EditXml.Show()
+    '            Else
+    '                EditXml.Show()
+    '            End If
 
-        End Select
+    '    End Select
 
-    End Sub
+    'End Sub
 
     Private Sub EditXml_FormClosed(sender As Object, e As FormClosedEventArgs) Handles EditXml.FormClosed
         EditXml = Nothing
@@ -1783,33 +2135,33 @@ Public Class Main
         EditRtf = Nothing
     End Sub
 
-    Private Sub btnNew_Click(sender As Object, e As EventArgs) Handles btnNew.Click
+    'Private Sub btnNew_Click(sender As Object, e As EventArgs) Handles btnNew.Click
 
-        Select Case FileTypeSelection
-            Case FileTypes.RTF
-                If IsNothing(NewRtf) Then
-                    NewRtf = New frmNewRtf
-                    NewRtf.Show()
-                Else
-                    NewRtf.Show()
-                End If
-                If rbFileInProject.Checked = True Then
-                    NewRtf.FileLocation = frmNewRtf.LocationTypes.Project
-                Else
-                    NewRtf.FileLocation = frmNewRtf.LocationTypes.FileSystem
-                End If
-            Case FileTypes.TXT
+    '    Select Case FileTypeSelection
+    '        Case FileTypes.RTF
+    '            If IsNothing(NewRtf) Then
+    '                NewRtf = New frmNewRtf
+    '                NewRtf.Show()
+    '            Else
+    '                NewRtf.Show()
+    '            End If
+    '            If rbFileInProject.Checked = True Then
+    '                NewRtf.FileLocation = frmNewRtf.LocationTypes.Project
+    '            Else
+    '                NewRtf.FileLocation = frmNewRtf.LocationTypes.FileSystem
+    '            End If
+    '        Case FileTypes.TXT
 
-            Case FileTypes.XML
-                If IsNothing(NewXml) Then
-                    NewXml = New frmNewXml
-                    NewXml.Show()
-                Else
-                    NewXml.Show()
-                End If
+    '        Case FileTypes.XML
+    '            If IsNothing(NewXml) Then
+    '                NewXml = New frmNewXml
+    '                NewXml.Show()
+    '            Else
+    '                NewXml.Show()
+    '            End If
 
-        End Select
-    End Sub
+    '    End Select
+    'End Sub
 
     Private Sub NewRtf_FormClosed(sender As Object, e As FormClosedEventArgs) Handles NewRtf.FormClosed
         NewRtf = Nothing
@@ -1819,99 +2171,97 @@ Public Class Main
         NewXml = Nothing
     End Sub
 
-    Private Sub btnNewDisplay_Click(sender As Object, e As EventArgs) Handles btnNewDisplay.Click
-        'Open a new document display window
+    'Private Sub btnNewDisplay_Click(sender As Object, e As EventArgs) Handles btnNewDisplay.Click
+    '    'Open a new document display window
 
-        Select Case FileTypeSelection
-            Case FileTypes.RTF
-                'Code to display multiple instances of the RTF Display form:
-                RtfDisplay = New frmRtfDisplay
-                If RtfDisplayFormList.Count = 0 Then
-                    RtfDisplayFormList.Add(RtfDisplay)
-                    RtfDisplayFormList(0).FormNo = 0
-                    RtfDisplayFormList(0).Show
-                Else
-                    Dim I As Integer
-                    Dim FormAdded As Boolean = False
-                    For I = 0 To RtfDisplayFormList.Count - 1 'Check if there are closed forms in RtfDisplayFormList. They can be re-used.
-                        If IsNothing(RtfDisplayFormList(I)) Then
-                            RtfDisplayFormList(I) = RtfDisplay
-                            RtfDisplayFormList(I).FormNo = I
-                            RtfDisplayFormList(I).Show
-                            FormAdded = True
-                            Exit For
-                        End If
-                    Next
-                    If FormAdded = False Then 'Add a new form to XmlDisplayFormList
-                        Dim FormNo As Integer
-                        RtfDisplayFormList.Add(RtfDisplay)
-                        FormNo = RtfDisplayFormList.Count - 1
-                        RtfDisplayFormList(FormNo).FormNo = FormNo
-                        RtfDisplayFormList(FormNo).Show
-                    End If
-                End If
+    '    Select Case FileTypeSelection
+    '        Case FileTypes.RTF
+    '            'Code to display multiple instances of the RTF Display form:
+    '            RtfDisplay = New frmRtfDisplay
+    '            If RtfDisplayFormList.Count = 0 Then
+    '                RtfDisplayFormList.Add(RtfDisplay)
+    '                RtfDisplayFormList(0).FormNo = 0
+    '                RtfDisplayFormList(0).Show
+    '            Else
+    '                Dim I As Integer
+    '                Dim FormAdded As Boolean = False
+    '                For I = 0 To RtfDisplayFormList.Count - 1 'Check if there are closed forms in RtfDisplayFormList. They can be re-used.
+    '                    If IsNothing(RtfDisplayFormList(I)) Then
+    '                        RtfDisplayFormList(I) = RtfDisplay
+    '                        RtfDisplayFormList(I).FormNo = I
+    '                        RtfDisplayFormList(I).Show
+    '                        FormAdded = True
+    '                        Exit For
+    '                    End If
+    '                Next
+    '                If FormAdded = False Then 'Add a new form to XmlDisplayFormList
+    '                    Dim FormNo As Integer
+    '                    RtfDisplayFormList.Add(RtfDisplay)
+    '                    FormNo = RtfDisplayFormList.Count - 1
+    '                    RtfDisplayFormList(FormNo).FormNo = FormNo
+    '                    RtfDisplayFormList(FormNo).Show
+    '                End If
+    '            End If
 
-            Case FileTypes.TXT
+    '        Case FileTypes.TXT
 
-            Case FileTypes.XML
-                'Code to display multiple instances of the XML Display form:
-                XmlDisplay = New frmXmlDisplay
-                If XmlDisplayFormList.Count = 0 Then
-                    XmlDisplayFormList.Add(XmlDisplay)
-                    XmlDisplayFormList(0).FormNo = 0
-                    XmlDisplayFormList(0).Show
-                Else
-                    Dim I As Integer
-                    Dim FormAdded As Boolean = False
-                    For I = 0 To XmlDisplayFormList.Count - 1 'Check if there are closed forms in XmlDisplayFormList. They can be re-used.
-                        If IsNothing(XmlDisplayFormList(I)) Then
-                            XmlDisplayFormList(I) = XmlDisplay
-                            XmlDisplayFormList(I).FormNo = I
-                            XmlDisplayFormList(I).Show
-                            FormAdded = True
-                            Exit For
-                        End If
-                    Next
-                    If FormAdded = False Then 'Add a new form to XmlDisplayFormList
-                        Dim FormNo As Integer
-                        XmlDisplayFormList.Add(XmlDisplay)
-                        FormNo = XmlDisplayFormList.Count - 1
-                        XmlDisplayFormList(FormNo).FormNo = FormNo
-                        XmlDisplayFormList(FormNo).Show
-                    End If
-                End If
+    '        Case FileTypes.XML
+    '            'Code to display multiple instances of the XML Display form:
+    '            XmlDisplay = New frmXmlDisplay
+    '            If XmlDisplayFormList.Count = 0 Then
+    '                XmlDisplayFormList.Add(XmlDisplay)
+    '                XmlDisplayFormList(0).FormNo = 0
+    '                XmlDisplayFormList(0).Show
+    '            Else
+    '                Dim I As Integer
+    '                Dim FormAdded As Boolean = False
+    '                For I = 0 To XmlDisplayFormList.Count - 1 'Check if there are closed forms in XmlDisplayFormList. They can be re-used.
+    '                    If IsNothing(XmlDisplayFormList(I)) Then
+    '                        XmlDisplayFormList(I) = XmlDisplay
+    '                        XmlDisplayFormList(I).FormNo = I
+    '                        XmlDisplayFormList(I).Show
+    '                        FormAdded = True
+    '                        Exit For
+    '                    End If
+    '                Next
+    '                If FormAdded = False Then 'Add a new form to XmlDisplayFormList
+    '                    Dim FormNo As Integer
+    '                    XmlDisplayFormList.Add(XmlDisplay)
+    '                    FormNo = XmlDisplayFormList.Count - 1
+    '                    XmlDisplayFormList(FormNo).FormNo = FormNo
+    '                    XmlDisplayFormList(FormNo).Show
+    '                End If
+    '            End If
 
-            Case FileTypes.HTML
-                'Code to display multiple instances of the HTML Display form:
-                HtmlDisplay = New frmHtmlDisplay
-                If HtmlDisplayFormList.Count = 0 Then
-                    HtmlDisplayFormList.Add(HtmlDisplay)
-                    HtmlDisplayFormList(0).FormNo = 0
-                    HtmlDisplayFormList(0).Show
-                Else
-                    Dim I As Integer
-                    Dim FormAdded As Boolean = False
-                    For I = 0 To HtmlDisplayFormList.Count - 1 'Check if there are closed forms in XmlDisplayFormList. They can be re-used.
-                        If IsNothing(HtmlDisplayFormList(I)) Then
-                            HtmlDisplayFormList(I) = HtmlDisplay
-                            HtmlDisplayFormList(I).FormNo = I
-                            HtmlDisplayFormList(I).Show
-                            FormAdded = True
-                            Exit For
-                        End If
-                    Next
-                    If FormAdded = False Then 'Add a new form to XmlDisplayFormList
-                        Dim FormNo As Integer
-                        HtmlDisplayFormList.Add(HtmlDisplay)
-                        FormNo = HtmlDisplayFormList.Count - 1
-                        HtmlDisplayFormList(FormNo).FormNo = FormNo
-                        HtmlDisplayFormList(FormNo).Show
-                    End If
-                End If
-
-        End Select
-
-    End Sub
+    '        Case FileTypes.HTML
+    '            'Code to display multiple instances of the HTML Display form:
+    '            HtmlDisplay = New frmHtmlDisplay
+    '            If HtmlDisplayFormList.Count = 0 Then
+    '                HtmlDisplayFormList.Add(HtmlDisplay)
+    '                HtmlDisplayFormList(0).FormNo = 0
+    '                HtmlDisplayFormList(0).Show
+    '            Else
+    '                Dim I As Integer
+    '                Dim FormAdded As Boolean = False
+    '                For I = 0 To HtmlDisplayFormList.Count - 1 'Check if there are closed forms in XmlDisplayFormList. They can be re-used.
+    '                    If IsNothing(HtmlDisplayFormList(I)) Then
+    '                        HtmlDisplayFormList(I) = HtmlDisplay
+    '                        HtmlDisplayFormList(I).FormNo = I
+    '                        HtmlDisplayFormList(I).Show
+    '                        FormAdded = True
+    '                        Exit For
+    '                    End If
+    '                Next
+    '                If FormAdded = False Then 'Add a new form to XmlDisplayFormList
+    '                    Dim FormNo As Integer
+    '                    HtmlDisplayFormList.Add(HtmlDisplay)
+    '                    FormNo = HtmlDisplayFormList.Count - 1
+    '                    HtmlDisplayFormList(FormNo).FormNo = FormNo
+    '                    HtmlDisplayFormList(FormNo).Show
+    '                End If
+    '            End If
+    '    End Select
+    'End Sub
 
     Public Function NewRtfDisplay() As Integer
         'Open a new RTF Display window, or reuse an existing one if avaiable.
@@ -1922,7 +2272,7 @@ Public Class Main
             RtfDisplayFormList.Add(RtfDisplay)
             RtfDisplayFormList(0).FormNo = 0
             RtfDisplayFormList(0).Show
-            Return 0 'The new RTF Display is at position 0 in RtfDisplayFOrmList()
+            Return 0 'The new RTF Display is at position 0 in RtfDisplayFormList()
         Else
             Dim I As Integer
             Dim FormAdded As Boolean = False
@@ -1932,7 +2282,7 @@ Public Class Main
                     RtfDisplayFormList(I).FormNo = I
                     RtfDisplayFormList(I).Show
                     FormAdded = True
-                    Return I 'The new RTF Display is at position I in RtfDisplayFOrmList()
+                    Return I 'The new RTF Display is at position I in RtfDisplayFormList()
                     Exit For
                 End If
             Next
@@ -1942,7 +2292,7 @@ Public Class Main
                 FormNo = RtfDisplayFormList.Count - 1
                 RtfDisplayFormList(FormNo).FormNo = FormNo
                 RtfDisplayFormList(FormNo).Show
-                Return FormNo 'The new RTF Display is at position FormNo in RtfDisplayFOrmList()
+                Return FormNo 'The new RTF Display is at position FormNo in RtfDisplayFormList()
             End If
         End If
 
@@ -2251,6 +2601,7 @@ Public Class Main
         Message.ApplicationName = ApplicationInfo.Name
         Message.SettingsLocn = Project.SettingsLocn
         Message.Show()
+        Message.ShowXMessages = ShowXMessages
         Message.MessageForm.BringToFront()
     End Sub
 
@@ -2398,7 +2749,7 @@ Public Class Main
     End Sub
 
     Private Sub btnOpenAppDir_Click(sender As Object, e As EventArgs) Handles btnOpenAppDir.Click
-        Process.Start(ApplicationInfo.ApplicationDir)
+
     End Sub
 
     Private Sub btnAdd_Click(sender As Object, e As EventArgs) Handles btnAdd.Click
@@ -2431,7 +2782,7 @@ Public Class Main
                     doc.Add(xmessage)
 
                     'Show the message sent to AppNet:
-                    Message.XAddText("Message sent to " & "MessageService" & ":" & vbCrLf, "XmlSentNotice")
+                    Message.XAddText("Message sent to " & "Message Service" & ":" & vbCrLf, "XmlSentNotice")
                     Message.XAddXml(doc.ToString)
                     Message.XAddText(vbCrLf, "Normal") 'Add extra line
                     client.SendMessage("", "MessageService", doc.ToString)
@@ -2476,27 +2827,46 @@ Public Class Main
         'Open the StartPage.html file and display in the Start Page tab.
 
         If Project.DataFileExists("StartPage.html") Then
-            StartPageFileName = "StartPage.html"
-            DisplayStartPage()
+            'StartPageFileName = "StartPage.html"
+            WorkflowFileName = "StartPage.html"
+            'DisplayStartPage()
+            DisplayWorkflow()
         Else
             CreateStartPage()
-            StartPageFileName = "StartPage.html"
-            DisplayStartPage()
+            'StartPageFileName = "StartPage.html"
+            WorkflowFileName = "StartPage.html"
+            'DisplayStartPage()
+            DisplayWorkflow()
         End If
 
     End Sub
 
-    Public Sub DisplayStartPage()
+    'Public Sub DisplayStartPage()
+    '    'Display the StartPage.html file in the Start Page tab.
+
+    '    If Project.DataFileExists(StartPageFileName) Then
+    '        Dim rtbData As New IO.MemoryStream
+    '        Project.ReadData(StartPageFileName, rtbData)
+    '        rtbData.Position = 0
+    '        Dim sr As New IO.StreamReader(rtbData)
+    '        WebBrowser2.DocumentText = sr.ReadToEnd()
+    '    Else
+    '        Message.AddWarning("Web page file not found: " & StartPageFileName & vbCrLf)
+    '    End If
+    'End Sub
+
+    Public Sub DisplayWorkflow()
         'Display the StartPage.html file in the Start Page tab.
 
-        If Project.DataFileExists(StartPageFileName) Then
+        If Project.DataFileExists(WorkflowFileName) Then
             Dim rtbData As New IO.MemoryStream
-            Project.ReadData(StartPageFileName, rtbData)
+            Project.ReadData(WorkflowFileName, rtbData)
             rtbData.Position = 0
             Dim sr As New IO.StreamReader(rtbData)
+            'WebBrowser1.DocumentText = sr.ReadToEnd()
             WebBrowser2.DocumentText = sr.ReadToEnd()
         Else
-            Message.AddWarning("Web page file not found: " & StartPageFileName & vbCrLf)
+            Message.AddWarning("Web page file not found: " & WorkflowFileName & vbCrLf)
         End If
     End Sub
 
@@ -2521,6 +2891,7 @@ Public Class Main
         sb.Append("<html>" & vbCrLf)
         sb.Append("<head>" & vbCrLf)
         sb.Append("<title>" & DocumentTitle & "</title>" & vbCrLf)
+        sb.Append("<meta name=""description"" content=""Application information."">" & vbCrLf)
         sb.Append("</head>" & vbCrLf)
 
         sb.Append("<body style=""font-family:arial;"">" & vbCrLf & vbCrLf)
@@ -2562,6 +2933,13 @@ Public Class Main
         sb.Append("//START: User modified JavaScript functions ==========================================================================" & vbCrLf)
         sb.Append("//  Modify these function to save all required web page settings and process all expected XMessage instructions." & vbCrLf & vbCrLf)
 
+        'Add the Start Up code section.
+        sb.Append("//Code to execute on Start Up:" & vbCrLf)
+        sb.Append("function StartUpCode() {" & vbCrLf)
+        sb.Append("  RestoreSettings() ;" & vbCrLf)
+        'sb.Append("  GetCalcsDbPath() ;" & vbCrLf)
+        sb.Append("}" & vbCrLf & vbCrLf)
+
         'Add the SaveSettings function - This is used to save web page settings between sessions.
         sb.Append("//Save the web page settings." & vbCrLf)
         sb.Append("function SaveSettings() {" & vbCrLf)
@@ -2579,6 +2957,14 @@ Public Class Main
         sb.Append("function XMsgInstruction(Info, Locn) {" & vbCrLf)
         sb.Append("  switch(Locn) {" & vbCrLf)
         sb.Append("  //Insert case statements here." & vbCrLf)
+        sb.Append("  case ""Status"" :" & vbCrLf)
+        sb.Append("    if (Info = ""OK"") { " & vbCrLf)
+        sb.Append("      //Instruction processing completed OK:" & vbCrLf)
+        sb.Append("      } else {" & vbCrLf)
+        sb.Append("      window.external.AddWarning(""Error: Unknown Status information: "" + "" Info: "" + Info + ""\r\n"") ;" & vbCrLf)
+        sb.Append("     }" & vbCrLf)
+        sb.Append("    break ;" & vbCrLf)
+        sb.Append(vbCrLf)
         sb.Append("  default:" & vbCrLf)
         sb.Append("    window.external.AddWarning(""Unknown location: "" + Locn + ""\r\n"") ;" & vbCrLf)
         sb.Append("  }" & vbCrLf)
@@ -2621,7 +3007,8 @@ Public Class Main
 
         'This line runs the RestoreSettings function when the web page is loaded.
         sb.Append("//Restore the web page settings when the page loads." & vbCrLf)
-        sb.Append("window.onload = RestoreSettings; " & vbCrLf)
+        'sb.Append("window.onload = RestoreSettings; " & vbCrLf)
+        sb.Append("window.onload = StartUpCode ; " & vbCrLf)
         sb.Append(vbCrLf)
 
         'Restores a single setting on the web page.
@@ -2692,15 +3079,12 @@ Public Class Main
 
     Private Sub Project_Closing() Handles Project.Closing
         'The current project is closing.
-
         SaveFormSettings() 'Save the form settings - they are saved in the Project before is closes.
         SaveProjectSettings() 'Update this subroutine if project settings need to be saved.
-
-        'Save the current project usage information:
-        Project.Usage.SaveUsageInfo()
-
-        ClearCurrentProjectData()
-
+        Project.Usage.SaveUsageInfo()   'Save the current project usage information.
+        ClearCurrentProjectData()  'Clear the current project data before opening another project.    
+        Project.UnlockProject() 'Unlock the current project before it Is closed.
+        If ConnectedToComnet Then DisconnectFromComNet()
     End Sub
 
     Private Sub ClearCurrentProjectData()
@@ -2819,12 +3203,19 @@ Public Class Main
 
         Project.ReadParameters()
         Project.ReadParentParameters()
-        If Project.ParentParameterExists("AppNetName") Then
-            Project.AddParameter("AppNetName", Project.ParentParameter("AppNetName").Value, Project.ParentParameter("AppNetName").Description) 'AddParameter will update the parameter if it already exists.
-            AppNetName = Project.Parameter("AppNetName").Value
+        If Project.ParentParameterExists("ProNetName") Then
+            Project.AddParameter("ProNetName", Project.ParentParameter("ProNetName").Value, Project.ParentParameter("ProNetName").Description) 'AddParameter will update the parameter if it already exists.
+            ProNetName = Project.Parameter("ProNetName").Value
         Else
-            AppNetName = Project.GetParameter("AppNetName")
+            ProNetName = Project.GetParameter("ProNetName")
         End If
+        If Project.ParentParameterExists("ProNetPath") Then 'Get the parent parameter value - it may have been updated.
+            Project.AddParameter("ProNetPath", Project.ParentParameter("ProNetPath").Value, Project.ParentParameter("ProNetPath").Description) 'AddParameter will update the parameter if it already exists.
+            ProNetPath = Project.Parameter("ProNetPath").Value
+        Else
+            ProNetPath = Project.GetParameter("ProNetPath") 'If the parameter does not exist, the value is set to ""
+        End If
+        Project.SaveParameters() 'These should be saved now - child projects look for parent parameters in the parameter file.
 
         Project.LockProject() 'Lock the project while it is open in this application.
 
@@ -2832,40 +3223,51 @@ Public Class Main
 
         ApplicationInfo.SettingsLocn = Project.SettingsLocn
         Message.SettingsLocn = Project.SettingsLocn
+        Message.Show()
 
         'Restore the new project settings:
         RestoreProjectSettings() 'Update this subroutine if project settings need to be restored.
 
-        'Show the project information:
-        txtProjectName.Text = Project.Name
-        txtProjectDescription.Text = Project.Description
-        Select Case Project.Type
-            Case ADVL_Utilities_Library_1.Project.Types.Directory
-                txtProjectType.Text = "Directory"
-            Case ADVL_Utilities_Library_1.Project.Types.Archive
-                txtProjectType.Text = "Archive"
-            Case ADVL_Utilities_Library_1.Project.Types.Hybrid
-                txtProjectType.Text = "Hybrid"
-            Case ADVL_Utilities_Library_1.Project.Types.None
-                txtProjectType.Text = "None"
-        End Select
+        ShowProjectInfo()
 
-        txtCreationDate.Text = Format(Project.CreationDate, "d-MMM-yyyy H:mm:ss")
-        txtLastUsed.Text = Format(Project.Usage.LastUsed, "d-MMM-yyyy H:mm:ss")
-        Select Case Project.SettingsLocn.Type
-            Case ADVL_Utilities_Library_1.FileLocation.Types.Directory
-                txtSettingsLocationType.Text = "Directory"
-            Case ADVL_Utilities_Library_1.FileLocation.Types.Archive
-                txtSettingsLocationType.Text = "Archive"
-        End Select
-        txtSettingsPath.Text = Project.SettingsLocn.Path
-        Select Case Project.DataLocn.Type
-            Case ADVL_Utilities_Library_1.FileLocation.Types.Directory
-                txtDataLocationType.Text = "Directory"
-            Case ADVL_Utilities_Library_1.FileLocation.Types.Archive
-                txtDataLocationType.Text = "Archive"
-        End Select
-        txtDataPath.Text = Project.DataLocn.Path
+        ''Show the project information:
+        'txtProjectName.Text = Project.Name
+        'txtProjectDescription.Text = Project.Description
+        'Select Case Project.Type
+        '    Case ADVL_Utilities_Library_1.Project.Types.Directory
+        '        txtProjectType.Text = "Directory"
+        '    Case ADVL_Utilities_Library_1.Project.Types.Archive
+        '        txtProjectType.Text = "Archive"
+        '    Case ADVL_Utilities_Library_1.Project.Types.Hybrid
+        '        txtProjectType.Text = "Hybrid"
+        '    Case ADVL_Utilities_Library_1.Project.Types.None
+        '        txtProjectType.Text = "None"
+        'End Select
+
+        'txtCreationDate.Text = Format(Project.CreationDate, "d-MMM-yyyy H:mm:ss")
+        'txtLastUsed.Text = Format(Project.Usage.LastUsed, "d-MMM-yyyy H:mm:ss")
+        'Select Case Project.SettingsLocn.Type
+        '    Case ADVL_Utilities_Library_1.FileLocation.Types.Directory
+        '        txtSettingsLocationType.Text = "Directory"
+        '    Case ADVL_Utilities_Library_1.FileLocation.Types.Archive
+        '        txtSettingsLocationType.Text = "Archive"
+        'End Select
+        'txtSettingsPath.Text = Project.SettingsLocn.Path
+        'Select Case Project.DataLocn.Type
+        '    Case ADVL_Utilities_Library_1.FileLocation.Types.Directory
+        '        txtDataLocationType.Text = "Directory"
+        '    Case ADVL_Utilities_Library_1.FileLocation.Types.Archive
+        '        txtDataLocationType.Text = "Archive"
+        'End Select
+        'txtDataPath.Text = Project.DataLocn.Path
+
+        If Project.ConnectOnOpen Then
+            ConnectToComNet() 'The Project is set to connect when it is opened.
+        ElseIf ApplicationInfo.ConnectOnStartup Then
+            ConnectToComNet() 'The Application is set to connect when it is started.
+        Else
+            'Don't connect to ComNet.
+        End If
 
     End Sub
 
@@ -2883,7 +3285,7 @@ Public Class Main
     End Sub
 
     Private Sub ConnectToComNet()
-        'Connect to the Application Network. (Message Exchange)
+        'Connect to the Message Service. (ComNet)
 
         If IsNothing(client) Then
             client = New ServiceReference1.MsgServiceClient(New System.ServiceModel.InstanceContext(New MsgServiceCallback))
@@ -2893,37 +3295,57 @@ Public Class Main
             'The Message Service is Running.
         Else 'The Message Service is NOT running'
             'Start the Message Service:
-            If System.IO.File.Exists(MsgServiceExePath) Then 'OK to start the Message Service application:
-                Shell(Chr(34) & MsgServiceExePath & Chr(34), AppWinStyle.NormalFocus) 'Start Message Service application with no argument
+            If AdvlNetworkAppPath = "" Then
+                Message.AddWarning("Andorville™ Network application path is unknown." & vbCrLf)
             Else
-                'Incorrect Message Service Executable path.
+                If System.IO.File.Exists(AdvlNetworkExePath) Then 'OK to start the Message Service application:
+                    Shell(Chr(34) & AdvlNetworkExePath & Chr(34), AppWinStyle.NormalFocus) 'Start Message Service application with no argument
+                Else
+                    'Incorrect Message Service Executable path.
+                    Message.AddWarning("Andorville™ Network exe file not found. Service not started." & vbCrLf)
+                End If
             End If
+        End If
+
+        'Try to fix a faulted client state:
+        If client.State = ServiceModel.CommunicationState.Faulted Then
+            client = Nothing
+            client = New ServiceReference1.MsgServiceClient(New System.ServiceModel.InstanceContext(New MsgServiceCallback))
         End If
 
         If client.State = ServiceModel.CommunicationState.Faulted Then
             Message.AddWarning("Client state is faulted. Connection not made!" & vbCrLf)
         Else
             Try
-                client.Endpoint.Binding.SendTimeout = New System.TimeSpan(0, 0, 16) 'Temporarily set the send timeaout to 16 seconds
+                client.Endpoint.Binding.SendTimeout = New System.TimeSpan(0, 0, 16) 'Temporarily set the send timeaout to 16 seconds  (8 seconds is too short for a slow computer!)
 
                 ConnectionName = ApplicationInfo.Name 'This name will be modified if it is already used in an existing connection.
-                ConnectionName = client.Connect(AppNetName, ApplicationInfo.Name, ConnectionName, Project.Name, Project.Description, Project.Type, Project.Path, False, False) 'UPDATED 2Feb19
-
+                ConnectionName = client.Connect(ProNetName, ApplicationInfo.Name, ConnectionName, Project.Name, Project.Description, Project.Type, Project.Path, False, False)
 
                 If ConnectionName <> "" Then
-                    Message.Add("Connected to the Application Network as " & ConnectionName & vbCrLf)
+                    Message.Add("Connected to the Andorville™ Network with Connection Name: [" & ProNetName & "]." & ConnectionName & vbCrLf)
                     client.Endpoint.Binding.SendTimeout = New System.TimeSpan(1, 0, 0) 'Restore the send timeaout to 1 hour
                     btnOnline.Text = "Online"
                     btnOnline.ForeColor = Color.ForestGreen
                     ConnectedToComnet = True
                     SendApplicationInfo()
-                    client.GetMessageServiceAppInfoAsync() 'Update the Exe Path in case it has changed. This path may be needed in the future to start the ComNet (Message Service).
+                    SendProjectInfo()
+                    client.GetAdvlNetworkAppInfoAsync() 'Update the Exe Path in case it has changed. This path may be needed in the future to start the ComNet (Message Service).
+
+                    bgwComCheck.WorkerReportsProgress = True
+                    bgwComCheck.WorkerSupportsCancellation = True
+                    If bgwComCheck.IsBusy Then
+                        'The ComCheck thread is already running.
+                    Else
+                        bgwComCheck.RunWorkerAsync() 'Start the ComCheck thread.
+                    End If
+
                 Else
-                    Message.Add("Connection to the Application Network failed!" & vbCrLf)
+                    Message.Add("Connection to the Andorville™ Network failed!" & vbCrLf)
                     client.Endpoint.Binding.SendTimeout = New System.TimeSpan(1, 0, 0) 'Restore the send timeaout to 1 hour
                 End If
             Catch ex As System.TimeoutException
-                Message.Add("Timeout error. Check if the Application Network is running." & vbCrLf)
+                Message.Add("Timeout error. Check if the Andorville™ Network (Message Service) is running." & vbCrLf)
             Catch ex As Exception
                 Message.Add("Error message: " & ex.Message & vbCrLf)
                 client.Endpoint.Binding.SendTimeout = New System.TimeSpan(1, 0, 0) 'Restore the send timeaout to 1 hour
@@ -2932,12 +3354,18 @@ Public Class Main
     End Sub
 
     Private Sub ConnectToComNet(ByVal ConnName As String)
-        'Connect to the Communication Network with the connection name ConnName.
+        'Connect to the Message Service (ComNet) with the connection name ConnName.
 
         If ConnectedToComnet = False Then
-            Dim Result As Boolean
+            'Dim Result As Boolean
 
             If IsNothing(client) Then
+                client = New ServiceReference1.MsgServiceClient(New System.ServiceModel.InstanceContext(New MsgServiceCallback))
+            End If
+
+            'Try to fix a faulted client state:
+            If client.State = ServiceModel.CommunicationState.Faulted Then
+                client = Nothing
                 client = New ServiceReference1.MsgServiceClient(New System.ServiceModel.InstanceContext(New MsgServiceCallback))
             End If
 
@@ -2946,43 +3374,52 @@ Public Class Main
                 Message.Add("client state is faulted. Connection not made!" & vbCrLf)
             Else
                 Try
-                    'client.Endpoint.Binding.SendTimeout = New System.TimeSpan(0, 0, 8) 'Temporarily set the send timeaout to 8 seconds
-                    client.Endpoint.Binding.SendTimeout = New System.TimeSpan(0, 0, 16) 'Temporarily set the send timeaout to 16 seconds
+                    client.Endpoint.Binding.SendTimeout = New System.TimeSpan(0, 0, 16) 'Temporarily set the send timeaout to 16 seconds (8 seconds is too short for a slow computer!)
                     ConnectionName = ConnName 'This name will be modified if it is already used in an existing connection.
-                    ConnectionName = client.Connect(AppNetName, ApplicationInfo.Name, ConnectionName, Project.Name, Project.Description, Project.Type, Project.Path, False, False) 'UPDATED 2Feb19
-
+                    ConnectionName = client.Connect(ProNetName, ApplicationInfo.Name, ConnectionName, Project.Name, Project.Description, Project.Type, Project.Path, False, False)
 
                     If ConnectionName <> "" Then
-                        Message.Add("Connected to the Application Network as " & ConnectionName & vbCrLf)
-                        client.Endpoint.Binding.SendTimeout = New System.TimeSpan(1, 0, 0) 'Restore the send timeaout to 1 hour
+                        Message.Add("Connected to the Andorville™ Network with Connection Name: [" & ProNetName & "]." & ConnectionName & vbCrLf)
+                        client.Endpoint.Binding.SendTimeout = New System.TimeSpan(1, 0, 0) 'Restore the send timeout to 1 hour
                         btnOnline.Text = "Online"
                         btnOnline.ForeColor = Color.ForestGreen
                         ConnectedToComnet = True
                         SendApplicationInfo()
-                        client.GetMessageServiceAppInfoAsync() 'Update the Exe Path in case it has changed. This path may be needed in the future to start the ComNet (Message Service).
+                        SendProjectInfo()
+                        client.GetAdvlNetworkAppInfoAsync() 'Update the Exe Path in case it has changed. This path may be needed in the future to start the ComNet (Message Service).
+
+                        bgwComCheck.WorkerReportsProgress = True
+                        bgwComCheck.WorkerSupportsCancellation = True
+                        If bgwComCheck.IsBusy Then
+                            'The ComCheck thread is already running.
+                        Else
+                            bgwComCheck.RunWorkerAsync() 'Start the ComCheck thread.
+                        End If
+
                     Else
-                        Message.Add("Connection to the Application Network failed!" & vbCrLf)
-                        client.Endpoint.Binding.SendTimeout = New System.TimeSpan(1, 0, 0) 'Restore the send timeaout to 1 hour
+                        Message.Add("Connection to the Andorville™ Network failed!" & vbCrLf)
+                        client.Endpoint.Binding.SendTimeout = New System.TimeSpan(1, 0, 0) 'Restore the send timeout to 1 hour
                     End If
                 Catch ex As System.TimeoutException
-                    Message.Add("Timeout error. Check if the Application Network is running." & vbCrLf)
+                    Message.Add("Timeout error. Check if the Andorville™ Network (Message Service) is running." & vbCrLf)
                 Catch ex As Exception
                     Message.Add("Error message: " & ex.Message & vbCrLf)
-                    client.Endpoint.Binding.SendTimeout = New System.TimeSpan(1, 0, 0) 'Restore the send timeaout to 1 hour
+                    client.Endpoint.Binding.SendTimeout = New System.TimeSpan(1, 0, 0) 'Restore the send timeout to 1 hour
                 End Try
             End If
         Else
-            Message.AddWarning("Already connected to the Application Network." & vbCrLf)
+            Message.AddWarning("Already connected to the Andorville™ Network (Message Service)." & vbCrLf)
         End If
 
     End Sub
 
     Private Sub DisconnectFromComNet()
-        'Disconnect from the Application Network.
+        'Disconnect from the Communication Network (Message Service).
 
         If ConnectedToComnet = True Then
             If IsNothing(client) Then
-                Message.Add("Already disconnected from the Application Network." & vbCrLf)
+                'Message.Add("Already disconnected from the Application Network." & vbCrLf)
+                Message.Add("Already disconnected from the Andorville™ Network (Message Service)." & vbCrLf)
                 btnOnline.Text = "Offline"
                 btnOnline.ForeColor = Color.Red
                 ConnectedToComnet = False
@@ -2993,16 +3430,24 @@ Public Class Main
                     ConnectionName = ""
                 Else
                     Try
-                        client.Disconnect(AppNetName, ConnectionName)
+                        'client.Disconnect(AppNetName, ConnectionName)
+                        client.Disconnect(ProNetName, ConnectionName)
 
                         btnOnline.Text = "Offline"
                         btnOnline.ForeColor = Color.Red
                         ConnectedToComnet = False
                         ConnectionName = ""
-                        Message.Add("Disconnected from the Application Network." & vbCrLf)
+                        'Message.Add("Disconnected from the Application Network." & vbCrLf)
+                        Message.Add("Disconnected from the Andorville™ Network (Message Service)." & vbCrLf)
+
+                        If bgwComCheck.IsBusy Then
+                            bgwComCheck.CancelAsync()
+                        End If
+
                     Catch ex As Exception
                         Message.SetWarningStyle()
-                        Message.Add("Error disconnecting from Application Network: " & ex.Message & vbCrLf)
+                        'Message.Add("Error disconnecting from Application Network: " & ex.Message & vbCrLf)
+                        Message.AddWarning("Error disconnecting from Andorville™ Network (Message Service): " & ex.Message & vbCrLf)
                     End Try
                 End If
             End If
@@ -3040,7 +3485,7 @@ Public Class Main
                 doc.Add(xmessage)
 
                 'Show the message sent to AppNet:
-                Message.XAddText("Message sent to " & "MessageService" & ":" & vbCrLf, "XmlSentNotice")
+                Message.XAddText("Message sent to " & "Message Service" & ":" & vbCrLf, "XmlSentNotice")
                 Message.XAddXml(doc.ToString)
                 Message.XAddText(vbCrLf, "Normal") 'Add extra line
 
@@ -3050,12 +3495,93 @@ Public Class Main
 
     End Sub
 
+    Private Sub SendProjectInfo()
+        'Send the project information to the Network application.
+
+        If ConnectedToComnet = False Then
+            Message.AddWarning("The application is not connected to the Message Service." & vbCrLf)
+        Else 'Connected to the Message Service (ComNet).
+            If IsNothing(client) Then
+                Message.Add("No client connection available!" & vbCrLf)
+            Else
+                If client.State = ServiceModel.CommunicationState.Faulted Then
+                    Message.Add("Client state is faulted. Message not sent!" & vbCrLf)
+                Else
+                    'Construct the XMessage to send to AppNet:
+                    Dim decl As New XDeclaration("1.0", "utf-8", "yes")
+                    Dim doc As New XDocument(decl, Nothing) 'Create an XDocument to store the instructions.
+                    Dim xmessage As New XElement("XMsg") 'This indicates the start of the message in the XMessage class
+                    Dim projectInfo As New XElement("ProjectInfo")
+
+                    Dim Path As New XElement("Path", Project.Path)
+                    projectInfo.Add(Path)
+                    xmessage.Add(projectInfo)
+                    doc.Add(xmessage)
+
+                    'Show the message sent to the Message Service:
+                    Message.XAddText("Message sent to " & "Message Service" & ":" & vbCrLf, "XmlSentNotice")
+                    Message.XAddXml(doc.ToString)
+                    Message.XAddText(vbCrLf, "Normal") 'Add extra line
+                    client.SendMessage("", "MessageService", doc.ToString)
+                End If
+            End If
+        End If
+    End Sub
+
+    Public Sub SendProjectInfo(ByVal ProjectPath As String)
+        'Send the project information to the Network application.
+        'This version of SendProjectInfo uses the ProjectPath argument.
+
+        If ConnectedToComnet = False Then
+            Message.AddWarning("The application is not connected to the Message Service." & vbCrLf)
+        Else 'Connected to the Message Service (ComNet).
+            If IsNothing(client) Then
+                Message.Add("No client connection available!" & vbCrLf)
+            Else
+                If client.State = ServiceModel.CommunicationState.Faulted Then
+                    Message.Add("Client state is faulted. Message not sent!" & vbCrLf)
+                Else
+                    'Construct the XMessage to send to AppNet:
+                    Dim decl As New XDeclaration("1.0", "utf-8", "yes")
+                    Dim doc As New XDocument(decl, Nothing) 'Create an XDocument to store the instructions.
+                    Dim xmessage As New XElement("XMsg") 'This indicates the start of the message in the XMessage class
+                    Dim projectInfo As New XElement("ProjectInfo")
+
+                    'Dim Path As New XElement("Path", Project.Path)
+                    Dim Path As New XElement("Path", ProjectPath)
+                    projectInfo.Add(Path)
+                    xmessage.Add(projectInfo)
+                    doc.Add(xmessage)
+
+                    'Show the message sent to the Message Service:
+                    Message.XAddText("Message sent to " & "Message Service" & ":" & vbCrLf, "XmlSentNotice")
+                    Message.XAddXml(doc.ToString)
+                    Message.XAddText(vbCrLf, "Normal") 'Add extra line
+                    client.SendMessage("", "MessageService", doc.ToString)
+                End If
+            End If
+        End If
+    End Sub
+
     Private Function ComNetRunning() As Boolean
         'Return True if ComNet (Message Service) is running.
-        If System.IO.File.Exists(MsgServiceAppPath & "\Application.Lock") Then
-            Return True
-        Else
+        ''If System.IO.File.Exists(MsgServiceAppPath & "\Application.Lock") Then
+        'If System.IO.File.Exists(AdvlNetworkAppPath & "\Application.Lock") Then
+        '    Return True
+        'Else
+        '    Return False
+        'End If
+
+        If AdvlNetworkAppPath = "" Then
+            Message.Add("Andorville™ Network application path is not known." & vbCrLf)
+            Message.Add("Run the Andorville™ Network before connecting to update the path." & vbCrLf)
             Return False
+        Else
+            If System.IO.File.Exists(AdvlNetworkAppPath & "\Application.Lock") Then
+                Return True
+            Else
+                Return False
+            End If
         End If
     End Function
 
@@ -3063,72 +3589,118 @@ Public Class Main
 
 #Region " Process XMessages"
 
-    Private Sub XMsg_Instruction(Info As String, Locn As String) Handles XMsg.Instruction
+    Private Sub XMsg_Instruction(Data As String, Locn As String) Handles XMsg.Instruction
         'Process an XMessage instruction.
         'An XMessage is a simplified XSequence. It is used to exchange information between Andorville™ applications.
         '
-        'An XSequence file is an AL-H7™ Information Vector Sequence stored in an XML format.
-        'AL-H7™ is the name of a programming system that uses sequences of information and location value pairs to store data items or processing steps.
-        'A single information and location value pair is called a knowledge element (or noxel).
-        'Any program, mathematical expression or data set can be expressed as an Information Vector Sequence.
+        'An XSequence file is an AL-H7™ Information Sequence stored in an XML format.
+        'AL-H7™ is the name of a programming system that uses sequences of data and location value pairs to store information or processing steps.
+        'Any program, mathematical expression or data set can be expressed as an Information Sequence.
 
         'Add code here to process the XMessage instructions.
         'See other Andorville™ applciations for examples.
-        If IsDBNull(Info) Then
-            Info = ""
+        If IsDBNull(Data) Then
+            Data = ""
         End If
 
-        'Intercept and instructions with the prefix "WebPage_"
+        'Intercept instructions with the prefix "WebPage_"
         If Locn.StartsWith("WebPage_") Then 'Send the Info, Location data to the correct Web Page:
-            Dim EndOfWebPageNoString As Integer = Locn.IndexOf(":")
-            Dim PageNoLen As Integer = EndOfWebPageNoString - 8
-            Dim WebPageNoString As String = Locn.Substring(8, PageNoLen)
-            Dim WebPageNo As Integer = CInt(WebPageNoString)
-            Dim WebPageInfo As String = Info
-            Dim WebPageLocn As String = Locn.Substring(EndOfWebPageNoString + 1)
+            'Message.Add("Web Page Location: " & Locn & vbCrLf)
+            If Locn.Contains(":") Then
+                Dim EndOfWebPageNoString As Integer = Locn.IndexOf(":")
+                If Locn.Contains("-") Then
+                    Dim HyphenLocn As Integer = Locn.IndexOf("-")
+                    If HyphenLocn < EndOfWebPageNoString Then 'Web Page Location contains a sub-location in the web page - WebPage_1-SubLocn:Locn - SubLocn:Locn will be sent to Web page 1
+                        EndOfWebPageNoString = HyphenLocn
+                    End If
+                End If
+                Dim PageNoLen As Integer = EndOfWebPageNoString - 8
+                Dim WebPageNoString As String = Locn.Substring(8, PageNoLen)
+                Dim WebPageNo As Integer = CInt(WebPageNoString)
+                Dim WebPageData As String = Data
+                Dim WebPageLocn As String = Locn.Substring(EndOfWebPageNoString + 1)
 
-            WebViewFormList(WebPageNo).XMsgInstruction(WebPageInfo, WebPageLocn)
+                'Message.Add("WebPageData = " & WebPageData & "  WebPageLocn = " & WebPageLocn & vbCrLf)
 
+                WebPageFormList(WebPageNo).XMsgInstruction(WebPageData, WebPageLocn)
+            Else
+                Message.AddWarning("XMessage instruction location is not complete: " & Locn & vbCrLf)
+            End If
         Else
 
             Select Case Locn
 
-                Case "ClientAppNetName"
-                    ClientAppNetName = Info 'The name of the Client Application Network requesting service. ADDED 2Feb19.
+                'Case "ClientAppNetName"
+                '    ClientAppNetName = Data 'The name of the Client Application Network requesting service. ADDED 2Feb19.
+                Case "ClientProNetName"
+                    ClientProNetName = Data 'The name of the Client Project Network requesting service.
 
                 Case "ClientName"
-                    ClientAppName = Info 'The name of the Client requesting service.
+                    ClientAppName = Data 'The name of the Client requesting service.
 
                 Case "ClientConnectionName"
-                    ClientConnName = Info 'The name of the client requesting service.
+                    ClientConnName = Data 'The name of the client requesting service.
 
                 Case "ClientLocn" 'The Location within the Client requesting service.
                     Dim statusOK As New XElement("Status", "OK") 'Add Status OK element when the Client Location is changed
                     xlocns(xlocns.Count - 1).Add(statusOK)
                     xmessage.Add(xlocns(xlocns.Count - 1)) 'Add the instructions for the last location to the reply xmessage
-                    xlocns.Add(New XElement(Info)) 'Start the new location instructions
+                    xlocns.Add(New XElement(Data)) 'Start the new location instructions
+
+                'Case "OnCompletion" 'Specify the last instruction to be returned on completion of the XMessage processing.
+                '    CompletionInstruction = Data
+
+                    'UPDATE:
+                Case "OnCompletion"
+                    OnCompletionInstruction = Data
+
 
                 Case "Main"
                  'Blank message - do nothing.
 
+                'Case "Main:OnCompletion"
+                '    Select Case "Stop"
+                '        'Stop on completion of the instruction sequence.
+                '    End Select
+
+                Case "Main:EndInstruction"
+                    Select Case Data
+                        Case "Stop"
+                            'Stop at the end of the instruction sequence.
+
+                            'Add other cases here:
+                    End Select
+
+
                 Case "Main:Status"
-                    Select Case Info
+                    Select Case Data
                         Case "OK"
                             'Main instructions completed OK
                     End Select
 
                 Case "Command"
-                    Select Case Info
+                    Select Case Data
                         Case "ConnectToAppNet" 'Startup Command
-                            If ConnectedToComnet = False Then
+                            If ConnectedToComNet = False Then
                                 ConnectToComNet()
                             End If
+
+                        Case "AppComCheck"
+                            'Add the Appplication Communication info to the reply message:
+                            Dim clientProNetName As New XElement("ClientProNetName", ProNetName) 'The Project Network Name
+                            xlocns(xlocns.Count - 1).Add(clientProNetName)
+                            Dim clientName As New XElement("ClientName", "ADVL_Document_Library_1") 'The name of this application.
+                            xlocns(xlocns.Count - 1).Add(clientName)
+                            Dim clientConnectionName As New XElement("ClientConnectionName", ConnectionName)
+                            xlocns(xlocns.Count - 1).Add(clientConnectionName)
+                            '<Status>OK</Status> will be automatically appended to the XMessage before it is sent.
+
                     End Select
 
 
                'Startup Command Arguments ================================================
                 Case "ProjectName"
-                    If Project.OpenProject(Info) = True Then
+                    If Project.OpenProject(Data) = True Then
                         ProjectSelected = True 'Project has been opened OK.
                     Else
                         ProjectSelected = False 'Project could not be opened.
@@ -3138,29 +3710,122 @@ Public Class Main
                     Message.AddWarning("Add code to handle ProjectID parameter at StartUp!" & vbCrLf)
 
                 Case "ProjectPath"
-                    If Project.OpenProjectPath(Info) = True Then
+                    If Project.OpenProjectPath(Data) = True Then
                         ProjectSelected = True 'Project has been opened OK.
                     Else
                         ProjectSelected = False 'Project could not be opened.
                     End If
 
                 Case "ConnectionName"
-                    StartupConnectionName = Info
+                    StartupConnectionName = Data
             '--------------------------------------------------------------------------
 
             'Application Information  =================================================
-            'returned by client.GetMessageServiceAppInfoAsync()
-                Case "MessageServiceAppInfo:Name"
-                'The name of the Message Service Application. (Not used.)
+            'returned by client.GetAdvlNetworkAppInfoAsync()
+                'Case "MessageServiceAppInfo:Name"
+                ''The name of the Message Service Application. (Not used.)
+                Case "AdvlNetworkAppInfo:Name"
+                'The name of the Andorville™ Network Application. (Not used.)
 
-                Case "MessageServiceAppInfo:ExePath"
-                    'The executable file path of the Message Service Application.
-                    MsgServiceExePath = Info
+                'Case "MessageServiceAppInfo:ExePath"
+                '    'The executable file path of the Message Service Application.
+                '    'MsgServiceExePath = Info
+                Case "AdvlNetworkAppInfo:ExePath"
+                    'The executable file path of the Andorville™ Network Application.
+                    AdvlNetworkExePath = Data
 
-                Case "MessageServiceAppInfo:Path"
-                    'The path of the Message Service Application (ComNet). (This is where an Application.Lock file will be found while ComNet is running.)
-                    MsgServiceAppPath = Info
+                'Case "MessageServiceAppInfo:Path"
+                '    'The path of the Message Service Application (ComNet). (This is where an Application.Lock file will be found while ComNet is running.)
+                '    'MsgServiceAppPath = Info
+                Case "AdvlNetworkAppInfo:Path"
+                    'The path of the Andorville™ Network Application (ComNet). (This is where an Application.Lock file will be found while ComNet is running.)
+                    AdvlNetworkAppPath = Data
            '---------------------------------------------------------------------------
+
+           'Show Document =============================================================
+                Case "ShowDocument:FileName"
+                    SearchFileName = Data
+                Case "ShowDocument:SearchText"
+                    SearchText = Data
+                Case "ShowDocument:Highlight"
+                    If Data = "True" Then
+                        SearchHighlight = True
+                    Else
+                        SearchHighlight = False
+                    End If
+                Case "ShowDocument:FindFirst"
+                    If Data = "True" Then
+                        SearchFindFirst = True
+                    Else
+                        SearchFindFirst = False
+                    End If
+                Case "ShowDocument:Command"
+                    Select Case Data
+                        Case "ShowInMainForm"
+                            FindTextInMainRtf(SearchFileName, SearchText, SearchHighlight, SearchFindFirst)
+                            TabControl1.SelectedIndex = 1 'Select the Library tab.
+                            TabControl3.SelectedIndex = 4 'Select the Document View tab.
+                        Case "ShowInDocumentWindow"
+                            FindTextInRtf(SearchFileName, SearchText, SearchHighlight, SearchFindFirst)
+                    End Select
+
+           '---------------------------------------------------------------------------
+
+               'Message Window Instructions  ==============================================
+                Case "MessageWindow:Left"
+                    If IsNothing(Message.MessageForm) Then
+                        Message.ApplicationName = ApplicationInfo.Name
+                        Message.SettingsLocn = Project.SettingsLocn
+                        Message.Show()
+                    End If
+                    Message.MessageForm.Left = Data
+                Case "MessageWindow:Top"
+                    If IsNothing(Message.MessageForm) Then
+                        Message.ApplicationName = ApplicationInfo.Name
+                        Message.SettingsLocn = Project.SettingsLocn
+                        Message.Show()
+                    End If
+                    Message.MessageForm.Top = Data
+                Case "MessageWindow:Width"
+                    If IsNothing(Message.MessageForm) Then
+                        Message.ApplicationName = ApplicationInfo.Name
+                        Message.SettingsLocn = Project.SettingsLocn
+                        Message.Show()
+                    End If
+                    Message.MessageForm.Width = Data
+                Case "MessageWindow:Height"
+                    If IsNothing(Message.MessageForm) Then
+                        Message.ApplicationName = ApplicationInfo.Name
+                        Message.SettingsLocn = Project.SettingsLocn
+                        Message.Show()
+                    End If
+                    Message.MessageForm.Height = Data
+                Case "MessageWindow:Command"
+                    Select Case Data
+                        Case "BringToFront"
+                            If IsNothing(Message.MessageForm) Then
+                                Message.ApplicationName = ApplicationInfo.Name
+                                Message.SettingsLocn = Project.SettingsLocn
+                                Message.Show()
+                            End If
+                            'Message.MessageForm.BringToFront()
+                            Message.MessageForm.Activate()
+                            Message.MessageForm.TopMost = True
+                            Message.MessageForm.TopMost = False
+                        Case "SaveSettings"
+                            Message.MessageForm.SaveFormSettings()
+                    End Select
+
+            '---------------------------------------------------------------------------
+
+               'Command to bring the Application window to the front:
+                Case "ApplicationWindow:Command"
+                    Select Case Data
+                        Case "BringToFront"
+                            Me.Activate()
+                            Me.TopMost = True
+                            Me.TopMost = False
+                    End Select
 
                 Case "EndOfSequence"
                     'End of Information Vector Sequence reached.
@@ -3168,53 +3833,91 @@ Public Class Main
                     Dim statusOK As New XElement("Status", "OK")
                     xlocns(xlocns.Count - 1).Add(statusOK)
 
+                    'Clear the Search Document variables:
+                    SearchFileName = ""
+                    SearchText = ""
+                    SearchHighlight = True
+                    SearchFindFirst = True
+
+                    Select Case EndInstruction
+                        Case "Stop"
+                            'No instructions.
+
+                            'Add any other Cases here:
+
+                        Case Else
+                            Message.AddWarning("Unknown End Instruction: " & EndInstruction & vbCrLf)
+                    End Select
+                    EndInstruction = "Stop"
+
+                    ''Add the final OnCompletion instruction:
+                    'Dim onCompletion As New XElement("OnCompletion", CompletionInstruction) '
+                    'xlocns(xlocns.Count - 1).Add(onCompletion)
+                    'CompletionInstruction = "Stop" 'Reset the Completion Instruction
+
+                    ''Final Version:
+                    ''Add the final EndInstruction:
+                    'Dim xEndInstruction As New XElement("EndInstruction", OnCompletionInstruction)
+                    'xlocns(xlocns.Count - 1).Add(xEndInstruction)
+                    'OnCompletionInstruction = "Stop" 'Reset the OnCompletion Instruction
+
+                    'Add the final EndInstruction:
+                    If OnCompletionInstruction = "Stop" Then
+                        'Final EndInstruction is not required.
+                    Else
+                        Dim xEndInstruction As New XElement("EndInstruction", OnCompletionInstruction)
+                        xlocns(xlocns.Count - 1).Add(xEndInstruction)
+                        OnCompletionInstruction = "Stop" 'Reset the OnCompletion Instruction
+                    End If
+
+
                 Case Else
                     Message.AddWarning("Unknown location: " & Locn & vbCrLf)
-                    Message.AddWarning("            info: " & Info & vbCrLf)
+                    Message.AddWarning("            data: " & Data & vbCrLf)
             End Select
         End If
 
     End Sub
 
-    Private Sub SendMessage()
-        'Code used to send a message after a timer delay.
-        'The message destination is stored in MessageDest
-        'The message text is stored in MessageText
-        Timer1.Interval = 100 '100ms delay
-        Timer1.Enabled = True 'Start the timer.
-    End Sub
+    'Private Sub SendMessage()
+    '    'Code used to send a message after a timer delay.
+    '    'The message destination is stored in MessageDest
+    '    'The message text is stored in MessageText
+    '    Timer1.Interval = 100 '100ms delay
+    '    Timer1.Enabled = True 'Start the timer.
+    'End Sub
 
-    Private Sub Timer1_Tick(sender As Object, e As EventArgs) Handles Timer1.Tick
+    'Private Sub Timer1_Tick(sender As Object, e As EventArgs) Handles Timer1.Tick
 
-        If IsNothing(client) Then
-            Message.AddWarning("No client connection available!" & vbCrLf)
-        Else
-            If client.State = ServiceModel.CommunicationState.Faulted Then
-                Message.AddWarning("client state is faulted. Message not sent!" & vbCrLf)
-            Else
-                Try
-                    client.SendMessage(ClientAppNetName, ClientConnName, MessageText) 'Added 2Feb19
-                    MessageText = "" 'Clear the message after it has been sent.
-                    ClientAppName = "" 'Clear the Client Application Name after the message has been sent.
-                    ClientConnName = "" 'Clear the Client Application Name after the message has been sent.
-                    xlocns.Clear()
-                Catch ex As Exception
-                    Message.AddWarning("Error sending message: " & ex.Message & vbCrLf)
-                End Try
-            End If
-        End If
+    '    If IsNothing(client) Then
+    '        Message.AddWarning("No client connection available!" & vbCrLf)
+    '    Else
+    '        If client.State = ServiceModel.CommunicationState.Faulted Then
+    '            Message.AddWarning("client state is faulted. Message not sent!" & vbCrLf)
+    '        Else
+    '            Try
+    '                'client.SendMessage(ClientAppNetName, ClientConnName, MessageText) 'Added 2Feb19
+    '                client.SendMessage(ClientProNetName, ClientConnName, MessageText)
+    '                MessageText = "" 'Clear the message after it has been sent.
+    '                ClientAppName = "" 'Clear the Client Application Name after the message has been sent.
+    '                ClientConnName = "" 'Clear the Client Application Name after the message has been sent.
+    '                xlocns.Clear()
+    '            Catch ex As Exception
+    '                Message.AddWarning("Error sending message: " & ex.Message & vbCrLf)
+    '            End Try
+    '        End If
+    '    End If
 
-        'Stop timer:
-        Timer1.Enabled = False
-    End Sub
+    '    'Stop timer:
+    '    Timer1.Enabled = False
+    'End Sub
 
 
 #End Region 'Process XMessages
 
-    Private Sub btnOpen_Click(sender As Object, e As EventArgs) Handles btnOpen.Click
-
-        OpenDocumentFile()
-    End Sub
+    'Private Sub btnOpen_Click(sender As Object, e As EventArgs) Handles btnOpen.Click
+    '    OpenDocumentFile()
+    'End Sub
 
     Private Sub OpenDocumentFile()
         'Open a document.
@@ -3242,6 +3945,10 @@ Public Class Main
                         RtfFileLocationType = LocationTypes.Project
                         Dim rtbData As New IO.MemoryStream
                         Project.ReadData(RtfFileName, rtbData)
+                        If rtbData.Length = 0 Then
+                            Message.AddWarning("No data read!" & vbCrLf)
+                            Exit Sub
+                        End If
                         XmlHtmDisplay1.Clear()
                         rtbData.Position = 0
                         XmlHtmDisplay1.LoadFile(rtbData, RichTextBoxStreamType.RichText)
@@ -3343,7 +4050,6 @@ Public Class Main
                         XmlHtmDisplay1.LoadFile(htmlData, RichTextBoxStreamType.PlainText)
                         Dim htmText As String = XmlHtmDisplay1.Text
                         XmlHtmDisplay1.Rtf = XmlHtmDisplay1.HmlToRtf(htmText)
-
                         DocumentTextChanged = False
                         FileName = HtmlFileName
                         FileLocationType = LocationTypes.Project
@@ -3371,7 +4077,6 @@ Public Class Main
                         XmlHtmDisplay1.LoadFile(XmlFileDirectory & "\" & XmlFileName, RichTextBoxStreamType.PlainText)
                         Dim htmText As String = XmlHtmDisplay1.Text
                         XmlHtmDisplay1.Rtf = XmlHtmDisplay1.HmlToRtf(htmText)
-
                         DocumentTextChanged = False
                         FileName = HtmlFileName
                         FileLocationType = LocationTypes.FileSystem
@@ -3381,7 +4086,6 @@ Public Class Main
                         LastHtmlFileDirectory = HtmlFileDirectory
                     End If
                 End If
-
         End Select
     End Sub
 
@@ -3797,7 +4501,8 @@ Public Class Main
                 Zip = New ADVL_Utilities_Library_1.ZipComp
                 Zip.ArchivePath = Project.DataLocn.Path
                 Zip.SelectFile()
-                Zip.SelectFileForm.ApplicationName = Project.ApplicationName
+                'Zip.SelectFileForm.ApplicationName = Project.ApplicationName
+                Zip.SelectFileForm.ApplicationName = Project.Application.Name
                 Zip.SelectFileForm.SettingsLocn = Project.SettingsLocn
                 Zip.SelectFileForm.Show()
                 Zip.SelectFileForm.RestoreFormSettings()
@@ -4423,9 +5128,9 @@ Public Class Main
         DocumentTextChanged = True
     End Sub
 
-    Private Sub btnSave_Click(sender As Object, e As EventArgs) Handles btnSave.Click
-        SaveDocument()
-    End Sub
+    'Private Sub btnSave_Click(sender As Object, e As EventArgs) Handles btnSave.Click
+    '    SaveDocument()
+    'End Sub
 
     Public Sub SaveDocument()
 
@@ -4513,16 +5218,13 @@ Public Class Main
                         XmlHtmDisplay1.SaveFile(htmData, RichTextBoxStreamType.PlainText)
                         htmData.Position = 0
                         Project.SaveData(FileName, htmData)
-
                         LastHtmlFileName = HtmlFileName 'Update the LastXmlFilePath.
                         LastHtmlFileLocationType = LocationTypes.Project
                         DocumentTextChanged = False
                     End If
 
                 End If
-
         End Select
-
     End Sub
 
     Private Sub txtFileName2_LostFocus(sender As Object, e As EventArgs) Handles txtFileName2.LostFocus
@@ -4541,44 +5243,44 @@ Public Class Main
 
     End Sub
 
-    Private Sub cmbDocType_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cmbDocType.SelectedIndexChanged
-        'Select Case cmbDocType.SelectedText
-        Select Case cmbDocType.Text
-            Case "XML"
-                _fileTypeSelection = FileTypes.XML
-            Case "TXT"
-                _fileTypeSelection = FileTypes.TXT
-            Case "RTF"
-                _fileTypeSelection = FileTypes.RTF
-            Case "HTML"
-                _fileTypeSelection = FileTypes.HTML
-        End Select
-    End Sub
+    'Private Sub cmbDocType_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cmbDocType.SelectedIndexChanged
+    '    'Select Case cmbDocType.SelectedText
+    '    Select Case cmbDocType.Text
+    '        Case "XML"
+    '            _fileTypeSelection = FileTypes.XML
+    '        Case "TXT"
+    '            _fileTypeSelection = FileTypes.TXT
+    '        Case "RTF"
+    '            _fileTypeSelection = FileTypes.RTF
+    '        Case "HTML"
+    '            _fileTypeSelection = FileTypes.HTML
+    '    End Select
+    'End Sub
 
-    Private Sub btnClose_Click(sender As Object, e As EventArgs) Handles btnClose.Click
+    'Private Sub btnClose_Click(sender As Object, e As EventArgs) Handles btnClose.Click
 
-        If DocumentTextChanged = True Then
-            Dim result As Integer = MessageBox.Show("Save changes to the current document?", "Notice", MessageBoxButtons.YesNoCancel)
-            If result = DialogResult.Cancel Then
-                Exit Sub
-            ElseIf result = DialogResult.Yes Then
-                SaveDocument()
-                FileName = ""
-                XmlHtmDisplay1.Clear()
-                DocumentTextChanged = False
-            ElseIf result = DialogResult.No Then
-                'Do not save the changes!
-                FileName = ""
-                XmlHtmDisplay1.Clear()
-                DocumentTextChanged = False
-            End If
-        Else
-            FileName = ""
-            XmlHtmDisplay1.Clear()
-            DocumentTextChanged = False
-        End If
+    '    If DocumentTextChanged = True Then
+    '        Dim result As Integer = MessageBox.Show("Save changes to the current document?", "Notice", MessageBoxButtons.YesNoCancel)
+    '        If result = DialogResult.Cancel Then
+    '            Exit Sub
+    '        ElseIf result = DialogResult.Yes Then
+    '            SaveDocument()
+    '            FileName = ""
+    '            XmlHtmDisplay1.Clear()
+    '            DocumentTextChanged = False
+    '        ElseIf result = DialogResult.No Then
+    '            'Do not save the changes!
+    '            FileName = ""
+    '            XmlHtmDisplay1.Clear()
+    '            DocumentTextChanged = False
+    '        End If
+    '    Else
+    '        FileName = ""
+    '        XmlHtmDisplay1.Clear()
+    '        DocumentTextChanged = False
+    '    End If
 
-    End Sub
+    'End Sub
 
 
     Private Sub btnSaveAs_Click(sender As Object, e As EventArgs) Handles btnSaveAs.Click
@@ -4927,6 +5629,8 @@ Public Class Main
         Dim XDocLib As XDocument
         Project.ReadXmlData(FileName, XDocLib)
         OpenLibraryXDoc(XDocLib)
+
+        UpdateDocList()
     End Sub
 
     Private Sub OpenLibraryXDoc(ByVal myXDoc As XDocument)
@@ -4972,6 +5676,9 @@ Public Class Main
                         Message.AddWarning("The Library node is already listed in the ItemInfo dictionary: " & NodeKey & vbCrLf)
                     Else
                         ItemInfo.Add(NodeKey, New clsItemInfo) 'Add the Item Name to the ItemInfo dictionary.
+
+                        'Add the Node Text to the ItemInfo dictionary: - ADDED 16 September 2020 - Used in the Document List tab.
+                        ItemInfo(NodeKey).Text = myNodeTextValue
 
                         'Read Library description:
                         NodeInfo = ChildNode.SelectSingleNode("Description")
@@ -5038,6 +5745,9 @@ Public Class Main
                         Message.AddWarning("The following item is already listed: " & NodeKey & vbCrLf)
                     Else
                         ItemInfo.Add(NodeKey, New clsItemInfo) 'Add the Item Name to the ItemInfo dictionary.
+
+                        'Add the Node Text to the ItemInfo dictionary: - ADDED 16 September 2020 - Used in the Document List tab.
+                        ItemInfo(NodeKey).Text = myNodeTextValue
 
                         'Read Item description:
                         NodeInfo = ChildNode.SelectSingleNode("Description")
@@ -5216,6 +5926,74 @@ Public Class Main
                                     End If
 
                                     ProcessLibChildNode(ChildNode, new_Node.Nodes, Spaces, IsExpanded)
+                                Case "XLS"
+                                    Dim new_Node As TreeNode = tnc.Add(System.Xml.XmlConvert.DecodeName(ChildNode.Name), myNodeTextValue, 14, 15)
+                                    If HasNodes Then
+                                        If IsExpanded Then
+                                            new_Node.EnsureVisible()
+                                        Else
+                                            new_Node.Collapse()
+                                        End If
+                                    Else
+                                        If ParentNodeIsExpanded Then
+                                            new_Node.EnsureVisible()
+                                        Else
+                                            new_Node.Collapse()
+                                        End If
+                                    End If
+
+                                    ProcessLibChildNode(ChildNode, new_Node.Nodes, Spaces, IsExpanded)
+                                Case "FolderLink"
+                                    Dim new_Node As TreeNode = tnc.Add(System.Xml.XmlConvert.DecodeName(ChildNode.Name), myNodeTextValue, 16, 17)
+                                    If HasNodes Then
+                                        If IsExpanded Then
+                                            new_Node.EnsureVisible()
+                                        Else
+                                            new_Node.Collapse()
+                                        End If
+                                    Else
+                                        If ParentNodeIsExpanded Then
+                                            new_Node.EnsureVisible()
+                                        Else
+                                            new_Node.Collapse()
+                                        End If
+                                    End If
+
+                                    ProcessLibChildNode(ChildNode, new_Node.Nodes, Spaces, IsExpanded)
+                                Case "XMsg"
+                                    Dim new_Node As TreeNode = tnc.Add(System.Xml.XmlConvert.DecodeName(ChildNode.Name), myNodeTextValue, 18, 19)
+                                    If HasNodes Then
+                                        If IsExpanded Then
+                                            new_Node.EnsureVisible()
+                                        Else
+                                            new_Node.Collapse()
+                                        End If
+                                    Else
+                                        If ParentNodeIsExpanded Then
+                                            new_Node.EnsureVisible()
+                                        Else
+                                            new_Node.Collapse()
+                                        End If
+                                    End If
+
+                                    ProcessLibChildNode(ChildNode, new_Node.Nodes, Spaces, IsExpanded)
+                                Case "XSeq"
+                                    Dim new_Node As TreeNode = tnc.Add(System.Xml.XmlConvert.DecodeName(ChildNode.Name), myNodeTextValue, 20, 21)
+                                    If HasNodes Then
+                                        If IsExpanded Then
+                                            new_Node.EnsureVisible()
+                                        Else
+                                            new_Node.Collapse()
+                                        End If
+                                    Else
+                                        If ParentNodeIsExpanded Then
+                                            new_Node.EnsureVisible()
+                                        Else
+                                            new_Node.Collapse()
+                                        End If
+                                    End If
+
+                                    ProcessLibChildNode(ChildNode, new_Node.Nodes, Spaces, IsExpanded)
                                 Case Else
                                     Message.AddWarning("Unknown Item type: " & NodeInfo.InnerText & vbCrLf)
                                     Message.AddWarning("A corresponding node has not been added to the Library Tree. " & vbCrLf & vbCrLf)
@@ -5308,6 +6086,7 @@ Public Class Main
                         Message.AddWarning("The following item is already listed: " & ChildNode.Name & vbCrLf)
                     Else
                         ItemInfo.Add(ChildNode.Name, New clsItemInfo)
+
                         'Read Item description:
                         myInfo = ChildNode.SelectSingleNode("Description")
                         If myInfo Is Nothing Then
@@ -5420,6 +6199,29 @@ Public Class Main
         txtNodeKey.Text = e.Node.Name
         txtNodeIndex.Text = e.Node.Index
 
+
+        Dim FileName As String
+        FileName = trvLibrary.SelectedNode.Name
+        If ItemInfo.ContainsKey(FileName) Then
+            txtDocCreationDate.Text = Format(ItemInfo(FileName).CreationDate, "d-MMM-yyyy H:mm:ss")
+            txtDocEditDate.Text = Format(ItemInfo(FileName).LastEditDate, "d-MMM-yyyy H:mm:ss")
+            If FileName.EndsWith(".FolderLink") Then 'This is a link to a folder.
+                txtFilePath.Text = ""
+                txtFolderPath.Text = ItemInfo(FileName).Directory
+            Else
+                If ItemInfo(FileName).Directory = "" Then 'This item is located in the Project.
+                    txtFilePath.Text = Project.DataLocn.Path & "\" & FileName
+                    txtFolderPath.Text = ""
+                Else 'The item in located in the file system.
+                    txtFilePath.Text = ItemInfo(FileName).Directory & "\" & FileName
+                    txtFolderPath.Text = ""
+                End If
+            End If
+        Else
+            txtFilePath.Text = ""
+            txtFolderPath.Text = ""
+        End If
+
         txtNodeKey2.Text = e.Node.Name
         If ItemInfo.ContainsKey(e.Node.Name) Then
             txtNodeType.Text = ItemInfo(e.Node.Name).Type
@@ -5437,7 +6239,7 @@ Public Class Main
                 btnWebView.Enabled = False
             End If
         Else
-                Message.AddWarning("Node key not found in ItemInfo: " & e.Node.Name & vbCrLf)
+            Message.AddWarning("Node key not found in ItemInfo: " & e.Node.Name & vbCrLf)
             txtNodeType.Text = ""
             txtEditDescription.Text = ""
             txtItemDescription.Text = ""
@@ -5463,6 +6265,7 @@ Public Class Main
                 If ItemInfo.ContainsKey(FileName) Then
                     Select Case ItemInfo(FileName).Type
                         Case "RTF"
+                            FileType = FileTypes.RTF
                             WebBrowser1.Visible = False
                             AxAcroPDF1.Visible = False
                             XmlHtmDisplay2.Visible = True
@@ -5476,6 +6279,7 @@ Public Class Main
                                 XmlHtmDisplay2.LoadFile(ItemInfo(FileName).Directory & "\" & FileName)
                             End If
                         Case "XML"
+                            FileType = FileTypes.XML
                             WebBrowser1.Visible = False
                             AxAcroPDF1.Visible = False
                             XmlHtmDisplay2.Visible = True
@@ -5488,6 +6292,7 @@ Public Class Main
                                 XmlHtmDisplay2.ReadXmlFile(ItemInfo(FileName).Directory & "\" & FileName, False)
                             End If
                         Case "HTML"
+                            FileType = FileTypes.HTML
                             If rbCodeView.Checked = True Then 'Show HTML code view.
                                 WebBrowser1.Visible = False
                                 AxAcroPDF1.Visible = False
@@ -5527,6 +6332,7 @@ Public Class Main
                             End If
 
                         Case "TXT"
+                            FileType = FileTypes.TXT
                             WebBrowser1.Visible = False
                             AxAcroPDF1.Visible = False
                             XmlHtmDisplay2.Visible = True
@@ -5545,21 +6351,55 @@ Public Class Main
 
                             End If
                         Case "PDF"
+                            FileType = FileTypes.PDF
                             WebBrowser1.Visible = False
                             XmlHtmDisplay2.Visible = False
                             AxAcroPDF1.Visible = True
                             If ItemInfo(FileName).Directory = "" Then
-                                If Project.DataLocn.Type = ADVL_Utilities_Library_1.FileLocation.Types.Archive Then
-
+                                If Project.Type = ADVL_Utilities_Library_1.Project.Types.Archive Then
+                                    'Write code later. Need to select a directory to temporarily store the extracted pdf file. (Maybe the Application directory?)
                                 Else
-                                    Dim DataLocnPath As String = Project.DataLocn.Path
-                                    AxAcroPDF1.LoadFile(DataLocnPath & "\" & FileName)
+                                    AxAcroPDF1.LoadFile(Project.DataDirLocn.Path & "\" & FileName)
                                     AxAcroPDF1.Focus()
-
                                 End If
+                                'OLD CODE:
+                                'If Project.DataLocn.Type = ADVL_Utilities_Library_1.FileLocation.Types.Archive Then
+
+                                'Else
+                                '    Dim DataLocnPath As String = Project.DataLocn.Path
+                                '    AxAcroPDF1.LoadFile(DataLocnPath & "\" & FileName)
+                                '    AxAcroPDF1.Focus()
+                                'End If
                             Else
                                 AxAcroPDF1.LoadFile(ItemInfo(FileName).Directory & "\" & FileName)
                                 AxAcroPDF1.Focus()
+                            End If
+                        Case "XMsg"
+                            FileType = FileTypes.XML
+                            WebBrowser1.Visible = False
+                            AxAcroPDF1.Visible = False
+                            XmlHtmDisplay2.Visible = True
+                            If ItemInfo(FileName).Directory = "" Then
+                                Dim xmlDoc As New System.Xml.XmlDocument
+                                Project.ReadXmlDocData(FileName, xmlDoc)
+                                XmlHtmDisplay2.Clear()
+                                XmlHtmDisplay2.Rtf = XmlHtmDisplay2.XmlToRtf(xmlDoc, True)
+                            Else
+                                XmlHtmDisplay2.ReadXmlFile(ItemInfo(FileName).Directory & "\" & FileName, False)
+                            End If
+
+                        Case "XSeq"
+                            FileType = FileTypes.XML
+                            WebBrowser1.Visible = False
+                            AxAcroPDF1.Visible = False
+                            XmlHtmDisplay2.Visible = True
+                            If ItemInfo(FileName).Directory = "" Then
+                                Dim xmlDoc As New System.Xml.XmlDocument
+                                Project.ReadXmlDocData(FileName, xmlDoc)
+                                XmlHtmDisplay2.Clear()
+                                XmlHtmDisplay2.Rtf = XmlHtmDisplay2.XmlToRtf(xmlDoc, True)
+                            Else
+                                XmlHtmDisplay2.ReadXmlFile(ItemInfo(FileName).Directory & "\" & FileName, False)
                             End If
 
                     End Select
@@ -5688,7 +6528,36 @@ Public Class Main
 
     Private Sub rbPdf_CheckedChanged(sender As Object, e As EventArgs) Handles rbPdf.CheckedChanged
         If rbPdf.Checked Then
+            _newItemType = NewItemTypes.PDF
             txtAddItemNotes.Text = "Drag a PDF file onto a node in the tree view. The PDF file will also be copied into the project data location."
+        End If
+    End Sub
+
+    Private Sub rbFolderLink_CheckedChanged(sender As Object, e As EventArgs) Handles rbFolderLink.CheckedChanged
+        If rbFolderLink.Checked Then
+            _newItemType = NewItemTypes.FolderLink
+            txtAddItemNotes.Text = "Enter the folder link settings then press the New button."
+        End If
+    End Sub
+
+    Private Sub rbXls_CheckedChanged(sender As Object, e As EventArgs) Handles rbXls.CheckedChanged
+        If rbXls.Checked Then
+            _newItemType = NewItemTypes.XLS
+            txtAddItemNotes.Text = "Drag an Excel spreadsheet file onto a node in the tree view. The Excel file will also be copied into the project data location."
+        End If
+    End Sub
+
+    Private Sub rbXMsg_CheckedChanged(sender As Object, e As EventArgs) Handles rbXMsg.CheckedChanged
+        If rbXMsg.Checked Then
+            _newItemType = NewItemTypes.XMsg
+            txtAddItemNotes.Text = "Drag an XMessage file onto a node in the tree view. The XMessage file will also be copied into the project data location."
+        End If
+    End Sub
+
+    Private Sub rbXSeq_CheckedChanged(sender As Object, e As EventArgs) Handles rbXSeq.CheckedChanged
+        If rbXSeq.Checked Then
+            _newItemType = NewItemTypes.XSeq
+            txtAddItemNotes.Text = "Drag an XSequence spreadsheet file onto a node in the tree view. The XSequence file will also be copied into the project data location."
         End If
     End Sub
 
@@ -5730,7 +6599,27 @@ Public Class Main
         rbTxt.Checked = True
     End Sub
 
-    Private Sub btnNewItem_Click(sender As Object, e As EventArgs) Handles btnNewItem.Click
+    Private Sub pbIconPdf_Click(sender As Object, e As EventArgs) Handles pbIconPdf.Click
+        rbPdf.Checked = True
+    End Sub
+
+    Private Sub pbIconFolder_Click(sender As Object, e As EventArgs) Handles pbIconFolder.Click
+        rbFolderLink.Checked = True
+    End Sub
+
+    Private Sub pbIconXls_Click(sender As Object, e As EventArgs) Handles pbIconXls.Click
+        rbXls.Checked = True
+    End Sub
+
+    Private Sub pbIconXmsg_Click(sender As Object, e As EventArgs) Handles pbIconXmsg.Click
+        rbXMsg.Checked = True
+    End Sub
+
+    Private Sub pbIconXSeq_Click(sender As Object, e As EventArgs) Handles pbIconXSeq.Click
+        rbXSeq.Checked = True
+    End Sub
+
+    Private Sub btnNewItem_Click(sender As Object, e As EventArgs) Handles btnCreateItem.Click
         'Add new item to the Document Library
 
         If LibraryName = "" Then
@@ -5753,13 +6642,18 @@ Public Class Main
                     Message.AddWarning("The name of the new Collection is already used: " & NodeKey & vbCrLf)
                 Else
                     ItemInfo.Add(NodeKey, New clsItemInfo)
-                    Dim NodeText As String = System.IO.Path.GetFileNameWithoutExtension(NodeKey) 'The text that appears on the node in the treeview.
+                    'Dim NodeText As String = System.IO.Path.GetFileNameWithoutExtension(NodeKey) 'The text that appears on the node in the treeview.
+                    Dim NodeText As String = Trim(txtItemText.Text) 'The text that appears on the node in the treeview.
 
                     If trvLibrary.SelectedNode Is Nothing Then
                         trvLibrary.Nodes.Add(NodeKey, NodeText, 2, 3) 'key As String, text As String, imageIndex As Integer, selectedImageIndex As Integer
                     Else
                         trvLibrary.SelectedNode.Nodes.Add(NodeKey, NodeText, 2, 3) 'key As String, text As String, imageIndex As Integer, selectedImageIndex As Integer
                     End If
+
+                    'Add the Node Text to the ItemInfo dictionary: - ADDED 16 September 2020 - Used in the Document List tab.
+                    ItemInfo(NodeKey).Text = NodeText
+
                     ItemInfo(NodeKey).Type = "Collection"
                     ItemInfo(NodeKey).Description = txtNewNodeDescr.Text
                     ItemInfo(NodeKey).CreationDate = Format(Now, "d-MMM-yyyy H:mm:ss")
@@ -5795,6 +6689,10 @@ Public Class Main
                     Else
                         trvLibrary.SelectedNode.Nodes.Add(NodeKey, NodeText, 8, 9) 'key As String, text As String, imageIndex As Integer, selectedImageIndex As Integer
                     End If
+
+                    'Add the Node Text to the ItemInfo dictionary: - ADDED 16 September 2020 - Used in the Document List tab.
+                    ItemInfo(NodeKey).Text = NodeText
+
                     ItemInfo(NodeKey).Type = "HTML"
                     ItemInfo(NodeKey).Description = txtNewNodeDescr.Text
                     ItemInfo(NodeKey).CreationDate = Format(Now, "d-MMM-yyyy H:mm:ss")
@@ -5864,7 +6762,7 @@ Public Class Main
                 Else
                     'Check if extension is a variant of the rtf extension.
                     If LCase(NodeKey).EndsWith(".rtf") Then
-                        'Replace last four characters with "rtf"
+                        'Replace last three characters with "rtf"
                         NodeKey = Strings.Left(NodeKey, Len(NodeKey) - 3) & "rtf"
                     Else
                         NodeKey = NodeKey & ".rtf"
@@ -5883,6 +6781,10 @@ Public Class Main
                     Else
                         trvLibrary.SelectedNode.Nodes.Add(NodeKey, NodeText, 4, 5) 'key As String, text As String, imageIndex As Integer, selectedImageIndex As Integer
                     End If
+
+                    'Add the Node Text to the ItemInfo dictionary: - ADDED 16 September 2020 - Used in the Document List tab.
+                    ItemInfo(NodeKey).Text = NodeText
+
                     ItemInfo(NodeKey).Type = "RTF"
                     ItemInfo(NodeKey).Description = txtNewNodeDescr.Text
                     ItemInfo(NodeKey).CreationDate = Format(Now, "d-MMM-yyyy H:mm:ss")
@@ -5948,10 +6850,54 @@ Public Class Main
                 Message.AddWarning("New XML file code not yet written!" & vbCrLf)
 
             Case NewItemTypes.PDF  '==============================================================================================================================
-                Message.AddWarning("New PDF file code not yet written!" & vbCrLf)
+                Message.AddWarning("New PDF file code not yet written! Currently you can only drag an existing PDF file onto a node." & vbCrLf)
 
+            Case NewItemTypes.XLS  '==============================================================================================================================
+                Message.AddWarning("New XLS file code not yet written! Currently you can only drag an existing Excel file onto a node." & vbCrLf)
+
+            Case NewItemTypes.FolderLink  '==============================================================================================================================
+                If NodeKey.EndsWith(".FolderLink") Then
+                    'Correct extension.
+                Else
+                    'Check if extension is a variant of the rtf extension.
+                    If LCase(NodeKey).EndsWith(".folderlink") Then
+                        'Replace last ten characters with "FolderLink"
+                        NodeKey = Strings.Left(NodeKey, Len(NodeKey) - 10) & "FolderLink"
+                    Else
+                        NodeKey = NodeKey & ".FolderLink"
+                        txtNewNodeFileName.Text = NodeKey
+                    End If
+                End If
+
+                If ItemInfo.ContainsKey(NodeKey) Then
+                    Message.AddWarning("The name of the new rtf file is already used: " & NodeKey & vbCrLf)
+                Else
+                    'Check if the Folder Link in txtFolderLink is valid:
+                    If System.IO.Directory.Exists(txtFolderLink.Text) Then
+                        ItemInfo.Add(NodeKey, New clsItemInfo)
+                        Dim NodeText As String = Trim(txtItemText.Text) 'The text that appears on the node in the treeview.
+                        If trvLibrary.SelectedNode Is Nothing Then
+                            'Image 16 is a closed folder, image 17 is an open folder.
+                            trvLibrary.Nodes.Add(NodeKey, NodeText, 16, 17) 'key As String, text As String, imageIndex As Integer, selectedImageIndex As Integer
+                        Else
+                            'Image 16 is a closed folder, image 17 is an open folder.
+                            trvLibrary.SelectedNode.Nodes.Add(NodeKey, NodeText, 16, 17) 'key As String, text As String, imageIndex As Integer, selectedImageIndex As Integer
+                        End If
+
+                        'Add the Node Text to the ItemInfo dictionary: - ADDED 16 September 2020 - Used in the Document List tab.
+                        ItemInfo(NodeKey).Text = NodeText
+
+                        ItemInfo(NodeKey).Type = "FolderLink"
+                        ItemInfo(NodeKey).Description = txtNewNodeDescr.Text
+                        ItemInfo(NodeKey).CreationDate = Format(Now, "d-MMM-yyyy H:mm:ss")
+                        ItemInfo(NodeKey).LastEditDate = Format(Now, "d-MMM-yyyy H:mm:ss")
+                        ItemInfo(NodeKey).Directory = txtFolderLink.Text
+                    Else
+                        Message.AddWarning("The folder link is not valid: " & txtFolderLink.Text & vbCrLf)
+                    End If
+
+                End If
         End Select
-
     End Sub
 
     Private Function DefaultHtmlString(ByVal DocumentTitle As String) As String
@@ -5960,115 +6906,24 @@ Public Class Main
         Dim sb As New System.Text.StringBuilder
 
         sb.Append("<!DOCTYPE html>" & vbCrLf)
-        sb.Append("<html>" & vbCrLf & "<head>" & vbCrLf & "<title>" & DocumentTitle & "</title>" & vbCrLf)
-        sb.Append("</head>" & vbCrLf & "<body>" & vbCrLf & vbCrLf)
-        sb.Append("<h1>New Web Page</h1>" & vbCrLf & vbCrLf)
+        sb.Append("<html>" & vbCrLf)
+        sb.Append("<!-- Andorville(TM) Workflow File -->" & vbCrLf)
+        sb.Append("<!-- Application Name:    " & ApplicationInfo.Name & " -->" & vbCrLf)
+        sb.Append("<!-- Application Version: " & My.Application.Info.Version.ToString & " -->" & vbCrLf)
+        sb.Append("<!-- Creation Date:          " & Format(Now, "dd MMMM yyyy") & " -->" & vbCrLf)
+        sb.Append("<head>" & vbCrLf)
+        sb.Append("<title>" & DocumentTitle & "</title>" & vbCrLf)
+        sb.Append("<meta name=""description"" content=""Workflow description."">" & vbCrLf)
+        sb.Append("</head>" & vbCrLf)
 
-        'Add JavaScript section:
-        sb.Append("<script>" & vbCrLf & vbCrLf)
+        sb.Append("<body style=""font-family:arial;"">" & vbCrLf & vbCrLf)
 
-        'START: User defined JavaScript functions ==========================================================================
-        'Add functions to implement the main actions performed by this web page.
-        sb.Append("//START: User defined JavaScript functions ==========================================================================" & vbCrLf)
-        sb.Append("//  Add functions to implement the main actions performed by this web page." & vbCrLf & vbCrLf)
+        sb.Append("<h2>" & DocumentTitle & "</h2>" & vbCrLf & vbCrLf)
 
-        'sb.Append("//END:   User defined JavaScript functions --------------------------------------------------------------------------" & vbCrLf & vbCrLf & vbCrLf)
-        sb.Append("//END:   User defined JavaScript functions __________________________________________________________________________" & vbCrLf & vbCrLf & vbCrLf)
-        'END:   User defined JavaScript functions --------------------------------------------------------------------------
+        sb.Append(DefaultJavaScriptString)
 
-
-        'START: User modified JavaScript functions ==========================================================================
-        'Modify these function to save all required web page settings and process all expected XMessage instructions.
-        sb.Append("//START: User modified JavaScript functions ==========================================================================" & vbCrLf)
-        sb.Append("//  Modify these function to save all required web page settings and process all expected XMessage instructions." & vbCrLf & vbCrLf)
-
-        'Add the SaveSettings function - This is used to save web page settings between sessions.
-        sb.Append("//Save the web page settings." & vbCrLf)
-        sb.Append("function SaveSettings() {" & vbCrLf)
-        sb.Append("  var xSettings = ""<Settings>"" + "" \n"" ; //String containing the web page settings in XML format." & vbCrLf)
-        sb.Append("  //Add xml lines to save each setting." & vbCrLf & vbCrLf)
-        sb.Append("  xSettings +=    ""</Settings>"" + ""\n"" ; //End of the Settings element." & vbCrLf)
-        sb.Append(vbCrLf)
-        sb.Append("  //Save the settings as an XML file in the project." & vbCrLf)
-        sb.Append("  window.external.SaveHtmlSettings(xSettings) ;" & vbCrLf)
-        sb.Append("}" & vbCrLf)
-        sb.Append(vbCrLf)
-
-        'Process a single XMsg instruction (Information:Location pair)
-        sb.Append("//Process an XMessage instruction:" & vbCrLf)
-        sb.Append("function XMsgInstruction(Info, Locn) {" & vbCrLf)
-        sb.Append("  switch(Locn) {" & vbCrLf)
-        sb.Append("  //Insert case statements here." & vbCrLf)
-        sb.Append("  default:" & vbCrLf)
-        sb.Append("    window.external.AddWarning(""Unknown location: "" + Locn + ""\r\n"") ;" & vbCrLf)
-        sb.Append("  }" & vbCrLf)
-        sb.Append("}" & vbCrLf)
-        sb.Append(vbCrLf)
-
-        'sb.Append("//END:   User modified JavaScript functions --------------------------------------------------------------------------" & vbCrLf & vbCrLf & vbCrLf)
-        sb.Append("//END:   User modified JavaScript functions __________________________________________________________________________" & vbCrLf & vbCrLf & vbCrLf)
-        'END:   User modified JavaScript functions --------------------------------------------------------------------------
-
-        'START: Required Document Library Web Page JavaScript functions ==========================================================================
-        sb.Append("//START: Required Document Library Web Page JavaScript functions ==========================================================================" & vbCrLf & vbCrLf)
-
-        'Add the AddText function - This sends a message to the message window using a named text type.
-        sb.Append("//Add text to the Message window using a named txt type:" & vbCrLf)
-        sb.Append("function AddText(Msg, TextType) {" & vbCrLf)
-        sb.Append("  window.external.AddText(Msg, TextType) ;" & vbCrLf)
-        sb.Append("}" & vbCrLf)
-        sb.Append(vbCrLf)
-
-        'Add the AddMessage function - This sends a message to the message window using default black text.
-        sb.Append("//Add a message to the Message window using the default black text:" & vbCrLf)
-        sb.Append("function AddMessage(Msg) {" & vbCrLf)
-        sb.Append("  window.external.AddMessage(Msg) ;" & vbCrLf)
-        sb.Append("}" & vbCrLf)
-        sb.Append(vbCrLf)
-
-        'Add the AddWarning function - This sends a red, bold warning message to the message window.
-        sb.Append("//Add a warning message to the Message window using bold red text:" & vbCrLf)
-        sb.Append("function AddWarning(Msg) {" & vbCrLf)
-        sb.Append("  window.external.AddWarning(Msg) ;" & vbCrLf)
-        sb.Append("}" & vbCrLf)
-        sb.Append(vbCrLf)
-
-        'Add the RestoreSettings function - This is used to restore web page settings.
-        sb.Append("//Restore the web page settings." & vbCrLf)
-        sb.Append("function RestoreSettings() {" & vbCrLf)
-        sb.Append("  window.external.RestoreHtmlSettings() " & vbCrLf)
-        sb.Append("}" & vbCrLf)
-        sb.Append(vbCrLf)
-
-        'This line runs the RestoreSettings function when the web page is loaded.
-        sb.Append("//Restore the web page settings when the page loads." & vbCrLf)
-        sb.Append("window.onload = RestoreSettings; " & vbCrLf)
-        sb.Append(vbCrLf)
-
-        'Restores a single setting on the web page.
-        sb.Append("//Restore a web page setting." & vbCrLf)
-        sb.Append("  function RestoreSetting(FormName, ItemName, ItemValue) {" & vbCrLf)
-        sb.Append("  document.forms[FormName][ItemName].value = ItemValue ;" & vbCrLf)
-        sb.Append("}" & vbCrLf)
-        sb.Append(vbCrLf)
-
-        'Add the RestoreOption function - This is used to add an option to a Select list.
-        sb.Append("//Restore a Select control Option." & vbCrLf)
-        sb.Append("function RestoreOption(SelectId, OptionText) {" & vbCrLf)
-        sb.Append("  var x = document.getElementById(SelectId) ;" & vbCrLf)
-        sb.Append("  var option = document.createElement(""Option"") ;" & vbCrLf)
-        sb.Append("  option.text = OptionText ;" & vbCrLf)
-        sb.Append("  x.add(option) ;" & vbCrLf)
-        sb.Append("}" & vbCrLf)
-        sb.Append(vbCrLf)
-
-        'sb.Append("//END:   Required Document Library Web Page JavaScript functions --------------------------------------------------------------------------" & vbCrLf & vbCrLf)
-        sb.Append("//END:   Required Document Library Web Page JavaScript functions __________________________________________________________________________" & vbCrLf & vbCrLf)
-        'END:   Required Document Library Web Page JavaScript functions --------------------------------------------------------------------------
-
-        sb.Append("</script>" & vbCrLf & vbCrLf)
-
-        sb.Append("</body>" & vbCrLf & "</html>" & vbCrLf)
+        sb.Append("</body>" & vbCrLf)
+        sb.Append("</html>" & vbCrLf)
 
         Return sb.ToString
 
@@ -6211,8 +7066,8 @@ Public Class Main
                 If ItemInfo.ContainsKey(FileName) Then
                     Select Case ItemInfo(FileName).Type
                         Case "RTF"
-                            cmbDocType.SelectedIndex = cmbDocType.FindStringExact("RTF")
-                            FileType = FileTypes.RTF
+                            'cmbDocType.SelectedIndex = cmbDocType.FindStringExact("RTF")
+                            FileType = FileTypes.RTF 'Setting this property also displays the appropriate text in txtDocType
                             RtfFileName = FileName
                             txtFileName2.Text = FileName
                             txtFileType.Text = "RTF"
@@ -6235,8 +7090,8 @@ Public Class Main
                                 TabControl1.SelectedIndex = 1 'Open the document tab.
                             End If
                         Case "XML"
-                            cmbDocType.SelectedIndex = cmbDocType.FindStringExact("XML")
-                            FileType = FileTypes.XML
+                            'cmbDocType.SelectedIndex = cmbDocType.FindStringExact("XML")
+                            FileType = FileTypes.XML 'Setting this property also displays the appropriate text in txtDocType
                             XmlFileName = FileName
                             txtFileName2.Text = FileName
                             txtFileType.Text = "XML"
@@ -6258,8 +7113,8 @@ Public Class Main
                                 TabControl1.SelectedIndex = 1 'Open the document tab.
                             End If
                         Case "HTML"
-                            FileType = FileTypes.HTML
-                            cmbDocType.SelectedIndex = cmbDocType.FindStringExact("HTML")
+                            FileType = FileTypes.HTML 'Setting this property also displays the appropriate text in txtDocType
+                            'cmbDocType.SelectedIndex = cmbDocType.FindStringExact("HTML")
                             HtmlFileName = FileName
                             txtFileName2.Text = FileName
                             txtFileType.Text = "HTML"
@@ -6303,8 +7158,8 @@ Public Class Main
 
 
                         Case "TXT"
-                            FileType = FileTypes.TXT
-                            cmbDocType.SelectedIndex = cmbDocType.FindStringExact("TXT")
+                            FileType = FileTypes.TXT 'Setting this property also displays the appropriate text in txtDocType
+                            'cmbDocType.SelectedIndex = cmbDocType.FindStringExact("TXT")
                             TextFileName = FileName
                             txtFileName2.Text = FileName
                             txtFileType.Text = "TXT"
@@ -6364,16 +7219,17 @@ Public Class Main
                 If ItemInfo.ContainsKey(FileName) Then
                     Select Case ItemInfo(FileName).Type
                         Case "RTF"
-                            Dim FormNo As Integer = NewRtfDisplay()
-                            RtfDisplayFormList(FormNo).FileName = FileName
-                            RtfDisplayFormList(FormNo).Description = ItemInfo(FileName).Description
-                            RtfDisplayFormList(FormNo).FileDirectory = ItemInfo(FileName).Directory
-                            If RtfDisplayFormList(FormNo).FileDirectory = "" Then
-                                RtfDisplayFormList(FormNo).FileLocationType = LocationTypes.Project
-                            Else
-                                RtfDisplayFormList(FormNo).FileLocationType = LocationTypes.FileSystem
-                            End If
-                            RtfDisplayFormList(FormNo).OpenDocument
+                            OpenRtfWindow(FileName)
+                            'Dim FormNo As Integer = NewRtfDisplay()
+                            'RtfDisplayFormList(FormNo).FileName = FileName
+                            'RtfDisplayFormList(FormNo).Description = ItemInfo(FileName).Description
+                            'RtfDisplayFormList(FormNo).FileDirectory = ItemInfo(FileName).Directory
+                            'If RtfDisplayFormList(FormNo).FileDirectory = "" Then
+                            '    RtfDisplayFormList(FormNo).FileLocationType = LocationTypes.Project
+                            'Else
+                            '    RtfDisplayFormList(FormNo).FileLocationType = LocationTypes.FileSystem
+                            'End If
+                            'RtfDisplayFormList(FormNo).OpenDocument
                         Case "XML"
                             Dim FormNo As Integer = NewXmlDisplay()
                             XmlDisplayFormList(FormNo).FileName = FileName
@@ -6436,11 +7292,137 @@ Public Class Main
                                 PdfDisplayFormList(FormNo).FileLocationType = LocationTypes.FileSystem
                             End If
                             PdfDisplayFormList(FormNo).OpenDocument
+                        Case "XLS"
+                            'Open the Excel spreadsheet file using the Excel application.
+                            If Project.Type = ADVL_Utilities_Library_1.Project.Types.Archive Then
+                                'Add code to extract the file from the Archive to a temporary directory.
+
+                            Else
+                                If Project.DataLocn.Type = ADVL_Utilities_Library_1.FileLocation.Types.Archive Then
+                                    'NEW CODE:
+                                    'Use the Project.DataDirLocn - this a directory that stores files that are not suitable for archive file storage.
+                                    If System.IO.File.Exists(Project.DataDirLocn.Path & "\" & FileName) Then
+                                        Process.Start("EXCEL.EXE", """" & Project.DataDirLocn.Path & "\" & FileName & """")
+                                    Else
+                                        Message.AddWarning("Excel file not found: " & FileName & vbCrLf)
+                                    End If
+
+                                    'OLD CODE:
+                                    ''Copy the Excel file to the Extracted Files sub-directory:
+                                    'Project.CopyCheckArchiveDataToProjectDir(FileName, "Extracted Files")
+                                    ''Final check that the extracted file exists:
+                                    'If System.IO.File.Exists(Project.Path & "\Extracted Files\" & FileName) Then
+                                    '    Process.Start("EXCEL.EXE", """" & Project.Path & "\Extracted Files\" & FileName & """")
+                                    'Else
+                                    '    Message.AddWarning("Problem extracting the Excel file: " & FileName & vbCrLf)
+                                    'End If
+
+                                    'OLDER CODE:
+                                    ''Copy the Excel file to the Project directory if it is not already there.
+                                    'If Project.ProjectFileExists(FileName) Then
+                                    '    Process.Start("EXCEL.EXE", """" & Project.Path & "\" & FileName & """")
+                                    '    'Message.Add("Excel file path: " & """" & Project.Path & "\" & FileName & """" & vbCrLf)
+                                    'Else
+                                    '    'Extract the file to the Project directory:
+                                    '    Project.CopyArchiveDataToProject(FileName)
+                                    '    'https://stackoverflow.com/questions/14497006/how-to-open-a-xls-file-with-excel-in-vb
+                                    '    Try
+                                    '        Process.Start("EXCEL.EXE", """" & Project.Path & "\" & FileName & """")
+                                    '        'Message.Add("Excel file path: " & "" & Project.Path & "\" & FileName & "" & vbCrLf)
+                                    '    Catch ex As Exception
+                                    '        Message.AddWarning("Error opening Excel file: " & ex.Message & vbCrLf)
+                                    '    End Try
+
+                                    'End If
+                                Else
+                                    'Final check that the file exists:
+                                    If System.IO.File.Exists(Project.DataLocn.Path & "\" & FileName) Then
+                                        Process.Start("EXCEL.EXE", """" & Project.DataLocn.Path & "\" & FileName & """")
+                                    Else
+                                        Message.AddWarning("Excel file not found: " & FileName & vbCrLf)
+                                    End If
+                                End If
+                            End If
+
+                        Case "FolderLink"
+                            'Open the folder using Windows Explorer:
+                            Dim FolderPath As String = ItemInfo(FileName).Directory
+                            Process.Start(FolderPath)
+
+                        Case "XMsg"
+                            'NOTE: TO BE UPDATED TO ALLOW THE XMSG TO BE RUN
+                            Dim FormNo As Integer = NewXmlDisplay()
+                            XmlDisplayFormList(FormNo).FileName = FileName
+                            XmlDisplayFormList(FormNo).Description = ItemInfo(FileName).Description
+                            XmlDisplayFormList(FormNo).FileDirectory = ItemInfo(FileName).Directory
+                            If XmlDisplayFormList(FormNo).FileDirectory = "" Then
+                                XmlDisplayFormList(FormNo).FileLocationType = LocationTypes.Project
+                            Else
+                                XmlDisplayFormList(FormNo).FileLocationType = LocationTypes.FileSystem
+                            End If
+                            XmlDisplayFormList(FormNo).OpenDocument
+
+                        Case "XSeq"
+                            'NOTE: TO BE UPDATED TO ALLOW THE XSEQ TO BE RUN
+                            Dim FormNo As Integer = NewXmlDisplay()
+                            XmlDisplayFormList(FormNo).FileName = FileName
+                            XmlDisplayFormList(FormNo).Description = ItemInfo(FileName).Description
+                            XmlDisplayFormList(FormNo).FileDirectory = ItemInfo(FileName).Directory
+                            If XmlDisplayFormList(FormNo).FileDirectory = "" Then
+                                XmlDisplayFormList(FormNo).FileLocationType = LocationTypes.Project
+                            Else
+                                XmlDisplayFormList(FormNo).FileLocationType = LocationTypes.FileSystem
+                            End If
+                            XmlDisplayFormList(FormNo).OpenDocument
+
                     End Select
                 Else
                     Message.AddWarning("No information is available on the selected node :" & FileName & vbCrLf)
                 End If
             End If
+        End If
+    End Sub
+
+    Private Sub OpenRtfWindow(ByRef FileName As String)
+        'Open the RTF file with the specified File Name.
+        'If the RTF file is already displayed, bring the window to the front.
+        'If the RTF file is not already displayed, open it in a new window.
+
+        If FileName = "" Then
+
+        Else
+            'First check if the RTF file is already open:
+            Dim FileFound As Boolean = False
+            If RtfDisplayFormList.Count = 0 Then
+
+            Else
+                Dim I As Integer
+                For I = 0 To RtfDisplayFormList.Count - 1
+                    If RtfDisplayFormList(I) Is Nothing Then
+
+                    Else
+                        If RtfDisplayFormList(I).FileName = FileName Then
+                            FileFound = True
+                            RtfDisplayFormList(I).BringToFront
+                            Exit For 'ADDED 11Sep2020
+                        End If
+                    End If
+                Next
+            End If
+
+            If FileFound = False Then
+                Dim FormNo As Integer = NewRtfDisplay()
+                RtfDisplayFormList(FormNo).FileName = FileName
+                RtfDisplayFormList(FormNo).Description = ItemInfo(FileName).Description
+                RtfDisplayFormList(FormNo).FileDirectory = ItemInfo(FileName).Directory
+                If RtfDisplayFormList(FormNo).FileDirectory = "" Then
+                    RtfDisplayFormList(FormNo).FileLocationType = LocationTypes.Project
+                Else
+                    RtfDisplayFormList(FormNo).FileLocationType = LocationTypes.FileSystem
+                End If
+                RtfDisplayFormList(FormNo).OpenDocument
+            End If
+
         End If
 
     End Sub
@@ -6560,6 +7542,536 @@ Public Class Main
     'These methods are used to display HTML pages in the Document tab.
     'The same methods can be found in the WebView form, which displays web pages on seprate forms.
 
+
+    'Display Messages ==============================================================================================
+
+    Public Sub AddMessage(ByVal Msg As String)
+        Message.Add(Msg)
+    End Sub
+
+    Public Sub AddWarning(ByVal Msg As String)
+        Message.AddWarning(Msg)
+    End Sub
+
+    Public Sub AddTextTypeMessage(ByVal Msg As String, ByVal TextType As String)
+        'Add a message with the specified Text Type to the Message window.
+        Message.AddText(Msg, TextType)
+    End Sub
+
+    Public Sub AddXmlMessage(ByVal XmlText As String)
+        'Add an Xml message to the Message window.
+        Message.AddXml(XmlText)
+    End Sub
+
+    'END Display Messages ------------------------------------------------------------------------------------------
+
+
+    'Run an XSequence ==============================================================================================
+
+    Public Sub RunClipboardXSeq()
+        'Run the XSequence instructions in the clipboard.
+
+        Dim XDocSeq As System.Xml.Linq.XDocument
+        Try
+            XDocSeq = XDocument.Parse(My.Computer.Clipboard.GetText)
+        Catch ex As Exception
+            Message.AddWarning("Error reading Clipboard data. " & ex.Message & vbCrLf)
+            Exit Sub
+        End Try
+
+        If IsNothing(XDocSeq) Then
+            Message.Add("No XSequence instructions were found in the clipboard.")
+        Else
+            Dim XmlSeq As New System.Xml.XmlDocument
+            Try
+                XmlSeq.LoadXml(XDocSeq.ToString) 'Convert XDocSeq to an XmlDocument to process with XSeq.
+                'Run the sequence:
+                XSeq.RunXSequence(XmlSeq, Status)
+            Catch ex As Exception
+                Message.AddWarning("Error restoring HTML settings. " & ex.Message & vbCrLf)
+            End Try
+        End If
+    End Sub
+
+    Public Sub RunXSequence(ByVal XSequence As String)
+        'Run the XMSequence
+        Dim XmlSeq As New System.Xml.XmlDocument
+        XmlSeq.LoadXml(XSequence)
+        XSeq.RunXSequence(XmlSeq, Status)
+    End Sub
+
+    Private Sub XSeq_ErrorMsg(ErrMsg As String) Handles XSeq.ErrorMsg
+        Message.AddWarning(ErrMsg & vbCrLf)
+    End Sub
+
+    Private Sub XSeq_Instruction(Data As String, Locn As String) Handles XSeq.Instruction
+        'Execute each instruction produced by running the XSeq file.
+
+        Select Case Locn
+
+            Case "Settings:Form:Name"
+                FormName = Data
+
+            Case "Settings:Form:Item:Name"
+                ItemName = Data
+
+            Case "Settings:Form:Item:Value"
+                RestoreSetting(FormName, ItemName, Data)
+
+            Case "Settings:Form:SelectId"
+                SelectId = Data
+
+            Case "Settings:Form:OptionText"
+                RestoreOption(SelectId, Data)
+
+            Case "Settings"
+
+            Case "EndOfSequence"
+                'Main.Message.Add("End of processing sequence" & Data & vbCrLf)
+
+            Case Else
+                'Main.Message.AddWarning("Unknown location: " & Locn & "  Data: " & Data & vbCrLf)
+                Message.AddWarning("Unknown location: " & Locn & "  Data: " & Data & vbCrLf)
+
+        End Select
+    End Sub
+
+    'END Run an XSequence ------------------------------------------------------------------------------------------
+
+
+    'Run an XMessage ===============================================================================================
+
+    Public Sub RunXMessage(ByVal XMsg As String)
+        'Run the XMessage by sending it to InstrReceived.
+        InstrReceived = XMsg
+    End Sub
+
+    Public Sub SendXMessage(ByVal ConnName As String, ByVal XMsg As String)
+        'Send the XMessage to the application with the connection name ConnName.
+        If IsNothing(client) Then
+            Message.Add("No client connection available!" & vbCrLf)
+        Else
+            If client.State = ServiceModel.CommunicationState.Faulted Then
+                Message.Add("client state is faulted. Message not sent!" & vbCrLf)
+            Else
+                If bgwSendMessage.IsBusy Then
+                    Message.AddWarning("Send Message backgroundworker is busy." & vbCrLf)
+                Else
+                    Dim SendMessageParams As New Main.clsSendMessageParams
+                    SendMessageParams.ProjectNetworkName = ProNetName
+                    SendMessageParams.ConnectionName = ConnName
+                    SendMessageParams.Message = XMsg
+                    bgwSendMessage.RunWorkerAsync(SendMessageParams)
+                    If ShowXMessages Then
+                        Message.XAddText("Message sent to " & "[" & ProNetName & "]." & ConnName & ":" & vbCrLf, "XmlSentNotice")
+                        Message.XAddXml(XMsg)
+                        Message.XAddText(vbCrLf, "Normal") 'Add extra line
+                    End If
+                End If
+            End If
+        End If
+    End Sub
+
+    Public Sub SendXMessageExt(ByVal ProNetName As String, ByVal ConnName As String, ByVal XMsg As String)
+        'Send the XMsg to the application with the connection name ConnName and Project Network Name ProNetname.
+        'This version can send the XMessage to a connection external to the current Project Network.
+        If IsNothing(client) Then
+            Message.Add("No client connection available!" & vbCrLf)
+        Else
+            If client.State = ServiceModel.CommunicationState.Faulted Then
+                Message.Add("client state is faulted. Message not sent!" & vbCrLf)
+            Else
+                If bgwSendMessage.IsBusy Then
+                    Message.AddWarning("Send Message backgroundworker is busy." & vbCrLf)
+                Else
+                    Dim SendMessageParams As New Main.clsSendMessageParams
+                    SendMessageParams.ProjectNetworkName = ProNetName
+                    SendMessageParams.ConnectionName = ConnName
+                    SendMessageParams.Message = XMsg
+                    bgwSendMessage.RunWorkerAsync(SendMessageParams)
+                    If ShowXMessages Then
+                        Message.XAddText("Message sent to " & "[" & ProNetName & "]." & ConnName & ":" & vbCrLf, "XmlSentNotice")
+                        Message.XAddXml(XMsg)
+                        Message.XAddText(vbCrLf, "Normal") 'Add extra line
+                    End If
+                End If
+            End If
+        End If
+    End Sub
+
+    Public Sub SendXMessageWait(ByVal ConnName As String, ByVal XMsg As String)
+        'Send the XMsg to the application with the connection name ConnName.
+        'Wait for the connection to be made.
+        If IsNothing(client) Then
+            Message.Add("No client connection available!" & vbCrLf)
+        Else
+            Try
+                'Application.DoEvents() 'TRY THE METHOD WITHOUT THE DOEVENTS
+                If client.State = ServiceModel.CommunicationState.Faulted Then
+                    Message.Add("client state is faulted. Message not sent!" & vbCrLf)
+                Else
+                    Dim StartTime As Date = Now
+                    Dim Duration As TimeSpan
+                    'Wait up to 16 seconds for the connection ConnName to be established
+                    While client.ConnectionExists(ProNetName, ConnName) = False 'Wait until the required connection is made.
+                        System.Threading.Thread.Sleep(1000) 'Pause for 1000ms
+                        Duration = Now - StartTime
+                        If Duration.Seconds > 16 Then Exit While
+                    End While
+
+                    If client.ConnectionExists(ProNetName, ConnName) = False Then
+                        Message.AddWarning("Connection not available: " & ConnName & " in application network: " & ProNetName & vbCrLf)
+                    Else
+                        If bgwSendMessage.IsBusy Then
+                            Message.AddWarning("Send Message backgroundworker is busy." & vbCrLf)
+                        Else
+                            Dim SendMessageParams As New Main.clsSendMessageParams
+                            SendMessageParams.ProjectNetworkName = ProNetName
+                            SendMessageParams.ConnectionName = ConnName
+                            SendMessageParams.Message = XMsg
+                            bgwSendMessage.RunWorkerAsync(SendMessageParams)
+                            If ShowXMessages Then
+                                Message.XAddText("Message sent to " & "[" & ProNetName & "]." & ConnName & ":" & vbCrLf, "XmlSentNotice")
+                                Message.XAddXml(XMsg)
+                                Message.XAddText(vbCrLf, "Normal") 'Add extra line
+                            End If
+                        End If
+                    End If
+                End If
+            Catch ex As Exception
+                Message.AddWarning(ex.Message & vbCrLf)
+            End Try
+        End If
+    End Sub
+
+    Public Sub SendXMessageExtWait(ByVal ProNetName As String, ByVal ConnName As String, ByVal XMsg As String)
+        'Send the XMsg to the application with the connection name ConnName and Project Network Name ProNetName.
+        'Wait for the connection to be made.
+        'This version can send the XMessage to a connection external to the current Project Network.
+        If IsNothing(client) Then
+            Message.Add("No client connection available!" & vbCrLf)
+        Else
+            If client.State = ServiceModel.CommunicationState.Faulted Then
+                Message.Add("client state is faulted. Message not sent!" & vbCrLf)
+            Else
+                Dim StartTime As Date = Now
+                Dim Duration As TimeSpan
+                'Wait up to 16 seconds for the connection ConnName to be established
+                While client.ConnectionExists(ProNetName, ConnName) = False
+                    System.Threading.Thread.Sleep(1000) 'Pause for 1000ms
+                    Duration = Now - StartTime
+                    If Duration.Seconds > 16 Then Exit While
+                End While
+
+                If client.ConnectionExists(ProNetName, ConnName) = False Then
+                    Message.AddWarning("Connection not available: " & ConnName & " in application network: " & ProNetName & vbCrLf)
+                Else
+                    If bgwSendMessage.IsBusy Then
+                        Message.AddWarning("Send Message backgroundworker is busy." & vbCrLf)
+                    Else
+                        Dim SendMessageParams As New Main.clsSendMessageParams
+                        SendMessageParams.ProjectNetworkName = ProNetName
+                        SendMessageParams.ConnectionName = ConnName
+                        SendMessageParams.Message = XMsg
+                        bgwSendMessage.RunWorkerAsync(SendMessageParams)
+                        If ShowXMessages Then
+                            Message.XAddText("Message sent to " & "[" & ProNetName & "]." & ConnName & ":" & vbCrLf, "XmlSentNotice")
+                            Message.XAddXml(XMsg)
+                            Message.XAddText(vbCrLf, "Normal") 'Add extra line
+                        End If
+                    End If
+                End If
+            End If
+        End If
+    End Sub
+
+    Public Sub XMsgInstruction(ByVal Info As String, ByVal Locn As String)
+        'Send the XMessage Instruction to the JavaScript function XMsgInstruction for processing.
+        Me.WebBrowser1.Document.InvokeScript("XMsgInstruction", New String() {Info, Locn})
+    End Sub
+
+    'END Run an XMessage -------------------------------------------------------------------------------------------
+
+
+    'Get Information ===============================================================================================
+
+    Public Function GetFormNo() As String
+        'Return FormNo.ToString
+        Return "-1" 'The Main Form is not a Web Page form.
+    End Function
+
+    Public Function GetParentFormNo() As String
+        'Return the Form Number of the Parent Form (that called this form).
+        'Return ParentWebPageFormNo.ToString
+        Return "-1" 'The Main Form does not have a Parent Web Page.
+    End Function
+
+    Public Function GetConnectionName() As String
+        'Return the Connection Name of the Project.
+        Return ConnectionName
+    End Function
+
+    Public Function GetProNetName() As String
+        'Return the Project Network Name of the Project.
+        Return ProNetName
+    End Function
+
+    Public Sub ParentProjectName(ByVal FormName As String, ByVal ItemName As String)
+        'Return the Parent Project name:
+        RestoreSetting(FormName, ItemName, Project.ParentProjectName)
+    End Sub
+
+    Public Sub ParentProjectPath(ByVal FormName As String, ByVal ItemName As String)
+        'Return the Parent Project path:
+        RestoreSetting(FormName, ItemName, Project.ParentProjectPath)
+    End Sub
+
+    Public Sub ParentProjectParameterValue(ByVal FormName As String, ByVal ItemName As String, ByVal ParameterName As String)
+        'Return the specified Parent Project parameter value:
+        RestoreSetting(FormName, ItemName, Project.ParentParameter(ParameterName).Value)
+    End Sub
+
+    Public Sub ProjectParameterValue(ByVal FormName As String, ByVal ItemName As String, ByVal ParameterName As String)
+        'Return the specified Project parameter value:
+        RestoreSetting(FormName, ItemName, Project.Parameter(ParameterName).Value)
+    End Sub
+
+    Public Sub ProjectNetworkName(ByVal FormName As String, ByVal ItemName As String)
+        'Return the name of the Project Network:
+        RestoreSetting(FormName, ItemName, Project.Parameter("ProNetName").Value)
+    End Sub
+
+    'END Get Information -------------------------------------------------------------------------------------------
+
+
+    'Open a Web Page ===============================================================================================
+
+    Public Sub OpenWebPage(ByVal FileName As String)
+        'Open the web page with the specified File Name.
+
+        If FileName = "" Then
+
+        Else
+            'First check if the HTML file is already open:
+            Dim FileFound As Boolean = False
+            If WebPageFormList.Count = 0 Then
+
+            Else
+                Dim I As Integer
+                For I = 0 To WebPageFormList.Count - 1
+                    If WebPageFormList(I) Is Nothing Then
+
+                    Else
+                        If WebPageFormList(I).FileName = FileName Then
+                            FileFound = True
+                            WebPageFormList(I).BringToFront
+                        End If
+                    End If
+                Next
+            End If
+
+            If FileFound = False Then
+                Dim FormNo As Integer = OpenNewWebPage()
+                WebPageFormList(FormNo).FileName = FileName
+                WebPageFormList(FormNo).OpenDocument
+                WebPageFormList(FormNo).BringToFront
+            End If
+        End If
+    End Sub
+
+    'END Open a Web Page -------------------------------------------------------------------------------------------
+
+
+    'Open and Close Projects =======================================================================================
+
+    Public Sub OpenProjectAtRelativePath(ByVal RelativePath As String, ByVal ConnectionName As String)
+        'Open the Project at the specified Relative Path using the specified Connection Name.
+
+        Dim ProjectPath As String
+        If RelativePath.StartsWith("\") Then
+            ProjectPath = Project.Path & RelativePath
+            client.StartProjectAtPath(ProjectPath, ConnectionName)
+        Else
+            ProjectPath = Project.Path & "\" & RelativePath
+            client.StartProjectAtPath(ProjectPath, ConnectionName)
+        End If
+    End Sub
+
+    Public Sub CheckOpenProjectAtRelativePath(ByVal RelativePath As String, ByVal ConnectionName As String)
+        'Check if the project at the specified Relative Path is open.
+        'Open it if it is not already open.
+        'Open the Project at the specified Relative Path using the specified Connection Name.
+
+        Dim ProjectPath As String
+        If RelativePath.StartsWith("\") Then
+            ProjectPath = Project.Path & RelativePath
+            If client.ProjectOpen(ProjectPath) Then
+                'Project is already open.
+            Else
+                client.StartProjectAtPath(ProjectPath, ConnectionName)
+            End If
+        Else
+            ProjectPath = Project.Path & "\" & RelativePath
+            If client.ProjectOpen(ProjectPath) Then
+                'Project is already open.
+            Else
+                client.StartProjectAtPath(ProjectPath, ConnectionName)
+            End If
+        End If
+    End Sub
+
+    Public Sub OpenProjectAtProNetPath(ByVal RelativePath As String, ByVal ConnectionName As String)
+        'Open the Project at the specified Path (relative to the ProNet Path) using the specified Connection Name.
+
+        Dim ProjectPath As String
+        If RelativePath.StartsWith("\") Then
+            If Project.ParameterExists("ProNetPath") Then
+                ProjectPath = Project.GetParameter("ProNetPath") & RelativePath
+                client.StartProjectAtPath(ProjectPath, ConnectionName)
+            Else
+                Message.AddWarning("The Project Network Path is not known." & vbCrLf)
+            End If
+        Else
+            If Project.ParameterExists("ProNetPath") Then
+                ProjectPath = Project.GetParameter("ProNetPath") & "\" & RelativePath
+                client.StartProjectAtPath(ProjectPath, ConnectionName)
+            Else
+                Message.AddWarning("The Project Network Path is not known." & vbCrLf)
+            End If
+        End If
+    End Sub
+
+    Public Sub CheckOpenProjectAtProNetPath(ByVal RelativePath As String, ByVal ConnectionName As String)
+        'Check if the project at the specified Path (relative to the ProNet Path) is open.
+        'Open it if it is not already open.
+        'Open the Project at the specified Path using the specified Connection Name.
+
+        Dim ProjectPath As String
+        If RelativePath.StartsWith("\") Then
+            If Project.ParameterExists("ProNetPath") Then
+                ProjectPath = Project.GetParameter("ProNetPath") & RelativePath
+                If client.ProjectOpen(ProjectPath) Then
+                    'Project is already open.
+                Else
+                    client.StartProjectAtPath(ProjectPath, ConnectionName)
+                End If
+            Else
+                Message.AddWarning("The Project Network Path is not known." & vbCrLf)
+            End If
+        Else
+            If Project.ParameterExists("ProNetPath") Then
+                ProjectPath = Project.GetParameter("ProNetPath") & "\" & RelativePath
+                If client.ProjectOpen(ProjectPath) Then
+                    'Project is already open.
+                Else
+                    client.StartProjectAtPath(ProjectPath, ConnectionName)
+                End If
+            Else
+                Message.AddWarning("The Project Network Path is not known." & vbCrLf)
+            End If
+        End If
+    End Sub
+
+    Public Sub CloseProjectAtConnection(ByVal ProNetName As String, ByVal ConnectionName As String)
+        'Close the application at the specified connection.
+
+        If IsNothing(client) Then
+            Message.Add("No client connection available!" & vbCrLf)
+        Else
+            If client.State = ServiceModel.CommunicationState.Faulted Then
+                Message.Add("client state is faulted. Message not sent!" & vbCrLf)
+            Else
+                'Create the XML instructions to close the Project at the connection.
+                Dim decl As New XDeclaration("1.0", "utf-8", "yes")
+                Dim doc As New XDocument(decl, Nothing) 'Create an XDocument to store the instructions.
+                Dim xmessage As New XElement("XMsg") 'This indicates the start of the message in the XMessage class
+
+                'NOTE: No reply expected. No need to provide the following client information(?)
+                'Dim clientConnName As New XElement("ClientConnectionName", Me.ConnectionName)
+                'xmessage.Add(clientConnName)
+
+                Dim command As New XDocument("Command", "Close")
+                xmessage.Add(command)
+                doc.Add(xmessage)
+
+                'Show the message sent to:
+                Message.XAddText("Message sent to [" & ProNetName & "]." & ConnectionName & ":" & vbCrLf, "XmlSentNotice")
+                Message.XAddXml(doc.ToString)
+                Message.XAddText(vbCrLf, "Normal") 'Add extra line
+
+                client.SendMessage(ProNetName, ConnectionName, doc.ToString)
+            End If
+        End If
+    End Sub
+
+    'END Open and Close Projects -----------------------------------------------------------------------------------
+
+
+    'System Methods ================================================================================================
+
+    Public Sub SaveHtmlSettings(ByVal xSettings As String, ByVal FileName As String)
+        'Save the Html settings for a web page.
+
+        'Convert the XSettings to XML format:
+        Dim XmlHeader As String = "<?xml version=""1.0"" encoding=""utf-8"" standalone=""yes""?>"
+        Dim XDocSettings As New System.Xml.Linq.XDocument
+
+        Try
+            XDocSettings = System.Xml.Linq.XDocument.Parse(XmlHeader & vbCrLf & xSettings)
+        Catch ex As Exception
+            Message.AddWarning("Error saving HTML settings file. " & ex.Message & vbCrLf)
+        End Try
+
+        Project.SaveXmlData(FileName, XDocSettings)
+    End Sub
+
+    Public Sub RestoreHtmlSettings()
+        'Restore the Html settings for a web page.
+
+        Dim SettingsFileName As String = txtNodeKey.Text & "Settings"
+        Dim XDocSettings As New System.Xml.Linq.XDocument
+        Project.ReadXmlData(SettingsFileName, XDocSettings)
+
+        If XDocSettings Is Nothing Then
+            'NOTE: THE FOLLOWING MESSAGE IS ALWAYS SHOWN. IS SETTINGS FILE USED HERE???
+            'Message.Add("No HTML Settings file : " & SettingsFileName & vbCrLf)
+        Else
+            Dim XSettings As New System.Xml.XmlDocument
+            Try
+                XSettings.LoadXml(XDocSettings.ToString)
+                'Run the Settings file:
+                XSeq.RunXSequence(XSettings, Status)
+            Catch ex As Exception
+                Message.AddWarning("Error restoring HTML settings. " & ex.Message & vbCrLf)
+            End Try
+
+        End If
+    End Sub
+
+    Public Sub RestoreSetting(ByVal FormName As String, ByVal ItemName As String, ByVal ItemValue As String)
+        'Restore the setting value with the specified Form Name and Item Name.
+        Me.WebBrowser2.Document.InvokeScript("RestoreSetting", New String() {FormName, ItemName, ItemValue})
+    End Sub
+
+    Public Sub RestoreOption(ByVal SelectId As String, ByVal OptionText As String)
+        'Restore the Option text in the Select control with the Id SelectId.
+        Me.WebBrowser2.Document.InvokeScript("RestoreOption", New String() {SelectId, OptionText})
+    End Sub
+
+    Private Sub SaveWebPageSettings()
+        'Call the SaveSettings JavaScript function:
+        Try
+            Me.WebBrowser2.Document.InvokeScript("SaveSettings")
+        Catch ex As Exception
+            Message.AddWarning("Web page settings not saved: " & ex.Message & vbCrLf)
+        End Try
+    End Sub
+
+    'END System Methods --------------------------------------------------------------------------------------------
+
+
+    'Legacy Code (These methods should no longer be used) ==========================================================
+
     Public Sub JSMethodTest1()
         'Test method that is called from JavaScript.
         Message.Add("JSMethodTest1 called OK." & vbCrLf)
@@ -6578,161 +8090,23 @@ Public Class Main
         Message.Add(Msg)
     End Sub
 
-    Public Sub SaveHtmlSettings(ByVal xSettings As String, ByVal FileName As String)
-        'Save the Html settings for a web page.
-
-        'Convert the XSettings to XML format:
-        Dim XmlHeader As String = "<?xml version=""1.0"" encoding=""utf-8"" standalone=""yes""?>"
-
-        Dim XDocSettings As New System.Xml.Linq.XDocument
-
-        Try
-            XDocSettings = System.Xml.Linq.XDocument.Parse(XmlHeader & vbCrLf & xSettings)
-        Catch ex As Exception
-            Message.AddWarning("Error saving HTML settings file. " & ex.Message & vbCrLf)
-        End Try
-
-        Project.SaveXmlData(FileName, XDocSettings)
-
-    End Sub
-
-    Public Sub RestoreHtmlSettings_Old(ByVal FileName As String)
-        'Restore the Html settings for a web page.
-
-        Dim XDocSettings As New System.Xml.Linq.XDocument
-        Project.ReadXmlData(FileName, XDocSettings)
-
-        If XDocSettings Is Nothing Then
-            Message.Add("No HTML Settings file : " & FileName & vbCrLf)
-        Else
-
-            Dim XSettings As New System.Xml.XmlDocument
-            Try
-                XSettings.LoadXml(XDocSettings.ToString)
-
-                'Run the Settings file:
-                XSeq.RunXSequence(XSettings, XStatus)
-            Catch ex As Exception
-                Message.AddWarning("Error restoring HTML settings. " & ex.Message & vbCrLf)
-            End Try
-
-        End If
-    End Sub
-
-    Public Sub RestoreHtmlSettings()
-        'Restore the Html settings for a web page.
-
-        Dim SettingsFileName As String = txtNodeKey.Text & "Settings"
-
-        Dim XDocSettings As New System.Xml.Linq.XDocument
-
-        Project.ReadXmlData(SettingsFileName, XDocSettings)
-
-        If XDocSettings Is Nothing Then
-            'NOTE: THE FOLLOWING MESSAGE IS ALWAYS SHOWN. IS SETTINGS FILE USED HERE???
-            'Message.Add("No HTML Settings file : " & SettingsFileName & vbCrLf)
-        Else
-
-            Dim XSettings As New System.Xml.XmlDocument
-            Try
-                XSettings.LoadXml(XDocSettings.ToString)
-
-                'Run the Settings file:
-                XSeq.RunXSequence(XSettings, Status)
-            Catch ex As Exception
-                Message.AddWarning("Error restoring HTML settings. " & ex.Message & vbCrLf)
-            End Try
-
-        End If
-    End Sub
-
-
-    Private Sub XSeq_ErrorMsg(ErrMsg As String) Handles XSeq.ErrorMsg
-        Message.AddWarning(ErrMsg & vbCrLf)
-    End Sub
-
-
-    Private Sub XSeq_Instruction(Info As String, Locn As String) Handles XSeq.Instruction
-        'Execute each instruction produced by running the XSeq file.
-
-        Select Case Locn
-
-            Case "Settings:Form:Name"
-                FormName = Info
-
-            Case "Settings:Form:Item:Name"
-                ItemName = Info
-
-            Case "Settings:Form:Item:Value"
-                RestoreSetting(FormName, ItemName, Info)
-
-            Case "Settings:Form:SelectId"
-                SelectId = Info
-
-            Case "Settings:Form:OptionText"
-                RestoreOption(SelectId, Info)
-
-            Case "Settings"
-
-            Case "EndOfSequence"
-                'Main.Message.Add("End of processing sequence" & Info & vbCrLf)
-
-            Case Else
-                'Main.Message.AddWarning("Unknown location: " & Locn & "  Info: " & Info & vbCrLf)
-                Message.AddWarning("Unknown location: " & Locn & "  Info: " & Info & vbCrLf)
-
-        End Select
-    End Sub
-
-
-    Public Sub RestoreSetting(ByVal FormName As String, ByVal ItemName As String, ByVal ItemValue As String)
-        'Restore the setting value with the specified Form Name and Item Name.
-
-        Me.WebBrowser2.Document.InvokeScript("RestoreSetting", New String() {FormName, ItemName, ItemValue})
-
-    End Sub
-
-    Public Sub RestoreOption(ByVal SelectId As String, ByVal OptionText As String)
-        'Restore the Option text in the Select control with the Id SelectId.
-        Me.WebBrowser2.Document.InvokeScript("RestoreOption", New String() {SelectId, OptionText})
-    End Sub
-
-    Private Sub SaveWebPageSettings()
-        'Call the SaveSettings JavaScript function:
-        Try
-            Me.WebBrowser2.Document.InvokeScript("SaveSettings")
-        Catch ex As Exception
-            Message.AddWarning("Web page settings not saved: " & ex.Message & vbCrLf)
-        End Try
-
-    End Sub
-
-    Public Sub JSSendXMessage(ByVal AppNetName As String, ByVal XMsg As String, ByVal Destination As String)
+    Public Sub JSSendXMessage(ByVal ProNetName As String, ByVal XMsg As String, ByVal Destination As String)
         'Send an XMessage to the specified destination.
         If IsNothing(client) Then
             Message.Add("No client connection available!" & vbCrLf)
         Else
-            client.SendMessage(AppNetName, Destination, XMsg)
+            client.SendMessage(ProNetName, Destination, XMsg)
         End If
-
     End Sub
-
-    Public Function GetFormNo() As String
-        'Return FormNo.ToString
-        Return "-1"
-    End Function
 
     Public Sub AddText(ByVal Msg As String, ByVal TextType As String)
         Message.AddText(Msg, TextType)
     End Sub
 
-    Public Sub AddMessage(ByVal Msg As String)
-        Message.Add(Msg)
-    End Sub
+    'END Legacy Code -----------------------------------------------------------------------------------------------
 
-    Public Sub AddWarning(ByVal Msg As String)
-        Message.AddWarning(Msg)
-    End Sub
+
+#End Region 'Methods Called by JavaScript -----------------------------------------------------------------------------------------------------------------------------------------------------
 
     Private Sub ApplicationInfo_UpdateExePath() Handles ApplicationInfo.UpdateExePath
 
@@ -6805,7 +8179,6 @@ Public Class Main
 
         For I = 0 To Path.Count - 1
             Message.Add(vbCrLf & "Path(" & I & "): " & Path(I) & vbCrLf)
-            'ProcessDragDropProject(Path(I))
             ProcessNewFile(Path(I), DestinationNode.Name)
         Next
 
@@ -6830,7 +8203,44 @@ Public Class Main
         Dim Attr As System.IO.FileAttributes = IO.File.GetAttributes(FilePath)
         If Attr.HasFlag(IO.FileAttributes.Directory) Then
             Message.Add("The item is a Directory." & vbCrLf)
-        Else
+            Dim NewFolderLink As String = FilePath.Replace(":", " ") & ".FolderLink" 'Removing the ":" character allows it to be saved in an XElement. (The ":" character is not allowed in an XElement name.)
+
+            If ItemInfo.ContainsKey(NewFolderLink) Then
+                Message.AddWarning("A node is already has the NodeKey: " & NewFolderLink & vbCrLf)
+            Else
+                'Check if the Folder Link is valid:
+                If System.IO.Directory.Exists(FilePath) Then
+                    'ItemInfo.Add(NodeKey, New clsItemInfo)
+                    ItemInfo.Add(NewFolderLink, New clsItemInfo)
+                    Dim NodeText As String = Trim(FilePath) 'The text that appears on the node in the treeview.
+                    If trvLibrary.SelectedNode Is Nothing Then
+                        'Image 16 is a closed folder, image 17 is an open folder.
+                        'trvLibrary.Nodes.Add(NodeKey, NodeText, 16, 17) 'key As String, text As String, imageIndex As Integer, selectedImageIndex As Integer
+                        trvLibrary.Nodes.Add(NewFolderLink, NodeText, 16, 17) 'key As String, text As String, imageIndex As Integer, selectedImageIndex As Integer
+                    Else
+                        'Image 16 is a closed folder, image 17 is an open folder.
+                        'trvLibrary.SelectedNode.Nodes.Add(NodeKey, NodeText, 16, 17) 'key As String, text As String, imageIndex As Integer, selectedImageIndex As Integer
+                        trvLibrary.SelectedNode.Nodes.Add(NewFolderLink, NodeText, 16, 17) 'key As String, text As String, imageIndex As Integer, selectedImageIndex As Integer
+                    End If
+
+                    'Add the Node Text to the ItemInfo dictionary: - ADDED 16 September 2020 - Used in the Document List tab.
+                    ItemInfo(NodeKey).Text = NodeText
+
+                    'ItemInfo(NodeKey).Type = "FolderLink"
+                    ItemInfo(NewFolderLink).Type = "FolderLink"
+                    'ItemInfo(NodeKey).Description = "Link to folder: " & FilePath
+                    ItemInfo(NewFolderLink).Description = "Link to folder: " & FilePath
+                    'ItemInfo(NodeKey).CreationDate = Format(Now, "d-MMM-yyyy H:mm:ss")
+                    ItemInfo(NewFolderLink).CreationDate = Format(Now, "d-MMM-yyyy H:mm:ss")
+                    'ItemInfo(NodeKey).LastEditDate = Format(Now, "d-MMM-yyyy H:mm:ss")
+                    ItemInfo(NewFolderLink).LastEditDate = Format(Now, "d-MMM-yyyy H:mm:ss")
+                    'ItemInfo(NodeKey).Directory = FilePath
+                    ItemInfo(NewFolderLink).Directory = FilePath
+                Else
+                    Message.AddWarning("The folder link is not valid: " & NewFolderLink & vbCrLf)
+                End If
+            End If
+                Else
             If LCase(FilePath).EndsWith(".pdf") Then
                 Message.Add("The file is a PDF document." & vbCrLf)
                 'Get the FileName of the new PDF file:
@@ -6838,21 +8248,25 @@ Public Class Main
                 NewFileName = System.IO.Path.GetFileName(FilePath)
                 Message.Add("The file name is: " & NewFileName & vbCrLf)
                 'Check if the file is already in the project:
-                If Project.DataFileExists(NewFileName) Then
+                If Project.DataDirFileExists(NewFileName) Then 'NOTE: .pdf files are stored in the DataDirLocn.
                     Message.Add("The File Name already exists in the project." & vbCrLf)
                 Else
                     If ItemInfo.ContainsKey(NewFileName) Then
                         Message.AddWarning("A node is already has the NodeKey: " & NewFileName & vbCrLf)
                     Else
                         'Copy the file to the Project Data Location.
-                        Dim fileStream As New IO.FileStream(FilePath, System.IO.FileMode.Open)
-                        Dim myData(fileStream.Length) As Byte
-                        fileStream.Read(myData, 0, fileStream.Length)
-                        Dim pdfData As New IO.MemoryStream
-                        Dim streamWriter As New IO.BinaryWriter(pdfData)
-                        streamWriter.Write(myData)
-                        fileStream.Close()
-                        Project.SaveData(NewFileName, pdfData)
+                        If Project.DataDirLocn.Type = ADVL_Utilities_Library_1.FileLocation.Types.Archive Then 'Use a filestream to write data to an archive.
+                            Dim fileStream As New IO.FileStream(FilePath, System.IO.FileMode.Open)
+                            Dim myData(fileStream.Length) As Byte
+                            fileStream.Read(myData, 0, fileStream.Length)
+                            Dim pdfData As New IO.MemoryStream
+                            Dim streamWriter As New IO.BinaryWriter(pdfData)
+                            streamWriter.Write(myData)
+                            fileStream.Close()
+                            Project.SaveData(NewFileName, pdfData)
+                        Else 'Use a simple file copy to write data to a directory.
+                            My.Computer.FileSystem.CopyFile(FilePath, Project.DataDirLocn.Path & "\" & NewFileName)
+                        End If
 
                         'Add ItemInfo entry:
                         ItemInfo.Add(NewFileName, New clsItemInfo)
@@ -6875,35 +8289,203 @@ Public Class Main
                         End If
                     End If
                 End If
+            ElseIf LCase(FilePath).EndsWith(".xls") Or LCase(FilePath).EndsWith(".xlsx") Then
+                Message.Add("The file is an Excel spreadsheet." & vbCrLf)
+                'Get the FileName of the new Excel file:
+                Dim NewFileName As String = System.IO.Path.GetFileName(FilePath)
+                'Check if the file is already in the project:
+                If Project.DataFileExists(NewFileName) Then
+                    Message.Add("The File Name already exists in the project." & vbCrLf)
+                Else
+                    If ItemInfo.ContainsKey(NewFileName) Then
+                        Message.AddWarning("A node is already has the NodeKey: " & NewFileName & vbCrLf)
+                    Else
+                        'Copy the file to the Project Data Location.
+                        If Project.DataDirLocn.Type = ADVL_Utilities_Library_1.FileLocation.Types.Archive Then 'Use a filestream to write data to an archive.
+                            'NOTE: This method appears to corrupt .xlsx files! To be checked! (The DataDirLocn will usually be a directory and use a simple file copy - only an issue for an Archive project.)
+                            Dim fileStream As New IO.FileStream(FilePath, System.IO.FileMode.Open)
+                            Dim myData(fileStream.Length) As Byte
+                            fileStream.Read(myData, 0, fileStream.Length)
+                            Dim pdfData As New IO.MemoryStream
+                            Dim streamWriter As New IO.BinaryWriter(pdfData)
+                            streamWriter.Write(myData)
+                            fileStream.Close()
+                            Project.SaveData(NewFileName, pdfData)
+                        Else 'Use a simple file copy to write data to a directory.
+                            My.Computer.FileSystem.CopyFile(FilePath, Project.DataDirLocn.Path & "\" & NewFileName)
+                        End If
+
+                        'Add ItemInfo entry:
+                        ItemInfo.Add(NewFileName, New clsItemInfo)
+                        Dim NodeText As String = NewFileName 'The text that appears on the node in the treeview.
+                        ItemInfo(NewFileName).Type = "XLS"
+                        ItemInfo(NewFileName).Description = ""
+                        ItemInfo(NewFileName).CreationDate = Format(Now, "d-MMM-yyyy H:mm:ss")
+                        ItemInfo(NewFileName).LastEditDate = Format(Now, "d-MMM-yyyy H:mm:ss")
+                        ItemInfo(NewFileName).Directory = ""
+
+                        'Add the XLS node to the tree.
+                        'Select the Parent Node:
+                        Dim node As TreeNode() = trvLibrary.Nodes.Find(NodeKey, True)
+                        If node Is Nothing Then
+                            'NodeKey not found
+                            Message.AddWarning("Node Key not found: " & NodeKey & vbCrLf)
+                        Else
+                            trvLibrary.SelectedNode = node(0)
+                            trvLibrary.SelectedNode.Nodes.Add(NewFileName, NewFileName, 14, 15) 'key As String, text As String, imageIndex As Integer, selectedImageIndex As Integer
+                        End If
+                    End If
+                End If
+
+            ElseIf LCase(FilePath).EndsWith(".rtf") Then
+                Message.Add("The file is a Rich Text Format document." & vbCrLf)
+                'Get the FileName of the new RTF file:
+                Dim NewFileName As String = System.IO.Path.GetFileName(FilePath)
+                'Check if the file is already in the project:
+                If Project.DataFileExists(NewFileName) Then
+                    Message.Add("The File Name already exists in the project." & vbCrLf)
+                Else
+                    If ItemInfo.ContainsKey(NewFileName) Then
+                        Message.AddWarning("A node is already has the NodeKey: " & NewFileName & vbCrLf)
+                    Else
+                        'Copy the file to the Project Data Location.
+                        If Project.DataDirLocn.Type = ADVL_Utilities_Library_1.FileLocation.Types.Archive Then 'Use a filestream to write data to an archive.
+                            Dim fileStream As New IO.FileStream(FilePath, System.IO.FileMode.Open)
+                            Dim myData(fileStream.Length) As Byte
+                            fileStream.Read(myData, 0, fileStream.Length)
+                            Dim pdfData As New IO.MemoryStream
+                            Dim streamWriter As New IO.BinaryWriter(pdfData)
+                            streamWriter.Write(myData)
+                            fileStream.Close()
+                            Project.SaveData(NewFileName, pdfData)
+                        Else 'Use a simple file copy to write data to a directory.
+                            My.Computer.FileSystem.CopyFile(FilePath, Project.DataDirLocn.Path & "\" & NewFileName)
+                        End If
+
+                        'Add ItemInfo entry:
+                        ItemInfo.Add(NewFileName, New clsItemInfo)
+                        Dim NodeText As String = NewFileName 'The text that appears on the node in the treeview.
+                        ItemInfo(NewFileName).Type = "RTF"
+                        ItemInfo(NewFileName).Description = ""
+                        ItemInfo(NewFileName).CreationDate = Format(Now, "d-MMM-yyyy H:mm:ss")
+                        ItemInfo(NewFileName).LastEditDate = Format(Now, "d-MMM-yyyy H:mm:ss")
+                        ItemInfo(NewFileName).Directory = ""
+
+                        'Add the XLS node to the tree.
+                        'Select the Parent Node:
+                        Dim node As TreeNode() = trvLibrary.Nodes.Find(NodeKey, True)
+                        If node Is Nothing Then
+                            'NodeKey not found
+                            Message.AddWarning("Node Key not found: " & NodeKey & vbCrLf)
+                        Else
+                            trvLibrary.SelectedNode = node(0)
+                            trvLibrary.SelectedNode.Nodes.Add(NewFileName, NewFileName, 4, 5) 'key As String, text As String, imageIndex As Integer, selectedImageIndex As Integer
+                        End If
+                    End If
+                End If
+
+            ElseIf _newItemType = NewItemTypes.XMsg Then
+                Message.Add("The file is an XMessage." & vbCrLf)
+                'Get the FileName of the new XMessage file:
+                Dim NewFileName As String = System.IO.Path.GetFileName(FilePath)
+                'Check if the file is already in the project:
+                If Project.DataFileExists(NewFileName) Then
+                    Message.Add("The File Name already exists in the project." & vbCrLf)
+                Else
+                    If ItemInfo.ContainsKey(NewFileName) Then
+                        Message.AddWarning("A node is already has the NodeKey: " & NewFileName & vbCrLf)
+                    Else
+                        'Copy the file to the Project Data Location.
+                        If Project.DataDirLocn.Type = ADVL_Utilities_Library_1.FileLocation.Types.Archive Then 'Use a filestream to write data to an archive.
+                            'NOTE: This method appears to corrupt .xlsx files! To be checked! (The DataDirLocn will usually be a directory and use a simple file copy - only an issue for an Archive project.)
+                            Dim fileStream As New IO.FileStream(FilePath, System.IO.FileMode.Open)
+                            Dim myData(fileStream.Length) As Byte
+                            fileStream.Read(myData, 0, fileStream.Length)
+                            Dim pdfData As New IO.MemoryStream
+                            Dim streamWriter As New IO.BinaryWriter(pdfData)
+                            streamWriter.Write(myData)
+                            fileStream.Close()
+                            Project.SaveData(NewFileName, pdfData)
+                        Else 'Use a simple file copy to write data to a directory.
+                            My.Computer.FileSystem.CopyFile(FilePath, Project.DataDirLocn.Path & "\" & NewFileName)
+                        End If
+
+                        'Add ItemInfo entry:
+                        ItemInfo.Add(NewFileName, New clsItemInfo)
+                        Dim NodeText As String = NewFileName 'The text that appears on the node in the treeview.
+                        ItemInfo(NewFileName).Type = "XMsg"
+                        ItemInfo(NewFileName).Description = ""
+                        ItemInfo(NewFileName).CreationDate = Format(Now, "d-MMM-yyyy H:mm:ss")
+                        ItemInfo(NewFileName).LastEditDate = Format(Now, "d-MMM-yyyy H:mm:ss")
+                        ItemInfo(NewFileName).Directory = ""
+
+                        'Add the XMsg node to the tree.
+                        'Select the Parent Node:
+                        Dim node As TreeNode() = trvLibrary.Nodes.Find(NodeKey, True)
+                        If node Is Nothing Then
+                            'NodeKey not found
+                            Message.AddWarning("Node Key not found: " & NodeKey & vbCrLf)
+                        Else
+                            trvLibrary.SelectedNode = node(0)
+                            trvLibrary.SelectedNode.Nodes.Add(NewFileName, NewFileName, 18, 19) 'key As String, text As String, imageIndex As Integer, selectedImageIndex As Integer
+                        End If
+                    End If
+                End If
+
+            ElseIf _newItemType = NewItemTypes.XSeq Then
+                Message.Add("The file is an XSequence." & vbCrLf)
+                'Get the FileName of the new XMessage file:
+                Dim NewFileName As String = System.IO.Path.GetFileName(FilePath)
+                'Check if the file is already in the project:
+                If Project.DataFileExists(NewFileName) Then
+                    Message.Add("The File Name already exists in the project." & vbCrLf)
+                Else
+                    If ItemInfo.ContainsKey(NewFileName) Then
+                        Message.AddWarning("A node is already has the NodeKey: " & NewFileName & vbCrLf)
+                    Else
+                        'Copy the file to the Project Data Location.
+                        If Project.DataDirLocn.Type = ADVL_Utilities_Library_1.FileLocation.Types.Archive Then 'Use a filestream to write data to an archive.
+                            'NOTE: This method appears to corrupt .xlsx files! To be checked! (The DataDirLocn will usually be a directory and use a simple file copy - only an issue for an Archive project.)
+                            Dim fileStream As New IO.FileStream(FilePath, System.IO.FileMode.Open)
+                            Dim myData(fileStream.Length) As Byte
+                            fileStream.Read(myData, 0, fileStream.Length)
+                            Dim pdfData As New IO.MemoryStream
+                            Dim streamWriter As New IO.BinaryWriter(pdfData)
+                            streamWriter.Write(myData)
+                            fileStream.Close()
+                            Project.SaveData(NewFileName, pdfData)
+                        Else 'Use a simple file copy to write data to a directory.
+                            My.Computer.FileSystem.CopyFile(FilePath, Project.DataDirLocn.Path & "\" & NewFileName)
+                        End If
+
+                        'Add ItemInfo entry:
+                        ItemInfo.Add(NewFileName, New clsItemInfo)
+                        Dim NodeText As String = NewFileName 'The text that appears on the node in the treeview.
+                        ItemInfo(NewFileName).Type = "XSeq"
+                        ItemInfo(NewFileName).Description = ""
+                        ItemInfo(NewFileName).CreationDate = Format(Now, "d-MMM-yyyy H:mm:ss")
+                        ItemInfo(NewFileName).LastEditDate = Format(Now, "d-MMM-yyyy H:mm:ss")
+                        ItemInfo(NewFileName).Directory = ""
+
+                        'Add the XSeq node to the tree.
+                        'Select the Parent Node:
+                        Dim node As TreeNode() = trvLibrary.Nodes.Find(NodeKey, True)
+                        If node Is Nothing Then
+                            'NodeKey not found
+                            Message.AddWarning("Node Key not found: " & NodeKey & vbCrLf)
+                        Else
+                            trvLibrary.SelectedNode = node(0)
+                            trvLibrary.SelectedNode.Nodes.Add(NewFileName, NewFileName, 20, 21) 'key As String, text As String, imageIndex As Integer, selectedImageIndex As Integer
+                        End If
+                    End If
+                End If
+
             Else
-                Message.Add("The file is a not PDF document." & vbCrLf)
+                Message.Add("The file is a not PDF or XLS document." & vbCrLf)
             End If
         End If
     End Sub
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#End Region 'Methods Called by JavaScript -----------------------------------------------------------------------------------------------------------------------------------------------------
 
     Private Sub chkConnect_LostFocus(sender As Object, e As EventArgs) Handles chkConnect.LostFocus
         If chkConnect.Checked Then
@@ -6914,33 +8496,650 @@ Public Class Main
         Project.SaveProjectInfoFile()
     End Sub
 
-    Private Sub Timer3_Tick(sender As Object, e As EventArgs) Handles Timer3.Tick
-        'Keet the connection awake with each tick:
+    'Private Sub Timer3_Tick(sender As Object, e As EventArgs) Handles Timer3.Tick
+    '    'Keet the connection awake with each tick:
 
-        If ConnectedToComnet = True Then
+    '    If ConnectedToComnet = True Then
+    '        Try
+    '            If client.IsAlive() Then
+    '                Message.Add(Format(Now, "HH:mm:ss") & " Connection OK." & vbCrLf)
+    '                Timer3.Interval = TimeSpan.FromMinutes(55).TotalMilliseconds '55 minute interval
+    '            Else
+    '                Message.Add(Format(Now, "HH:mm:ss") & " Connection Fault." & vbCrLf)
+    '                Timer3.Interval = TimeSpan.FromMinutes(55).TotalMilliseconds '55 minute interval
+    '            End If
+    '        Catch ex As Exception
+    '            Message.AddWarning(ex.Message & vbCrLf)
+    '            'Set interval to five minutes - try again in five minutes:
+    '            Timer3.Interval = TimeSpan.FromMinutes(5).TotalMilliseconds '5 minute interval
+    '        End Try
+    '    Else
+    '        Message.Add(Format(Now, "HH:mm:ss") & " Not connected." & vbCrLf)
+    '    End If
+    'End Sub
+
+    Private Sub chkConnect_CheckedChanged(sender As Object, e As EventArgs) Handles chkConnect.CheckedChanged
+
+    End Sub
+
+    Private Sub btnFindText_Click(sender As Object, e As EventArgs) Handles btnFindText.Click
+        'Find the text shown in txtFindText.Text
+        'Look in the document associated with the selected node
+
+        If trvLibrary.SelectedNode Is Nothing Then
+            Message.AddWarning("No document has been selected in the tree view." & vbCrLf)
+        Else
+
+            Dim FileName As String
+            FileName = trvLibrary.SelectedNode.Name
+            If FileName.EndsWith(".DocLib") Then
+                Message.AddWarning("The Document Library node has been selected, not a document." & vbCrLf)
+            ElseIf FileName.EndsWith(".DocColl") Then
+                Message.AddWarning("A Document Collection node has been selected, not a document." & vbCrLf)
+            Else
+                'A document has been selected.
+                If ItemInfo.ContainsKey(FileName) Then
+                    Select Case ItemInfo(FileName).Type
+                        Case "RTF"
+                            'OpenRtfWindow(FileName) 'This shows the Rtf window if it already exists or creates a new one to display the file.
+                            'FindFirstRtf(FileName, txtFindText.Text)
+                            If chkHighlight.Checked Then
+                                If chkFindFirst.Checked Then
+                                    FindTextInRtf(FileName, txtFindText.Text, True, True)
+                                Else
+                                    FindTextInRtf(FileName, txtFindText.Text, True, False)
+                                End If
+                            Else
+                                If chkFindFirst.Checked Then
+                                    FindTextInRtf(FileName, txtFindText.Text, False, True)
+                                Else
+                                    FindTextInRtf(FileName, txtFindText.Text, False, False)
+                                End If
+                            End If
+                        Case "XML"
+                            Message.Add("Code not yet added to search for text in an XML file." & vbCrLf)
+
+                        Case "HTML"
+                            If rbCodeView.Checked = True Then 'Display HTML Code View.
+                                Message.Add("Code not yet added to search for text in a HTML file." & vbCrLf)
+
+                            Else 'Display HTML Web View.
+                                Message.Add("Code not yet added to search for text in a Web page." & vbCrLf)
+
+                            End If
+                        Case "TXT"
+                            Message.Add("Code not yet added to search for text in a Text file." & vbCrLf)
+
+                        Case "PDF"
+                            Message.Add("Code not yet added to search for text in a PDF file." & vbCrLf)
+
+                    End Select
+                Else
+                    Message.AddWarning("No information is available on the selected node :" & FileName & vbCrLf)
+                End If
+            End If
+
+        End If
+
+    End Sub
+
+    Private Sub FindFirstRtf(ByVal FileName As String, ByVal SearchText As String)
+        'Find the first instance of the SearchText in the RTF window displaying FileName.
+
+        If FileName = "" Then
+
+        Else
+            'First check if the RTF file is already open:
+            Dim FileFound As Boolean = False
+            If RtfDisplayFormList.Count = 0 Then
+
+            Else
+                Dim I As Integer
+                For I = 0 To RtfDisplayFormList.Count - 1
+                    If RtfDisplayFormList(I) Is Nothing Then
+
+                    Else
+                        If RtfDisplayFormList(I).FileName = FileName Then
+                            FileFound = True
+                            RtfDisplayFormList(I).BringToFront
+                            RtfDisplayFormList(I).FindFirstText(SearchText) 'Search for the text
+                        End If
+                    End If
+                Next
+            End If
+
+            If FileFound = False Then
+                Dim FormNo As Integer = NewRtfDisplay()
+                RtfDisplayFormList(FormNo).FileName = FileName
+                RtfDisplayFormList(FormNo).Description = ItemInfo(FileName).Description
+                RtfDisplayFormList(FormNo).FileDirectory = ItemInfo(FileName).Directory
+                If RtfDisplayFormList(FormNo).FileDirectory = "" Then
+                    RtfDisplayFormList(FormNo).FileLocationType = LocationTypes.Project
+                Else
+                    RtfDisplayFormList(FormNo).FileLocationType = LocationTypes.FileSystem
+                End If
+                RtfDisplayFormList(FormNo).OpenDocument
+                RtfDisplayFormList(FormNo).FindFirstText(SearchText) 'Search for the text.
+            End If
+
+        End If
+
+    End Sub
+
+    Private Sub FindFirstRtf(ByVal FileName As String, ByVal SearchText As String, ByVal Highlight As Boolean)
+        'Find the first instance of the SearchText in the RTF window displaying FileName.
+        'A new RTF window is opened if required.
+        'Highlight the SearchText when found.
+
+        If FileName = "" Then
+
+        Else
+            'First check if the RTF file is already open:
+            Dim FileFound As Boolean = False
+            If RtfDisplayFormList.Count = 0 Then
+
+            Else
+                Dim I As Integer
+                For I = 0 To RtfDisplayFormList.Count - 1
+                    If RtfDisplayFormList(I) Is Nothing Then
+
+                    Else
+                        If RtfDisplayFormList(I).FileName = FileName Then
+                            FileFound = True
+                            RtfDisplayFormList(I).BringToFront
+                            RtfDisplayFormList(I).FindFirstText(SearchText) 'Search for the text
+                        End If
+                    End If
+                Next
+            End If
+
+            If FileFound = False Then
+                Dim FormNo As Integer = NewRtfDisplay()
+                RtfDisplayFormList(FormNo).FileName = FileName
+                RtfDisplayFormList(FormNo).Description = ItemInfo(FileName).Description
+                RtfDisplayFormList(FormNo).FileDirectory = ItemInfo(FileName).Directory
+                If RtfDisplayFormList(FormNo).FileDirectory = "" Then
+                    RtfDisplayFormList(FormNo).FileLocationType = LocationTypes.Project
+                Else
+                    RtfDisplayFormList(FormNo).FileLocationType = LocationTypes.FileSystem
+                End If
+                RtfDisplayFormList(FormNo).OpenDocument
+                RtfDisplayFormList(FormNo).FindFirstText(SearchText) 'Search for the text.
+            End If
+
+        End If
+
+    End Sub
+
+    Private Sub FindTextInRtf(ByVal FileName As String, ByVal SearchText As String, ByVal Highlight As Boolean, ByVal FindFirst As Boolean)
+        'Find the SearchText in the RTF window displaying FileName.
+        'A new RTF window is opened if required.
+        'Highlight the SearchText when found if Highlight is True.
+        'Find the first instance of SearchText if FindFirst is True, else find the next instance.
+
+        If FileName = "" Then
+            Message.AddWarning("The file name is blank." & vbCrLf)
+        Else
+            'First check if the RTF file is already open:
+            Dim FileFound As Boolean = False
+            If RtfDisplayFormList.Count = 0 Then
+
+            Else
+                Dim I As Integer
+                For I = 0 To RtfDisplayFormList.Count - 1
+                    If RtfDisplayFormList(I) Is Nothing Then
+
+                    Else
+                        If RtfDisplayFormList(I).FileName = FileName Then
+                            FileFound = True
+                            RtfDisplayFormList(I).BringToFront
+                            'RtfDisplayFormList(I).FindFirstText(SearchText) 'Search for the text
+                            RtfDisplayFormList(I).FindText(SearchText, Highlight, FindFirst) 'Search for the text
+                        End If
+                    End If
+                Next
+            End If
+
+            If FileFound = False Then
+                Dim FormNo As Integer = NewRtfDisplay()
+                RtfDisplayFormList(FormNo).FileName = FileName
+                RtfDisplayFormList(FormNo).Description = ItemInfo(FileName).Description
+                RtfDisplayFormList(FormNo).FileDirectory = ItemInfo(FileName).Directory
+                If RtfDisplayFormList(FormNo).FileDirectory = "" Then
+                    RtfDisplayFormList(FormNo).FileLocationType = LocationTypes.Project
+                Else
+                    RtfDisplayFormList(FormNo).FileLocationType = LocationTypes.FileSystem
+                End If
+                RtfDisplayFormList(FormNo).OpenDocument
+                'RtfDisplayFormList(FormNo).FindFirstText(SearchText) 'Search for the text.
+                RtfDisplayFormList(FormNo).FindText(SearchText, Highlight, FindFirst) 'Search for the text
+            End If
+        End If
+    End Sub
+
+    Private Sub FindTextInMainRtf(ByVal FileName As String, ByVal SearchText As String, ByVal Highlight As Boolean, ByVal FindFirst As Boolean)
+        'Find the SearchText in the Document View tab (in the Main window) displaying FileName.
+        'The RTF file is opened if required.
+        'Highlight the SearchText when found if Highlight is True.
+        'Find the first instance of SearchText if FindFirst is True, else find the next instance.
+
+        If FileName = "" Then
+            Message.AddWarning("The file name is blank." & vbCrLf)
+        Else
+            If ItemInfo.ContainsKey(FileName) Then
+                If ItemInfo(FileName).Type = "RTF" Then
+                    If Me.FileName = FileName Then
+                        'The file is already open in the Document View tab.
+                        FindTextInRtf(SearchText, Highlight, FindFirst)
+                        'Me.BringToFront()
+                        'Me.TopMost = True
+                        Me.Activate()
+                        'Me.Show()
+                        'Me.Focus()
+                        'Me.Refresh()
+                        Me.TopMost = True
+                        Me.TopMost = False
+                    Else
+                        'Open the file in the Document View tab:
+                        WebBrowser1.Visible = False
+                        AxAcroPDF1.Visible = False
+                        XmlHtmDisplay2.Visible = True
+                        If ItemInfo(FileName).Directory = "" Then
+                            Dim rtbData As New IO.MemoryStream
+                            Project.ReadData(FileName, rtbData)
+                            XmlHtmDisplay2.Clear()
+                            rtbData.Position = 0
+                            XmlHtmDisplay2.LoadFile(rtbData, RichTextBoxStreamType.RichText)
+                        Else
+                            XmlHtmDisplay2.LoadFile(ItemInfo(FileName).Directory & "\" & FileName)
+                        End If
+                        FindTextInRtf(SearchText, Highlight, FindFirst)
+                        'Me.BringToFront()
+                        'Me.TopMost = True
+                        Me.Activate()
+                        'Me.Show()
+                        'Me.Focus()
+                        'Me.Refresh()
+                        Me.TopMost = True
+                        Me.TopMost = False
+                    End If
+                Else
+                    Message.AddWarning("The file is not Rich Text Format." & vbCrLf)
+                End If
+            Else
+                Message.AddWarning("The file name is not in the file list." & vbCrLf)
+            End If
+        End If
+    End Sub
+
+    Public Sub FindTextInRtf(ByVal myText As String, ByVal Highlight As Boolean, ByVal FindFirst As Boolean)
+        'Find myText in the RichTextBox in the Document View tab (XmlHtmDisplay2).
+
+        Dim StartPos As Integer
+
+        If FindFirst Then
+            StartPos = 0
+        Else
+            StartPos = XmlHtmDisplay1.SelectionStart + 1
+        End If
+
+        XmlHtmDisplay2.Focus()
+
+        Dim FoundPos As Integer = XmlHtmDisplay2.Find(myText, StartPos, RichTextBoxFinds.MatchCase)
+
+        If FoundPos < 0 Then
+            Message.Add("String not found." & vbCrLf)
+        Else
+            XmlHtmDisplay2.SelectionStart = FoundPos
+            If Highlight Then
+                XmlHtmDisplay2.SelectionLength = myText.Length
+            Else
+                XmlHtmDisplay2.SelectionLength = 0
+            End If
+        End If
+    End Sub
+
+    Private Sub ToolStripMenuItem1_EditWorkflowTabPage_Click(sender As Object, e As EventArgs) Handles ToolStripMenuItem1_EditWorkflowTabPage.Click
+        'Edit the Workflows Web Page:
+
+        If WorkflowFileName = "" Then
+            Message.AddWarning("No page to edit." & vbCrLf)
+        Else
+            Dim FormNo As Integer = OpenNewWFHtmlDisplayPage()
+            WFHtmlDisplayFormList(FormNo).FileName = WorkflowFileName
+            WFHtmlDisplayFormList(FormNo).OpenDocument
+
+        End If
+
+        '    Public WFHtmlDisplayFormList As New ArrayList 'Used for displaying multiple HtmlDisplay forms.
+    End Sub
+
+    Private Sub ToolStripMenuItem1_ShowStartPageInWorkflowTab_Click(sender As Object, e As EventArgs) Handles ToolStripMenuItem1_ShowStartPageInWorkflowTab.Click
+        'Show the Start Page in the Workflows Tab:
+        OpenStartPage()
+
+    End Sub
+
+    Private Sub bgwSendMessage_DoWork(sender As Object, e As DoWorkEventArgs) Handles bgwSendMessage.DoWork
+        'Send a message on a separate thread:
+        Try
+            If IsNothing(client) Then
+                bgwSendMessage.ReportProgress(1, "No Connection available. Message not sent!")
+            Else
+                If client.State = ServiceModel.CommunicationState.Faulted Then
+                    bgwSendMessage.ReportProgress(1, "Connection state is faulted. Message not sent!")
+                Else
+                    Dim SendMessageParams As clsSendMessageParams = e.Argument
+                    client.SendMessage(SendMessageParams.ProjectNetworkName, SendMessageParams.ConnectionName, SendMessageParams.Message)
+                End If
+            End If
+        Catch ex As Exception
+            bgwSendMessage.ReportProgress(1, ex.Message)
+        End Try
+    End Sub
+
+    Private Sub bgwSendMessage_ProgressChanged(sender As Object, e As ProgressChangedEventArgs) Handles bgwSendMessage.ProgressChanged
+        'Display an error message:
+        Message.AddWarning("Send Message error: " & e.UserState.ToString & vbCrLf) 'Show the bgwSendMessage message 
+    End Sub
+
+    Private Sub bgwSendMessageAlt_DoWork(sender As Object, e As DoWorkEventArgs) Handles bgwSendMessageAlt.DoWork
+        'Alternative SendMessage background worker - used to send a message while instructions are being processed. 
+        'Send a message on a separate thread
+        Try
+            If IsNothing(client) Then
+                bgwSendMessageAlt.ReportProgress(1, "No Connection available. Message not sent!")
+            Else
+                If client.State = ServiceModel.CommunicationState.Faulted Then
+                    bgwSendMessageAlt.ReportProgress(1, "Connection state is faulted. Message not sent!")
+                Else
+                    Dim SendMessageParamsAlt As clsSendMessageParams = e.Argument
+                    client.SendMessage(SendMessageParamsAlt.ProjectNetworkName, SendMessageParamsAlt.ConnectionName, SendMessageParamsAlt.Message)
+                End If
+            End If
+        Catch ex As Exception
+            bgwSendMessageAlt.ReportProgress(1, ex.Message)
+        End Try
+    End Sub
+
+    Private Sub bgwSendMessageAlt_ProgressChanged(sender As Object, e As ProgressChangedEventArgs) Handles bgwSendMessageAlt.ProgressChanged
+        'Display an error message:
+        Message.AddWarning("Send Message error: " & e.UserState.ToString & vbCrLf) 'Show the bgwSendMessageAlt message 
+    End Sub
+
+    Private Sub XMsg_ErrorMsg(ErrMsg As String) Handles XMsg.ErrorMsg
+        Message.AddWarning(ErrMsg & vbCrLf)
+    End Sub
+
+    Private Sub XMsgLocal_Instruction(Info As String, Locn As String) Handles XMsgLocal.Instruction
+
+    End Sub
+
+    Private Sub Message_ShowXMessagesChanged(Show As Boolean) Handles Message.ShowXMessagesChanged
+        ShowXMessages = Show
+    End Sub
+
+    Private Sub Message_ShowSysMessagesChanged(Show As Boolean) Handles Message.ShowSysMessagesChanged
+        ShowSysMessages = Show
+    End Sub
+
+    'Private Sub btnMove_Click(sender As Object, e As EventArgs) Handles btnMove.Click
+    '    Message.MessageForm.Top = Val(txtYLocn.Text)
+    '    Message.MessageForm.Left = Val(txtXLocn.Text)
+    'End Sub
+
+    'Private Sub chkCheckPosn_Click(sender As Object, e As EventArgs) Handles chkCheckPosn.Click
+    '    'Check that the Message form can be seen on a screen.
+
+
+    '    If Message.MessageForm Is Nothing Then
+    '        Message.ApplicationName = ApplicationInfo.Name
+    '        Message.SettingsLocn = Project.SettingsLocn
+    '        Message.Show()
+    '        Message.MessageForm.BringToFront()
+    '    End If
+
+
+    '    Dim MinWidthVisible As Integer = 48 'Minimum number of X pixels visible. The form will be moved if this many form pixels are not visible.
+    '    Dim MinHeightVisible As Integer = 48 'Minimum number of Y pixels visible. The form will be moved if this many form pixels are not visible.
+
+    '    Dim FormRect As New Rectangle(Message.MessageForm.Left, Message.MessageForm.Top, Message.MessageForm.Width, Message.MessageForm.Height)
+    '    Dim WARect As Rectangle = Screen.GetWorkingArea(FormRect) 'The Working Area rectangle - the usable area of the screen containing the form.
+
+    '    'Check if the top of the form is less than zero:
+    '    If Message.MessageForm.Top < 0 Then Message.MessageForm.Top = 0
+
+    '    'Check if the top of the form is too close to the bottom of the Working Area:
+    '    If (Message.MessageForm.Top + MinHeightVisible) > (WARect.Top + WARect.Height) Then
+    '        Message.MessageForm.Top = WARect.Top + WARect.Height - MinHeightVisible
+    '    End If
+
+    '    'Check if the left edge of the form is too close to the right edge of the Working Area:
+    '    If (Message.MessageForm.Left + MinWidthVisible) > (WARect.Left + WARect.Width) Then
+    '        Message.MessageForm.Left = WARect.Left + WARect.Width - MinWidthVisible
+    '    End If
+
+    '    'Check if the right edge of the form is too close to the left edge of the Working Area:
+    '    If (Message.MessageForm.Left + Message.MessageForm.Width - MinWidthVisible) < WARect.Left Then
+    '        Message.MessageForm.Left = WARect.Left - Message.MessageForm.Width + MinWidthVisible
+    '    End If
+    'End Sub
+
+
+
+
+    Private Sub Project_NewProjectCreated(ProjectPath As String) Handles Project.NewProjectCreated
+        SendProjectInfo(ProjectPath) 'Send the path of the new project to the Network application. THe new project will be added to the list of projects.
+    End Sub
+
+    Private Sub bgwComCheck_DoWork(sender As Object, e As DoWorkEventArgs) Handles bgwComCheck.DoWork
+        'The communications check thread.
+        While ConnectedToComnet
             Try
                 If client.IsAlive() Then
-                    Message.Add(Format(Now, "HH:mm:ss") & " Connection OK." & vbCrLf)
-                    Timer3.Interval = TimeSpan.FromMinutes(55).TotalMilliseconds '55 minute interval
+                    'Message.Add(Format(Now, "HH:mm:ss") & " Connection OK." & vbCrLf) 'This produces the error: Cross thread operation not valid.
+                    bgwComCheck.ReportProgress(1, Format(Now, "HH:mm:ss") & " Connection OK." & vbCrLf)
                 Else
-                    Message.Add(Format(Now, "HH:mm:ss") & " Connection Fault." & vbCrLf)
-                    Timer3.Interval = TimeSpan.FromMinutes(55).TotalMilliseconds '55 minute interval
+                    'Message.Add(Format(Now, "HH:mm:ss") & " Connection Fault." & vbCrLf) 'This produces the error: Cross thread operation not valid.
+                    bgwComCheck.ReportProgress(1, Format(Now, "HH:mm:ss") & " Connection Fault.")
                 End If
             Catch ex As Exception
-                Message.AddWarning(ex.Message & vbCrLf)
-                'Set interval to five minutes - try again in five minutes:
-                Timer3.Interval = TimeSpan.FromMinutes(5).TotalMilliseconds '5 minute interval
+                bgwComCheck.ReportProgress(1, "Error in bgeComCheck_DoWork!" & vbCrLf)
+                bgwComCheck.ReportProgress(1, ex.Message & vbCrLf)
             End Try
+
+            'System.Threading.Thread.Sleep(60000) 'Sleep time in milliseconds (60 seconds) - For testing only.
+            System.Threading.Thread.Sleep(1800000) 'Sleep time in milliseconds (30 minutes)
+        End While
+
+    End Sub
+
+    Private Sub bgwComCheck_ProgressChanged(sender As Object, e As ProgressChangedEventArgs) Handles bgwComCheck.ProgressChanged
+        Message.Add(e.UserState.ToString) 'Show the ComCheck message 
+    End Sub
+
+    Private Sub btnShowItemList_Click(sender As Object, e As EventArgs) Handles btnShowItemList.Click
+        'Show the list of items in the Message window:
+
+        'Message.Add(vbCrLf & "List of items in the library: " & LibraryName & vbCrLf)
+        Message.AddText(vbCrLf & "List of items in the library: " & LibraryName & vbCrLf, "Heading 11pt") 'Message displayed with bold text.
+        Dim ItemCount As Integer = ItemInfo.Count
+        Message.AddText("Number of items: " & ItemCount & vbCrLf, "Bold")
+
+        For Each item In ItemInfo
+            Message.AddText(vbCrLf & "Key: " & item.Key & vbCrLf, "Bold")
+            Message.Add("Type: " & item.Value.Type & vbCrLf)
+            Message.Add("Creation date: " & item.Value.CreationDate & vbCrLf)
+            Message.Add("LastEditDate: " & item.Value.LastEditDate & vbCrLf)
+            Message.Add("Description: " & item.Value.Description & vbCrLf)
+            Message.Add("Directory: " & item.Value.Directory & vbCrLf)
+            Message.Add("FormNo: " & item.Value.FormNo & vbCrLf)
+        Next
+
+
+    End Sub
+
+    Private Sub btnCopy_Click(sender As Object, e As EventArgs) Handles btnCopy.Click
+        'This method copies information from the selected node to the Create Item tab.
+        'This provides a template to be edited for the new item. 
+
+        Select Case txtNodeType.Text
+            Case "Collection"
+                rbCollection.Checked = True
+            Case "RTF"
+                rbRtf.Checked = True
+            Case "XML"
+                rbXml.Checked = True
+            Case "TXT"
+                rbTxt.Checked = True
+            Case "HTML"
+                rbHtml.Checked = True
+            Case "PDF"
+                rbPdf.Checked = True
+            Case "XLS"
+                rbXls.Checked = True
+            Case "FolderLink"
+                rbFolderLink.Checked = True
+            Case "XMsg"
+                rbXMsg.Checked = True
+            Case "XSeq"
+                rbXSeq.Checked = True
+            Case Else
+                Message.AddWarning("Unknown node type: " & txtNodeType.Text & vbCrLf)
+        End Select
+
+        txtNewNodeFileName.Text = txtNodeKey.Text
+        txtItemText.Text = txtNodeText.Text
+        txtNewNodeDescr.Text = txtItemDescription.Text
+
+    End Sub
+
+    Private Sub btnUpdateDocList_Click(sender As Object, e As EventArgs) Handles btnUpdateDocList.Click
+        'Update document list.
+        UpdateDocList()
+    End Sub
+
+    Private Sub UpdateDocList()
+        'Update document list.
+
+        dgvDocList.Rows.Clear()
+
+        For Each item In ItemInfo
+            dgvDocList.Rows.Add(item.Value.Text, item.Value.Type, item.Value.CreationDate, item.Value.LastEditDate, item.Key)
+        Next
+
+        dgvDocList.AutoResizeColumns()
+        dgvDocList.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells
+        dgvDocList.Columns(4).AutoSizeMode = DataGridViewAutoSizeColumnMode.None
+        dgvDocList.Columns(4).Width = 300
+        dgvDocList.Sort(dgvDocList.Columns(3), ListSortDirection.Descending)
+    End Sub
+
+    Private Sub dgvDocList_SelectionChanged(sender As Object, e As EventArgs) Handles dgvDocList.SelectionChanged
+
+    End Sub
+
+    Private Sub dgvDocList_CellContentClick(sender As Object, e As DataGridViewCellEventArgs) Handles dgvDocList.CellContentClick
+
+        'Dim RowNo As Integer = e.RowIndex
+
+        'If RowNo = -1 Then
+        '    txtDocFileName.Text = ""
+        '    txtDocDescr.Text = ""
+        'Else
+        '    Dim FileName As String = dgvDocList.SelectedRows(0).Cells(4).Value
+        '    If ItemInfo.ContainsKey(FileName) Then
+        '        txtDocFileName.Text = FileName
+        '        txtDocDescr.Text = ItemInfo(FileName).Description
+        '    Else
+        '        txtDocFileName.Text = FileName
+        '        txtDocDescr.Text = ""
+        '    End If
+        'End If
+    End Sub
+
+    Private Sub dgvDocList_DoubleClick(sender As Object, e As EventArgs) Handles dgvDocList.DoubleClick
+        OpenDocListItemInNewWindow()
+    End Sub
+
+    Private Sub dgvDocList_RowEnter(sender As Object, e As DataGridViewCellEventArgs) Handles dgvDocList.RowEnter
+        Dim RowNo As Integer = e.RowIndex
+
+        If RowNo = -1 Then
+            txtDocFileName.Text = ""
+            txtDocDescr.Text = ""
         Else
-            Message.Add(Format(Now, "HH:mm:ss") & " Not connected." & vbCrLf)
+            'If dgvDocList.Focused Then
+            If dgvDocList.SelectedRows.Count > 0 Then
+                Dim FileName As String = dgvDocList.SelectedRows(0).Cells(4).Value
+                If ItemInfo.ContainsKey(FileName) Then
+                    txtDocFileName.Text = FileName
+                    txtDocDescr.Text = ItemInfo(FileName).Description
+                Else
+                    txtDocFileName.Text = FileName
+                    txtDocDescr.Text = ""
+                End If
+            End If
+            'End If
+        End If
+    End Sub
+
+    Private Sub btnOpenDocInNewWindow2_Click(sender As Object, e As EventArgs) Handles btnOpenDocInNewWindow2.Click
+        'Open the document selected in the document list (dgvDocList) in a new window.
+
+        ''Select the node in the tree view:
+        'Dim myNodes As TreeNode() = trvLibrary.Nodes.Find(txtDocFileName.Text, True)
+
+        'If myNodes.Count = 0 Then
+        '    Message.AddWarning("The document node cound not be found." & vbCrLf)
+        'ElseIf myNodes.Count = 1 Then
+        '    trvLibrary.SelectedNode = myNodes(0)
+        '    OpenDocInNewWindow()
+        'Else
+        '    Message.AddWarning(myNodes.Count & " matching document nodes found. Te first one will be opened." & vbCrLf)
+        '    trvLibrary.SelectedNode = myNodes(0)
+        '    OpenDocInNewWindow()
+        'End If
+        OpenDocListItemInNewWindow()
+    End Sub
+
+    Private Sub OpenDocListItemInNewWindow()
+        'Select the node in the tree view:
+        Dim myNodes As TreeNode() = trvLibrary.Nodes.Find(txtDocFileName.Text, True)
+
+        If myNodes.Count = 0 Then
+            Message.AddWarning("The document node cound not be found." & vbCrLf)
+        ElseIf myNodes.Count = 1 Then
+            trvLibrary.SelectedNode = myNodes(0)
+            OpenDocInNewWindow()
+        Else
+            Message.AddWarning(myNodes.Count & " matching document nodes found. Te first one will be opened." & vbCrLf)
+            trvLibrary.SelectedNode = myNodes(0)
+            OpenDocInNewWindow()
         End If
     End Sub
 
 
 #End Region 'Form Methods ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+    Public Class clsSendMessageParams
+        'Parameters used when sending a message using the Message Service.
+        Public ProjectNetworkName As String
+        Public ConnectionName As String
+        Public Message As String
+    End Class
 
+    Private Sub btnAddToCollection_Click(sender As Object, e As EventArgs) Handles btnAddToCollection.Click
 
+    End Sub
+
+    Private Sub btnNewFile_Click(sender As Object, e As EventArgs) Handles btnNewFile.Click
+
+    End Sub
+
+    Private Sub txtNewNodeFileName_TextChanged(sender As Object, e As EventArgs) Handles txtNewNodeFileName.TextChanged
+
+    End Sub
 
 
 End Class
@@ -6961,6 +9160,17 @@ Public Class clsItemInfo
     'Width         'Integer
     'Height        'Integer
     'FormNo        'Integer
+
+    'The Text property was added 16 September 2020:
+    Private _text As String = ""
+    Property Text As String
+        Get
+            Return _text
+        End Get
+        Set(value As String)
+            _text = value
+        End Set
+    End Property
 
     Private _description As String = "" 'A description of the item. (Default value is "".)
     Property Description As String
@@ -7063,3 +9273,6 @@ Public Class clsItemInfo
     End Property
 
 End Class
+
+
+

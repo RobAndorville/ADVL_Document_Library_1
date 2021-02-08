@@ -147,7 +147,42 @@ Public Class frmWebView
 
             'Add code to read other saved setting here:
 
+            CheckFormPos()
         End If
+    End Sub
+
+    Private Sub CheckFormPos()
+        'Check that the form can be seen on a screen.
+
+        Dim MinWidthVisible As Integer = 192 'Minimum number of X pixels visible. The form will be moved if this many form pixels are not visible.
+        Dim MinHeightVisible As Integer = 64 'Minimum number of Y pixels visible. The form will be moved if this many form pixels are not visible.
+
+        Dim FormRect As New Rectangle(Me.Left, Me.Top, Me.Width, Me.Height)
+        Dim WARect As Rectangle = Screen.GetWorkingArea(FormRect) 'The Working Area rectangle - the usable area of the screen containing the form.
+
+        ''Check if the top of the form is less than zero:
+        'If Me.Top < 0 Then Me.Top = 0
+
+        'Check if the top of the form is above the top of the Working Area:
+        If Me.Top < WARect.Top Then
+            Me.Top = WARect.Top
+        End If
+
+        'Check if the top of the form is too close to the bottom of the Working Area:
+        If (Me.Top + MinHeightVisible) > (WARect.Top + WARect.Height) Then
+            Me.Top = WARect.Top + WARect.Height - MinHeightVisible
+        End If
+
+        'Check if the left edge of the form is too close to the right edge of the Working Area:
+        If (Me.Left + MinWidthVisible) > (WARect.Left + WARect.Width) Then
+            Me.Left = WARect.Left + WARect.Width - MinWidthVisible
+        End If
+
+        'Check if the right edge of the form is too close to the left edge of the Working Area:
+        If (Me.Left + Me.Width - MinWidthVisible) < WARect.Left Then
+            Me.Left = WARect.Left - Me.Width + MinWidthVisible
+        End If
+
     End Sub
 
     Protected Overrides Sub WndProc(ByRef m As Message) 'Save the form settings before the form is minimised:
@@ -468,8 +503,8 @@ Public Class frmWebView
     End Function
 
     'Public Sub SendXMessage(ByVal ConnName As String, ByVal XMsg As String)
-    Public Sub SendXMessage(ByVal AppNetName As String, ByVal ConnName As String, ByVal XMsg As String) 'UPDATED 2Feb19
-
+    'Public Sub SendXMessage(ByVal AppNetName As String, ByVal ConnName As String, ByVal XMsg As String) 'UPDATED 2Feb19
+    Public Sub SendXMessage(ByVal ProNetName As String, ByVal ConnName As String, ByVal XMsg As String)
         'Send the XMsg to the application with the connection name ConnName.
         If IsNothing(Main.client) Then
             Main.Message.Add("No client connection available!" & vbCrLf)
@@ -477,8 +512,11 @@ Public Class frmWebView
             If Main.client.State = ServiceModel.CommunicationState.Faulted Then
                 Main.Message.Add("client state is faulted. Message not sent!" & vbCrLf)
             Else
-                Main.client.SendMessageAsync(AppNetName, ConnName, XMsg) 'UPDATED 2Feb19
-                Main.Message.XAddText("Message sent to " & ConnName & " (AppNet: " & AppNetName & ") " & ":" & vbCrLf, "XmlSentNotice") 'UPDATED 2Feb19
+                'Main.client.SendMessageAsync(AppNetName, ConnName, XMsg) 'UPDATED 2Feb19
+                Main.client.SendMessageAsync(ProNetName, ConnName, XMsg)
+                'Main.Message.XAddText("Message sent to " & ConnName & " (AppNet: " & AppNetName & ") " & ":" & vbCrLf, "XmlSentNotice") 'UPDATED 2Feb19
+                'Main.Message.XAddText("Message sent to " & ConnName & " (ProNet: " & ProNetName & ") " & ":" & vbCrLf, "XmlSentNotice")
+                Main.Message.XAddText("Message sent to [" & ProNetName & "]." & ConnName & ":" & vbCrLf, "XmlSentNotice")
                 Main.Message.XAddXml(XMsg)
                 Main.Message.XAddText(vbCrLf, "Normal") 'Add extra line
             End If

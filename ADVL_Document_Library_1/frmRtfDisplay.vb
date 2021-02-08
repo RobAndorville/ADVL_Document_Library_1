@@ -10,6 +10,8 @@
     Private Shared Function GetCursor() As IntPtr
     End Function
 
+    Public WithEvents EditImage As frmEditImage
+
 #End Region 'Variable Declarations ------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 #Region " Properties - All the properties used in this form and this application" '============================================================================================================
@@ -225,7 +227,45 @@
                     XmlHtmDisplay1.WordWrap = False
                 End If
             End If
+
+            CheckFormPos()
         End If
+    End Sub
+
+    Private Sub CheckFormPos()
+        'Check that the form can be seen on a screen.
+
+        'Dim MinWidthVisible As Integer = 48 'Minimum number of X pixels visible. The form will be moved if this many form pixels are not visible.
+        'Dim MinHeightVisible As Integer = 48 'Minimum number of Y pixels visible. The form will be moved if this many form pixels are not visible.
+        Dim MinWidthVisible As Integer = 192 'Minimum number of X pixels visible. The form will be moved if this many form pixels are not visible.
+        Dim MinHeightVisible As Integer = 64 'Minimum number of Y pixels visible. The form will be moved if this many form pixels are not visible.
+
+        Dim FormRect As New Rectangle(Me.Left, Me.Top, Me.Width, Me.Height)
+        Dim WARect As Rectangle = Screen.GetWorkingArea(FormRect) 'The Working Area rectangle - the usable area of the screen containing the form.
+
+        ''Check if the top of the form is less than zero:
+        'If Me.Top < 0 Then Me.Top = 0
+
+        'Check if the top of the form is above the top of the Working Area:
+        If Me.Top < WARect.Top Then
+            Me.Top = WARect.Top
+        End If
+
+        'Check if the top of the form is too close to the bottom of the Working Area:
+        If (Me.Top + MinHeightVisible) > (WARect.Top + WARect.Height) Then
+            Me.Top = WARect.Top + WARect.Height - MinHeightVisible
+        End If
+
+        'Check if the left edge of the form is too close to the right edge of the Working Area:
+        If (Me.Left + MinWidthVisible) > (WARect.Left + WARect.Width) Then
+            Me.Left = WARect.Left + WARect.Width - MinWidthVisible
+        End If
+
+        'Check if the right edge of the form is too close to the left edge of the Working Area:
+        If (Me.Left + Me.Width - MinWidthVisible) < WARect.Left Then
+            Me.Left = WARect.Left - Me.Width + MinWidthVisible
+        End If
+
     End Sub
 
     Protected Overrides Sub WndProc(ByRef m As Message) 'Save the form settings before the form is minimised:
@@ -252,8 +292,48 @@
     Private Sub btnExit_Click(sender As Object, e As EventArgs) Handles btnExit.Click
         'Exit the Form
 
+        'If DocTextChanged = True Then
+        '    Dim result As Integer = MessageBox.Show("Save changes to the current document?", "Notice", MessageBoxButtons.YesNoCancel)
+        '    If result = DialogResult.Cancel Then
+        '        Exit Sub
+        '    ElseIf result = DialogResult.Yes Then
+        '        SaveDocument()
+        '    ElseIf result = DialogResult.No Then
+        '        'Do not save the changes!
+        '    End If
+        'End If
+
+        'Main.ClosedFormNo = FormNo 'The Main form property ClosedFormNo is set to this form number. This is used in the RtfDisplayFormClosed method to select the correct form to set to nothing.
+
+        'If FileName <> "" Then
+        '    LastFileName = FileName
+        'End If
+
+        'If IsNothing(EditRtf) Then
+        '    'The EditRtf form is already closed.
+        'Else
+        '    EditRtf.Close() 'Close the EditRtf form.
+        'End If
+
+        Me.Close() 'Close the form
+    End Sub
+
+    Private Sub Form_FormClosing(sender As Object, e As FormClosingEventArgs) Handles Me.FormClosing
+        If WindowState = FormWindowState.Normal Then
+            SaveFormSettings()
+        Else
+            'Dont save settings if the form is minimised. (The settings are not valid when the form is minimised.)
+        End If
+
+        If IsNothing(EditImage) Then
+            'The EditImage form is already closed.
+        Else
+            EditImage.Close() 'Close the EditImage form
+        End If
+
         If DocTextChanged = True Then
-            Dim result As Integer = MessageBox.Show("Save changes to the current document?", "Notice", MessageBoxButtons.YesNoCancel)
+            'Dim result As Integer = MessageBox.Show("Save changes to the current document?", "Notice", MessageBoxButtons.YesNoCancel)
+            Dim result As Integer = MessageBox.Show("This document is closing:" & vbCrLf & FileName & vbCrLf & "Save changes to the document?", "Notice", MessageBoxButtons.YesNoCancel)
             If result = DialogResult.Cancel Then
                 Exit Sub
             ElseIf result = DialogResult.Yes Then
@@ -272,18 +352,7 @@
         If IsNothing(EditRtf) Then
             'The EditRtf form is already closed.
         Else
-            'Close the EditRtf form:
-            EditRtf.Close()
-        End If
-
-        Me.Close() 'Close the form
-    End Sub
-
-    Private Sub Form_FormClosing(sender As Object, e As FormClosingEventArgs) Handles Me.FormClosing
-        If WindowState = FormWindowState.Normal Then
-            SaveFormSettings()
-        Else
-            'Dont save settings if the form is minimised.
+            EditRtf.Close() 'Close the EditRtf form.
         End If
     End Sub
 
@@ -347,11 +416,28 @@
             EditRtf.Show()
         Else
             EditRtf.Show()
+            EditRtf.BringToFront()
         End If
     End Sub
 
     Private Sub EditRtf_FormClosed(sender As Object, e As FormClosedEventArgs) Handles EditRtf.FormClosed
         EditRtf = Nothing
+    End Sub
+
+
+    Private Sub btnEditImage_Click(sender As Object, e As EventArgs) Handles btnEditImage.Click
+        'Open the Edit Image form:
+        If IsNothing(EditImage) Then
+            EditImage = New frmEditImage
+            EditImage.Show()
+        Else
+            EditImage.Show()
+            EditImage.BringToFront()
+        End If
+    End Sub
+
+    Private Sub EditImage_FormClosed(sender As Object, e As FormClosedEventArgs) Handles EditImage.FormClosed
+        EditImage = Nothing
     End Sub
 
 #End Region 'Open and Close Forms -------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -389,6 +475,11 @@
                 LastFileLocationType = LocationTypes.Project
                 LastFileDirectory = ""
                 DocTextChanged = False
+            End If
+            If Main.ItemInfo.ContainsKey(FileName) Then
+                Main.ItemInfo(FileName).LastEditDate = Now
+            Else
+                Main.Message.AddWarning("Document not found in the list: " & FileName & vbCrLf)
             End If
         End If
     End Sub
@@ -432,6 +523,9 @@
 
             Try
                 XmlHtmDisplay1.LoadFile(rtbData, RichTextBoxStreamType.RichText)
+                XmlHtmDisplay1.Focus()
+                XmlHtmDisplay1.SelectionStart = 0
+                XmlHtmDisplay1.SelectionLength = 0
                 XmlHtmDisplay1.ZoomFactor = _zoomFactor
                 DocTextChanged = False
                 LastFileName = FileName
@@ -443,6 +537,9 @@
 
         Else
             XmlHtmDisplay1.LoadFile(FileDirectory & "\" & FileName)
+            XmlHtmDisplay1.Focus()
+            XmlHtmDisplay1.SelectionStart = 0
+            XmlHtmDisplay1.SelectionLength = 0
             XmlHtmDisplay1.ZoomFactor = _zoomFactor
             DocTextChanged = False
             LastFileName = FileName
@@ -465,70 +562,71 @@
     End Sub
 
     Private Sub EditRtf_Bold() Handles EditRtf.Bold
-        If XmlHtmDisplay1.SelectionFont.Bold = True Then 'No not apply bold
-
-            Dim newStyle As FontStyle = FontStyle.Regular
-            If XmlHtmDisplay1.SelectionFont.Italic Then newStyle = newStyle Or FontStyle.Italic
-            If XmlHtmDisplay1.SelectionFont.Underline Then newStyle = newStyle Or FontStyle.Underline
-            If XmlHtmDisplay1.SelectionFont.Strikeout Then newStyle = newStyle Or FontStyle.Strikeout
-
-            XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont, newStyle)
-
-        Else 'Apply bold
-            Dim newStyle As FontStyle = FontStyle.Regular
-            newStyle = newStyle Or FontStyle.Bold
-            If XmlHtmDisplay1.SelectionFont.Italic Then newStyle = newStyle Or FontStyle.Italic
-            If XmlHtmDisplay1.SelectionFont.Underline Then newStyle = newStyle Or FontStyle.Underline
-            If XmlHtmDisplay1.SelectionFont.Strikeout Then newStyle = newStyle Or FontStyle.Strikeout
-
-            XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont, newStyle)
-        End If
-        XmlHtmDisplay1.Focus()
-
+        Try
+            If XmlHtmDisplay1.SelectionFont.Bold = True Then 'No not apply bold
+                Dim newStyle As FontStyle = FontStyle.Regular
+                If XmlHtmDisplay1.SelectionFont.Italic Then newStyle = newStyle Or FontStyle.Italic
+                If XmlHtmDisplay1.SelectionFont.Underline Then newStyle = newStyle Or FontStyle.Underline
+                If XmlHtmDisplay1.SelectionFont.Strikeout Then newStyle = newStyle Or FontStyle.Strikeout
+                XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont, newStyle)
+            Else 'Apply bold
+                Dim newStyle As FontStyle = FontStyle.Regular
+                newStyle = newStyle Or FontStyle.Bold
+                If XmlHtmDisplay1.SelectionFont.Italic Then newStyle = newStyle Or FontStyle.Italic
+                If XmlHtmDisplay1.SelectionFont.Underline Then newStyle = newStyle Or FontStyle.Underline
+                If XmlHtmDisplay1.SelectionFont.Strikeout Then newStyle = newStyle Or FontStyle.Strikeout
+                XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont, newStyle)
+            End If
+            XmlHtmDisplay1.Focus()
+        Catch ex As Exception
+            Main.Message.AddWarning(ex.Message & vbCrLf)
+        End Try
     End Sub
 
     Private Sub EditRtf_Italic() Handles EditRtf.Italic
-        If XmlHtmDisplay1.SelectionFont.Italic = True Then 'No not apply italic
-
-            Dim newStyle As FontStyle = FontStyle.Regular
-            If XmlHtmDisplay1.SelectionFont.Bold Then newStyle = newStyle Or FontStyle.Bold
-            If XmlHtmDisplay1.SelectionFont.Underline Then newStyle = newStyle Or FontStyle.Underline
-            If XmlHtmDisplay1.SelectionFont.Strikeout Then newStyle = newStyle Or FontStyle.Strikeout
-
-            XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont, newStyle)
-
-        Else 'Apply italic
-
-            Dim newStyle As FontStyle = FontStyle.Regular
-            newStyle = newStyle Or FontStyle.Italic
-            If XmlHtmDisplay1.SelectionFont.Bold Then newStyle = newStyle Or FontStyle.Bold
-            If XmlHtmDisplay1.SelectionFont.Underline Then newStyle = newStyle Or FontStyle.Underline
-            If XmlHtmDisplay1.SelectionFont.Strikeout Then newStyle = newStyle Or FontStyle.Strikeout
-
-            XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont, newStyle)
-        End If
-        XmlHtmDisplay1.Focus()
-
+        Try
+            If XmlHtmDisplay1.SelectionFont.Italic = True Then 'No not apply italic
+                Dim newStyle As FontStyle = FontStyle.Regular
+                If XmlHtmDisplay1.SelectionFont.Bold Then newStyle = newStyle Or FontStyle.Bold
+                If XmlHtmDisplay1.SelectionFont.Underline Then newStyle = newStyle Or FontStyle.Underline
+                If XmlHtmDisplay1.SelectionFont.Strikeout Then newStyle = newStyle Or FontStyle.Strikeout
+                XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont, newStyle)
+            Else 'Apply italic
+                Dim newStyle As FontStyle = FontStyle.Regular
+                newStyle = newStyle Or FontStyle.Italic
+                If XmlHtmDisplay1.SelectionFont.Bold Then newStyle = newStyle Or FontStyle.Bold
+                If XmlHtmDisplay1.SelectionFont.Underline Then newStyle = newStyle Or FontStyle.Underline
+                If XmlHtmDisplay1.SelectionFont.Strikeout Then newStyle = newStyle Or FontStyle.Strikeout
+                XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont, newStyle)
+            End If
+            XmlHtmDisplay1.Focus()
+        Catch ex As Exception
+            Main.Message.AddWarning(ex.Message & vbCrLf)
+        End Try
     End Sub
 
     Private Sub EditRtf_Underline() Handles EditRtf.Underline
-        If XmlHtmDisplay1.SelectionFont.Underline = True Then 'No not apply underline
-            Dim newStyle As FontStyle = FontStyle.Regular
-            If XmlHtmDisplay1.SelectionFont.Bold Then newStyle = newStyle Or FontStyle.Bold
-            If XmlHtmDisplay1.SelectionFont.Italic Then newStyle = newStyle Or FontStyle.Italic
-            If XmlHtmDisplay1.SelectionFont.Strikeout Then newStyle = newStyle Or FontStyle.Strikeout
+        Try
+            If XmlHtmDisplay1.SelectionFont.Underline = True Then 'No not apply underline
+                Dim newStyle As FontStyle = FontStyle.Regular
+                If XmlHtmDisplay1.SelectionFont.Bold Then newStyle = newStyle Or FontStyle.Bold
+                If XmlHtmDisplay1.SelectionFont.Italic Then newStyle = newStyle Or FontStyle.Italic
+                If XmlHtmDisplay1.SelectionFont.Strikeout Then newStyle = newStyle Or FontStyle.Strikeout
 
-            XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont, newStyle)
-        Else 'Add underline
-            Dim newStyle As FontStyle = FontStyle.Regular
-            newStyle = newStyle Or FontStyle.Underline
-            If XmlHtmDisplay1.SelectionFont.Bold Then newStyle = newStyle Or FontStyle.Bold
-            If XmlHtmDisplay1.SelectionFont.Italic Then newStyle = newStyle Or FontStyle.Italic
-            If XmlHtmDisplay1.SelectionFont.Strikeout Then newStyle = newStyle Or FontStyle.Strikeout
+                XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont, newStyle)
+            Else 'Add underline
+                Dim newStyle As FontStyle = FontStyle.Regular
+                newStyle = newStyle Or FontStyle.Underline
+                If XmlHtmDisplay1.SelectionFont.Bold Then newStyle = newStyle Or FontStyle.Bold
+                If XmlHtmDisplay1.SelectionFont.Italic Then newStyle = newStyle Or FontStyle.Italic
+                If XmlHtmDisplay1.SelectionFont.Strikeout Then newStyle = newStyle Or FontStyle.Strikeout
 
-            XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont, newStyle)
-        End If
-        XmlHtmDisplay1.Focus()
+                XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont, newStyle)
+            End If
+            XmlHtmDisplay1.Focus()
+        Catch ex As Exception
+            Main.Message.AddWarning(ex.Message & vbCrLf)
+        End Try
     End Sub
 
     Private Sub EditRtf_AlignLeft() Handles EditRtf.AlignLeft
@@ -621,6 +719,27 @@
 
     End Sub
 
+    Private Sub EditRtf_InsertXml(XmlText As String) Handles EditRtf.InsertXml
+        'Insert the text using XML format:
+        XmlHtmDisplay1.SelectedRtf = XmlHtmDisplay1.XmlToRtf(XmlText, False)
+    End Sub
+
+    Private Sub EditRtf_InsertText(InputText As String, TypeName As String) Handles EditRtf.InsertText
+        'Insert the text using the font type name:
+        XmlHtmDisplay1.SelectedRtf = XmlHtmDisplay1.TextToRtf(InputText, TypeName)
+    End Sub
+
+    'Private Sub EditRtf_InsertImage(ByRef myImage As Image) Handles EditRtf.InsertImage
+    '    'XmlHtmDisplay1.SelectedRtf = myImage
+    '    My.Computer.Clipboard.SetImage(myImage)
+    '    XmlHtmDisplay1.Paste()
+    'End Sub
+
+    Private Sub EditImage_InsertImage(ByRef myImage As Image) Handles EditImage.InsertImage
+        My.Computer.Clipboard.SetImage(myImage)
+        XmlHtmDisplay1.Paste()
+    End Sub
+
     Private Sub XmlHtmDisplay1_LinkClicked(sender As Object, e As LinkClickedEventArgs) Handles XmlHtmDisplay1.LinkClicked
         txtLink.Text = e.LinkText
     End Sub
@@ -706,25 +825,98 @@
         End If
     End Sub
 
-    Private Sub btnPasteImage_Click(sender As Object, e As EventArgs) Handles btnPasteImage.Click
-        'Paste the image in the clipboard into the rich text box:
+    'Private Sub btnPasteImage_Click(sender As Object, e As EventArgs) Handles btnPasteImage.Click
+    '    'Paste the image in the clipboard into the rich text box:
 
-        Dim ClipImage As System.Drawing.Image = Nothing
+    '    Dim ClipImage As System.Drawing.Image = Nothing
 
-        If My.Computer.Clipboard.ContainsImage() Then
-            ClipImage = My.Computer.Clipboard.GetImage
-            'ClipImage = System.Windows.Forms.Clipboard.GetImage
-        End If
+    '    If My.Computer.Clipboard.ContainsImage() Then
+    '        ClipImage = My.Computer.Clipboard.GetImage
+    '        'ClipImage = System.Windows.Forms.Clipboard.GetImage
+    '    End If
 
-        If ClipImage IsNot Nothing Then
-            'XmlHtmDisplay1.Paste()
+    '    If ClipImage IsNot Nothing Then
+    '        'XmlHtmDisplay1.Paste()
 
-            Dim myBitMap As Bitmap = ClipImage
-            My.Computer.Clipboard.SetImage(myBitMap)
-            XmlHtmDisplay1.Paste()
+    '        Dim myBitMap As Bitmap = ClipImage
+    '        My.Computer.Clipboard.SetImage(myBitMap)
+    '        XmlHtmDisplay1.Paste()
+    '    End If
+
+    'End Sub
+
+    Public Sub FindText(ByVal myText As String)
+        'Find the next instance of myText in the RichTextBox.
+
+        Dim StartPos As Integer = XmlHtmDisplay1.SelectionStart
+
+        XmlHtmDisplay1.Focus()
+
+        Dim FoundPos As Integer = XmlHtmDisplay1.Find(myText, StartPos, RichTextBoxFinds.MatchCase)
+
+        If FoundPos < 0 Then
+            Main.Message.Add("String not found." & vbCrLf)
+        Else
+            XmlHtmDisplay1.SelectionStart = FoundPos
+            XmlHtmDisplay1.SelectionLength = 0
         End If
 
     End Sub
+
+    Public Sub FindText(ByVal myText As String, ByVal Highlight As Boolean, ByVal FindFirst As Boolean)
+        'Find myText in the RichTextBox.
+
+        Dim StartPos As Integer
+
+        XmlHtmDisplay1.Focus()
+
+        If FindFirst Then
+            StartPos = 0
+        Else
+            StartPos = XmlHtmDisplay1.SelectionStart + 1
+        End If
+
+        Dim FoundPos As Integer = XmlHtmDisplay1.Find(myText, StartPos, RichTextBoxFinds.MatchCase)
+
+        If FoundPos < 0 Then
+            Main.Message.Add("String not found." & vbCrLf)
+        Else
+            XmlHtmDisplay1.SelectionStart = FoundPos
+            If Highlight Then
+                XmlHtmDisplay1.SelectionLength = myText.Length
+            Else
+                XmlHtmDisplay1.SelectionLength = 0
+            End If
+            'XmlHtmDisplay1.SelectionLength = 0
+        End If
+    End Sub
+
+
+    Public Sub FindFirstText(ByVal myText As String)
+        'Find the next instance of myText in the RichTextBox.
+
+        Dim StartPos As Integer = 0
+
+        XmlHtmDisplay1.Focus()
+
+        Dim FoundPos As Integer = XmlHtmDisplay1.Find(myText, StartPos, RichTextBoxFinds.MatchCase)
+
+        If FoundPos < 0 Then
+            Main.Message.Add("String not found." & vbCrLf)
+        Else
+            XmlHtmDisplay1.SelectionStart = FoundPos
+            XmlHtmDisplay1.SelectionLength = 0
+        End If
+
+    End Sub
+
+
+
+
+
+
+
+
 
 
 #End Region 'Form Methods ---------------------------------------------------------------------------------------------------------------------------------------------------------------------

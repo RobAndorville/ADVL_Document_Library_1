@@ -24,38 +24,38 @@ Partial Class Main
     Private Sub InitializeComponent()
         Me.components = New System.ComponentModel.Container()
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(Main))
-        Dim XmlHtmDisplaySettings3 As ADVL_Utilities_Library_1.XmlHtmDisplaySettings = New ADVL_Utilities_Library_1.XmlHtmDisplaySettings()
-        Dim TextSettings31 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
-        Dim TextSettings32 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
-        Dim TextSettings33 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
-        Dim TextSettings34 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
-        Dim TextSettings35 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
-        Dim TextSettings36 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
-        Dim TextSettings37 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
-        Dim TextSettings38 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
-        Dim TextSettings39 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
-        Dim TextSettings40 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
-        Dim TextSettings41 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
-        Dim TextSettings42 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
-        Dim TextSettings43 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
-        Dim TextSettings44 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
-        Dim TextSettings45 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
-        Dim XmlHtmDisplaySettings4 As ADVL_Utilities_Library_1.XmlHtmDisplaySettings = New ADVL_Utilities_Library_1.XmlHtmDisplaySettings()
-        Dim TextSettings46 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
-        Dim TextSettings47 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
-        Dim TextSettings48 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
-        Dim TextSettings49 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
-        Dim TextSettings50 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
-        Dim TextSettings51 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
-        Dim TextSettings52 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
-        Dim TextSettings53 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
-        Dim TextSettings54 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
-        Dim TextSettings55 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
-        Dim TextSettings56 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
-        Dim TextSettings57 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
-        Dim TextSettings58 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
-        Dim TextSettings59 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
-        Dim TextSettings60 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim XmlHtmDisplaySettings1 As ADVL_Utilities_Library_1.XmlHtmDisplaySettings = New ADVL_Utilities_Library_1.XmlHtmDisplaySettings()
+        Dim TextSettings1 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim TextSettings2 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim TextSettings3 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim TextSettings4 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim TextSettings5 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim TextSettings6 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim TextSettings7 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim TextSettings8 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim TextSettings9 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim TextSettings10 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim TextSettings11 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim TextSettings12 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim TextSettings13 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim TextSettings14 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim TextSettings15 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim XmlHtmDisplaySettings2 As ADVL_Utilities_Library_1.XmlHtmDisplaySettings = New ADVL_Utilities_Library_1.XmlHtmDisplaySettings()
+        Dim TextSettings16 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim TextSettings17 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim TextSettings18 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim TextSettings19 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim TextSettings20 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim TextSettings21 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim TextSettings22 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim TextSettings23 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim TextSettings24 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim TextSettings25 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim TextSettings26 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim TextSettings27 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim TextSettings28 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim TextSettings29 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
+        Dim TextSettings30 As ADVL_Utilities_Library_1.TextSettings = New ADVL_Utilities_Library_1.TextSettings()
         Me.btnAppInfo = New System.Windows.Forms.Button()
         Me.btnOnline = New System.Windows.Forms.Button()
         Me.btnMessages = New System.Windows.Forms.Button()
@@ -64,6 +64,9 @@ Partial Class Main
         Me.TabPage9 = New System.Windows.Forms.TabPage()
         Me.WebBrowser2 = New System.Windows.Forms.WebBrowser()
         Me.TabPage6 = New System.Windows.Forms.TabPage()
+        Me.btnSaveDocument = New System.Windows.Forms.Button()
+        Me.chkWordWrap = New System.Windows.Forms.CheckBox()
+        Me.btnShowItemList = New System.Windows.Forms.Button()
         Me.btnNewLibrary = New System.Windows.Forms.Button()
         Me.SplitContainer1 = New System.Windows.Forms.SplitContainer()
         Me.trvLibrary = New System.Windows.Forms.TreeView()
@@ -71,6 +74,19 @@ Partial Class Main
         Me.ToolStripMenuItem1_OpenDocument = New System.Windows.Forms.ToolStripMenuItem()
         Me.TabControl3 = New System.Windows.Forms.TabControl()
         Me.TabPage4 = New System.Windows.Forms.TabPage()
+        Me.txtDocEditDate = New System.Windows.Forms.TextBox()
+        Me.Label43 = New System.Windows.Forms.Label()
+        Me.txtDocCreationDate = New System.Windows.Forms.TextBox()
+        Me.Label42 = New System.Windows.Forms.Label()
+        Me.btnCopy = New System.Windows.Forms.Button()
+        Me.txtFolderPath = New System.Windows.Forms.TextBox()
+        Me.Label40 = New System.Windows.Forms.Label()
+        Me.txtFilePath = New System.Windows.Forms.TextBox()
+        Me.Label14 = New System.Windows.Forms.Label()
+        Me.chkFindFirst = New System.Windows.Forms.CheckBox()
+        Me.chkHighlight = New System.Windows.Forms.CheckBox()
+        Me.btnFindText = New System.Windows.Forms.Button()
+        Me.txtFindText = New System.Windows.Forms.TextBox()
         Me.txtNodeIndex = New System.Windows.Forms.TextBox()
         Me.Label39 = New System.Windows.Forms.Label()
         Me.btnSelectNode = New System.Windows.Forms.Button()
@@ -97,6 +113,15 @@ Partial Class Main
         Me.Label22 = New System.Windows.Forms.Label()
         Me.txtNodeText = New System.Windows.Forms.TextBox()
         Me.TabPage5 = New System.Windows.Forms.TabPage()
+        Me.rbXMsg = New System.Windows.Forms.RadioButton()
+        Me.rbXSeq = New System.Windows.Forms.RadioButton()
+        Me.pbIconXmsg = New System.Windows.Forms.PictureBox()
+        Me.pbIconXSeq = New System.Windows.Forms.PictureBox()
+        Me.txtFolderLink = New System.Windows.Forms.TextBox()
+        Me.rbXls = New System.Windows.Forms.RadioButton()
+        Me.pbIconXls = New System.Windows.Forms.PictureBox()
+        Me.rbFolderLink = New System.Windows.Forms.RadioButton()
+        Me.pbIconFolder = New System.Windows.Forms.PictureBox()
         Me.txtAddItemNotes = New System.Windows.Forms.TextBox()
         Me.rbPdf = New System.Windows.Forms.RadioButton()
         Me.rbTxt = New System.Windows.Forms.RadioButton()
@@ -107,7 +132,7 @@ Partial Class Main
         Me.rbNewWindow = New System.Windows.Forms.RadioButton()
         Me.rbDefaultWindow = New System.Windows.Forms.RadioButton()
         Me.btnFindItem = New System.Windows.Forms.Button()
-        Me.btnNewItem = New System.Windows.Forms.Button()
+        Me.btnCreateItem = New System.Windows.Forms.Button()
         Me.txtNewNodeDescr = New System.Windows.Forms.TextBox()
         Me.rbCollection = New System.Windows.Forms.RadioButton()
         Me.txtNewNodeFileName = New System.Windows.Forms.TextBox()
@@ -154,6 +179,14 @@ Partial Class Main
         Me.AxAcroPDF1 = New AxAcroPDFLib.AxAcroPDF()
         Me.WebBrowser1 = New System.Windows.Forms.WebBrowser()
         Me.XmlHtmDisplay2 = New ADVL_Utilities_Library_1.XmlHtmDisplay(Me.components)
+        Me.TabPage11 = New System.Windows.Forms.TabPage()
+        Me.Label46 = New System.Windows.Forms.Label()
+        Me.txtDocDescr = New System.Windows.Forms.TextBox()
+        Me.txtDocFileName = New System.Windows.Forms.TextBox()
+        Me.Label44 = New System.Windows.Forms.Label()
+        Me.btnUpdateDocList = New System.Windows.Forms.Button()
+        Me.btnOpenDocInNewWindow2 = New System.Windows.Forms.Button()
+        Me.dgvDocList = New System.Windows.Forms.DataGridView()
         Me.btnSaveLibraryAs = New System.Windows.Forms.Button()
         Me.btnSaveLibrary = New System.Windows.Forms.Button()
         Me.Label21 = New System.Windows.Forms.Label()
@@ -188,7 +221,7 @@ Partial Class Main
         Me.Label5 = New System.Windows.Forms.Label()
         Me.txtProjectPath = New System.Windows.Forms.TextBox()
         Me.Label8 = New System.Windows.Forms.Label()
-        Me.txtAppNetName = New System.Windows.Forms.TextBox()
+        Me.txtProNetName = New System.Windows.Forms.TextBox()
         Me.btnAdd = New System.Windows.Forms.Button()
         Me.txtParentProject = New System.Windows.Forms.TextBox()
         Me.Label45 = New System.Windows.Forms.Label()
@@ -223,22 +256,18 @@ Partial Class Main
         Me.txtProjectName = New System.Windows.Forms.TextBox()
         Me.Label3 = New System.Windows.Forms.Label()
         Me.btnProject = New System.Windows.Forms.Button()
-        Me.btnOpen = New System.Windows.Forms.Button()
-        Me.btnEdit = New System.Windows.Forms.Button()
-        Me.btnNewDisplay = New System.Windows.Forms.Button()
-        Me.btnSave = New System.Windows.Forms.Button()
-        Me.Timer1 = New System.Windows.Forms.Timer(Me.components)
         Me.OpenFileDialog1 = New System.Windows.Forms.OpenFileDialog()
         Me.ToolTip1 = New System.Windows.Forms.ToolTip(Me.components)
-        Me.cmbDocType = New System.Windows.Forms.ComboBox()
-        Me.btnNew = New System.Windows.Forms.Button()
-        Me.btnClose = New System.Windows.Forms.Button()
         Me.SaveFileDialog1 = New System.Windows.Forms.SaveFileDialog()
         Me.ImageList1 = New System.Windows.Forms.ImageList(Me.components)
         Me.btnAndorville = New System.Windows.Forms.Button()
         Me.Timer2 = New System.Windows.Forms.Timer(Me.components)
         Me.btnWebPages = New System.Windows.Forms.Button()
-        Me.Timer3 = New System.Windows.Forms.Timer(Me.components)
+        Me.ContextMenuStrip2 = New System.Windows.Forms.ContextMenuStrip(Me.components)
+        Me.ToolStripMenuItem1_EditWorkflowTabPage = New System.Windows.Forms.ToolStripMenuItem()
+        Me.ToolStripMenuItem1_ShowStartPageInWorkflowTab = New System.Windows.Forms.ToolStripMenuItem()
+        Me.Label41 = New System.Windows.Forms.Label()
+        Me.txtDocType = New System.Windows.Forms.TextBox()
         Me.TabControl1.SuspendLayout()
         Me.TabPage9.SuspendLayout()
         Me.TabPage6.SuspendLayout()
@@ -251,6 +280,10 @@ Partial Class Main
         Me.TabPage4.SuspendLayout()
         Me.GroupBox2.SuspendLayout()
         Me.TabPage5.SuspendLayout()
+        CType(Me.pbIconXmsg, System.ComponentModel.ISupportInitialize).BeginInit()
+        CType(Me.pbIconXSeq, System.ComponentModel.ISupportInitialize).BeginInit()
+        CType(Me.pbIconXls, System.ComponentModel.ISupportInitialize).BeginInit()
+        CType(Me.pbIconFolder, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.GroupBox1.SuspendLayout()
         CType(Me.pbIconPdf, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.pbIconTxt, System.ComponentModel.ISupportInitialize).BeginInit()
@@ -262,16 +295,19 @@ Partial Class Main
         Me.TabPage8.SuspendLayout()
         Me.TabPage7.SuspendLayout()
         CType(Me.AxAcroPDF1, System.ComponentModel.ISupportInitialize).BeginInit()
+        Me.TabPage11.SuspendLayout()
+        CType(Me.dgvDocList, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.TabPage1.SuspendLayout()
         Me.TabPage3.SuspendLayout()
         CType(Me.DataGridView1, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.TabPage2.SuspendLayout()
+        Me.ContextMenuStrip2.SuspendLayout()
         Me.SuspendLayout()
         '
         'btnAppInfo
         '
         Me.btnAppInfo.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.btnAppInfo.Location = New System.Drawing.Point(694, 12)
+        Me.btnAppInfo.Location = New System.Drawing.Point(687, 12)
         Me.btnAppInfo.Name = "btnAppInfo"
         Me.btnAppInfo.Size = New System.Drawing.Size(95, 22)
         Me.btnAppInfo.TabIndex = 49
@@ -283,17 +319,18 @@ Partial Class Main
         Me.btnOnline.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.btnOnline.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.btnOnline.ForeColor = System.Drawing.Color.Red
-        Me.btnOnline.Location = New System.Drawing.Point(873, 12)
+        Me.btnOnline.Location = New System.Drawing.Point(866, 12)
         Me.btnOnline.Name = "btnOnline"
         Me.btnOnline.Size = New System.Drawing.Size(56, 22)
         Me.btnOnline.TabIndex = 48
         Me.btnOnline.Text = "Offline"
+        Me.ToolTip1.SetToolTip(Me.btnOnline, "Toggle the connection to the Andorville™ Network")
         Me.btnOnline.UseVisualStyleBackColor = True
         '
         'btnMessages
         '
         Me.btnMessages.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.btnMessages.Location = New System.Drawing.Point(795, 12)
+        Me.btnMessages.Location = New System.Drawing.Point(788, 12)
         Me.btnMessages.Name = "btnMessages"
         Me.btnMessages.Size = New System.Drawing.Size(72, 22)
         Me.btnMessages.TabIndex = 47
@@ -303,7 +340,7 @@ Partial Class Main
         'btnExit
         '
         Me.btnExit.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.btnExit.Location = New System.Drawing.Point(935, 12)
+        Me.btnExit.Location = New System.Drawing.Point(928, 12)
         Me.btnExit.Name = "btnExit"
         Me.btnExit.Size = New System.Drawing.Size(48, 22)
         Me.btnExit.TabIndex = 46
@@ -323,7 +360,7 @@ Partial Class Main
         Me.TabControl1.Location = New System.Drawing.Point(12, 40)
         Me.TabControl1.Name = "TabControl1"
         Me.TabControl1.SelectedIndex = 0
-        Me.TabControl1.Size = New System.Drawing.Size(971, 447)
+        Me.TabControl1.Size = New System.Drawing.Size(964, 675)
         Me.TabControl1.TabIndex = 50
         '
         'TabPage9
@@ -331,7 +368,7 @@ Partial Class Main
         Me.TabPage9.Controls.Add(Me.WebBrowser2)
         Me.TabPage9.Location = New System.Drawing.Point(4, 22)
         Me.TabPage9.Name = "TabPage9"
-        Me.TabPage9.Size = New System.Drawing.Size(963, 421)
+        Me.TabPage9.Size = New System.Drawing.Size(956, 649)
         Me.TabPage9.TabIndex = 6
         Me.TabPage9.Text = "Workflow"
         Me.TabPage9.UseVisualStyleBackColor = True
@@ -344,11 +381,14 @@ Partial Class Main
         Me.WebBrowser2.Location = New System.Drawing.Point(3, 3)
         Me.WebBrowser2.MinimumSize = New System.Drawing.Size(20, 20)
         Me.WebBrowser2.Name = "WebBrowser2"
-        Me.WebBrowser2.Size = New System.Drawing.Size(957, 415)
+        Me.WebBrowser2.Size = New System.Drawing.Size(940, 643)
         Me.WebBrowser2.TabIndex = 69
         '
         'TabPage6
         '
+        Me.TabPage6.Controls.Add(Me.btnSaveDocument)
+        Me.TabPage6.Controls.Add(Me.chkWordWrap)
+        Me.TabPage6.Controls.Add(Me.btnShowItemList)
         Me.TabPage6.Controls.Add(Me.btnNewLibrary)
         Me.TabPage6.Controls.Add(Me.SplitContainer1)
         Me.TabPage6.Controls.Add(Me.btnSaveLibraryAs)
@@ -358,15 +398,47 @@ Partial Class Main
         Me.TabPage6.Controls.Add(Me.txtLibraryName)
         Me.TabPage6.Location = New System.Drawing.Point(4, 22)
         Me.TabPage6.Name = "TabPage6"
-        Me.TabPage6.Size = New System.Drawing.Size(963, 421)
+        Me.TabPage6.Size = New System.Drawing.Size(956, 649)
         Me.TabPage6.TabIndex = 5
         Me.TabPage6.Text = "Library"
         Me.TabPage6.UseVisualStyleBackColor = True
         '
+        'btnSaveDocument
+        '
+        Me.btnSaveDocument.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.btnSaveDocument.Location = New System.Drawing.Point(755, 6)
+        Me.btnSaveDocument.Name = "btnSaveDocument"
+        Me.btnSaveDocument.Size = New System.Drawing.Size(108, 22)
+        Me.btnSaveDocument.TabIndex = 268
+        Me.btnSaveDocument.Text = "Save Document"
+        Me.btnSaveDocument.UseVisualStyleBackColor = True
+        '
+        'chkWordWrap
+        '
+        Me.chkWordWrap.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.chkWordWrap.AutoSize = True
+        Me.chkWordWrap.Location = New System.Drawing.Point(869, 8)
+        Me.chkWordWrap.Name = "chkWordWrap"
+        Me.chkWordWrap.Size = New System.Drawing.Size(81, 17)
+        Me.chkWordWrap.TabIndex = 267
+        Me.chkWordWrap.Text = "Word Wrap"
+        Me.chkWordWrap.UseVisualStyleBackColor = True
+        '
+        'btnShowItemList
+        '
+        Me.btnShowItemList.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.btnShowItemList.Location = New System.Drawing.Point(570, 6)
+        Me.btnShowItemList.Name = "btnShowItemList"
+        Me.btnShowItemList.Size = New System.Drawing.Size(90, 22)
+        Me.btnShowItemList.TabIndex = 252
+        Me.btnShowItemList.Text = "Show Item List"
+        Me.ToolTip1.SetToolTip(Me.btnShowItemList, "Show the list of library items in the Message window.")
+        Me.btnShowItemList.UseVisualStyleBackColor = True
+        '
         'btnNewLibrary
         '
         Me.btnNewLibrary.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.btnNewLibrary.Location = New System.Drawing.Point(533, 6)
+        Me.btnNewLibrary.Location = New System.Drawing.Point(526, 6)
         Me.btnNewLibrary.Name = "btnNewLibrary"
         Me.btnNewLibrary.Size = New System.Drawing.Size(38, 22)
         Me.btnNewLibrary.TabIndex = 242
@@ -388,8 +460,8 @@ Partial Class Main
         'SplitContainer1.Panel2
         '
         Me.SplitContainer1.Panel2.Controls.Add(Me.TabControl3)
-        Me.SplitContainer1.Size = New System.Drawing.Size(976, 392)
-        Me.SplitContainer1.SplitterDistance = 273
+        Me.SplitContainer1.Size = New System.Drawing.Size(950, 620)
+        Me.SplitContainer1.SplitterDistance = 264
         Me.SplitContainer1.TabIndex = 251
         '
         'trvLibrary
@@ -401,7 +473,7 @@ Partial Class Main
         Me.trvLibrary.ContextMenuStrip = Me.ContextMenuStrip1
         Me.trvLibrary.Location = New System.Drawing.Point(3, 3)
         Me.trvLibrary.Name = "trvLibrary"
-        Me.trvLibrary.Size = New System.Drawing.Size(267, 377)
+        Me.trvLibrary.Size = New System.Drawing.Size(258, 605)
         Me.trvLibrary.TabIndex = 81
         '
         'ContextMenuStrip1
@@ -426,14 +498,28 @@ Partial Class Main
         Me.TabControl3.Controls.Add(Me.TabPage10)
         Me.TabControl3.Controls.Add(Me.TabPage8)
         Me.TabControl3.Controls.Add(Me.TabPage7)
+        Me.TabControl3.Controls.Add(Me.TabPage11)
         Me.TabControl3.Location = New System.Drawing.Point(3, 6)
         Me.TabControl3.Name = "TabControl3"
         Me.TabControl3.SelectedIndex = 0
-        Me.TabControl3.Size = New System.Drawing.Size(677, 378)
+        Me.TabControl3.Size = New System.Drawing.Size(676, 606)
         Me.TabControl3.TabIndex = 262
         '
         'TabPage4
         '
+        Me.TabPage4.Controls.Add(Me.txtDocEditDate)
+        Me.TabPage4.Controls.Add(Me.Label43)
+        Me.TabPage4.Controls.Add(Me.txtDocCreationDate)
+        Me.TabPage4.Controls.Add(Me.Label42)
+        Me.TabPage4.Controls.Add(Me.btnCopy)
+        Me.TabPage4.Controls.Add(Me.txtFolderPath)
+        Me.TabPage4.Controls.Add(Me.Label40)
+        Me.TabPage4.Controls.Add(Me.txtFilePath)
+        Me.TabPage4.Controls.Add(Me.Label14)
+        Me.TabPage4.Controls.Add(Me.chkFindFirst)
+        Me.TabPage4.Controls.Add(Me.chkHighlight)
+        Me.TabPage4.Controls.Add(Me.btnFindText)
+        Me.TabPage4.Controls.Add(Me.txtFindText)
         Me.TabPage4.Controls.Add(Me.txtNodeIndex)
         Me.TabPage4.Controls.Add(Me.Label39)
         Me.TabPage4.Controls.Add(Me.btnSelectNode)
@@ -458,14 +544,133 @@ Partial Class Main
         Me.TabPage4.Location = New System.Drawing.Point(4, 22)
         Me.TabPage4.Name = "TabPage4"
         Me.TabPage4.Padding = New System.Windows.Forms.Padding(3)
-        Me.TabPage4.Size = New System.Drawing.Size(669, 352)
+        Me.TabPage4.Size = New System.Drawing.Size(668, 580)
         Me.TabPage4.TabIndex = 0
         Me.TabPage4.Text = "Item Information"
         Me.TabPage4.UseVisualStyleBackColor = True
         '
+        'txtDocEditDate
+        '
+        Me.txtDocEditDate.Location = New System.Drawing.Point(489, 135)
+        Me.txtDocEditDate.Name = "txtDocEditDate"
+        Me.txtDocEditDate.Size = New System.Drawing.Size(120, 20)
+        Me.txtDocEditDate.TabIndex = 285
+        '
+        'Label43
+        '
+        Me.Label43.AutoSize = True
+        Me.Label43.Location = New System.Drawing.Point(409, 138)
+        Me.Label43.Name = "Label43"
+        Me.Label43.Size = New System.Drawing.Size(74, 13)
+        Me.Label43.TabIndex = 284
+        Me.Label43.Text = "Last edit date:"
+        '
+        'txtDocCreationDate
+        '
+        Me.txtDocCreationDate.Location = New System.Drawing.Point(283, 135)
+        Me.txtDocCreationDate.Name = "txtDocCreationDate"
+        Me.txtDocCreationDate.Size = New System.Drawing.Size(120, 20)
+        Me.txtDocCreationDate.TabIndex = 283
+        '
+        'Label42
+        '
+        Me.Label42.AutoSize = True
+        Me.Label42.Location = New System.Drawing.Point(204, 138)
+        Me.Label42.Name = "Label42"
+        Me.Label42.Size = New System.Drawing.Size(73, 13)
+        Me.Label42.TabIndex = 282
+        Me.Label42.Text = "Creation date:"
+        '
+        'btnCopy
+        '
+        Me.btnCopy.Location = New System.Drawing.Point(6, 48)
+        Me.btnCopy.Name = "btnCopy"
+        Me.btnCopy.Size = New System.Drawing.Size(54, 22)
+        Me.btnCopy.TabIndex = 281
+        Me.btnCopy.Text = "Copy"
+        Me.ToolTip1.SetToolTip(Me.btnCopy, "Copy this item information to the Create Item tab - as a template")
+        Me.btnCopy.UseVisualStyleBackColor = True
+        '
+        'txtFolderPath
+        '
+        Me.txtFolderPath.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.txtFolderPath.Location = New System.Drawing.Point(75, 412)
+        Me.txtFolderPath.Multiline = True
+        Me.txtFolderPath.Name = "txtFolderPath"
+        Me.txtFolderPath.Size = New System.Drawing.Size(587, 57)
+        Me.txtFolderPath.TabIndex = 280
+        '
+        'Label40
+        '
+        Me.Label40.AutoSize = True
+        Me.Label40.Location = New System.Drawing.Point(6, 415)
+        Me.Label40.Name = "Label40"
+        Me.Label40.Size = New System.Drawing.Size(63, 13)
+        Me.Label40.TabIndex = 279
+        Me.Label40.Text = "Folder path:"
+        '
+        'txtFilePath
+        '
+        Me.txtFilePath.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.txtFilePath.Location = New System.Drawing.Point(75, 349)
+        Me.txtFilePath.Multiline = True
+        Me.txtFilePath.Name = "txtFilePath"
+        Me.txtFilePath.Size = New System.Drawing.Size(587, 57)
+        Me.txtFilePath.TabIndex = 278
+        '
+        'Label14
+        '
+        Me.Label14.AutoSize = True
+        Me.Label14.Location = New System.Drawing.Point(6, 352)
+        Me.Label14.Name = "Label14"
+        Me.Label14.Size = New System.Drawing.Size(50, 13)
+        Me.Label14.TabIndex = 277
+        Me.Label14.Text = "File path:"
+        '
+        'chkFindFirst
+        '
+        Me.chkFindFirst.AutoSize = True
+        Me.chkFindFirst.Location = New System.Drawing.Point(366, 252)
+        Me.chkFindFirst.Name = "chkFindFirst"
+        Me.chkFindFirst.Size = New System.Drawing.Size(68, 17)
+        Me.chkFindFirst.TabIndex = 276
+        Me.chkFindFirst.Text = "Find First"
+        Me.chkFindFirst.UseVisualStyleBackColor = True
+        '
+        'chkHighlight
+        '
+        Me.chkHighlight.AutoSize = True
+        Me.chkHighlight.Location = New System.Drawing.Point(269, 252)
+        Me.chkHighlight.Name = "chkHighlight"
+        Me.chkHighlight.Size = New System.Drawing.Size(91, 17)
+        Me.chkHighlight.TabIndex = 275
+        Me.chkHighlight.Text = "Highlight Text"
+        Me.chkHighlight.UseVisualStyleBackColor = True
+        '
+        'btnFindText
+        '
+        Me.btnFindText.Location = New System.Drawing.Point(195, 248)
+        Me.btnFindText.Name = "btnFindText"
+        Me.btnFindText.Size = New System.Drawing.Size(68, 22)
+        Me.btnFindText.TabIndex = 274
+        Me.btnFindText.Text = "Find Text"
+        Me.btnFindText.UseVisualStyleBackColor = True
+        '
+        'txtFindText
+        '
+        Me.txtFindText.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.txtFindText.Location = New System.Drawing.Point(195, 276)
+        Me.txtFindText.Multiline = True
+        Me.txtFindText.Name = "txtFindText"
+        Me.txtFindText.Size = New System.Drawing.Size(467, 67)
+        Me.txtFindText.TabIndex = 273
+        '
         'txtNodeIndex
         '
-        Me.txtNodeIndex.Location = New System.Drawing.Point(374, 162)
+        Me.txtNodeIndex.Location = New System.Drawing.Point(265, 187)
         Me.txtNodeIndex.Name = "txtNodeIndex"
         Me.txtNodeIndex.Size = New System.Drawing.Size(114, 20)
         Me.txtNodeIndex.TabIndex = 272
@@ -473,7 +678,7 @@ Partial Class Main
         'Label39
         '
         Me.Label39.AutoSize = True
-        Me.Label39.Location = New System.Drawing.Point(304, 165)
+        Me.Label39.Location = New System.Drawing.Point(195, 190)
         Me.Label39.Name = "Label39"
         Me.Label39.Size = New System.Drawing.Size(64, 13)
         Me.Label39.TabIndex = 271
@@ -481,7 +686,7 @@ Partial Class Main
         '
         'btnSelectNode
         '
-        Me.btnSelectNode.Location = New System.Drawing.Point(217, 135)
+        Me.btnSelectNode.Location = New System.Drawing.Point(174, 161)
         Me.btnSelectNode.Name = "btnSelectNode"
         Me.btnSelectNode.Size = New System.Drawing.Size(84, 22)
         Me.btnSelectNode.TabIndex = 270
@@ -492,9 +697,9 @@ Partial Class Main
         '
         Me.txtSelNodeKey.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.txtSelNodeKey.Location = New System.Drawing.Point(307, 136)
+        Me.txtSelNodeKey.Location = New System.Drawing.Point(264, 161)
         Me.txtSelNodeKey.Name = "txtSelNodeKey"
-        Me.txtSelNodeKey.Size = New System.Drawing.Size(356, 20)
+        Me.txtSelNodeKey.Size = New System.Drawing.Size(355, 20)
         Me.txtSelNodeKey.TabIndex = 269
         '
         'GroupBox2
@@ -619,7 +824,7 @@ Partial Class Main
         Me.txtItemDescription.Location = New System.Drawing.Point(75, 32)
         Me.txtItemDescription.Multiline = True
         Me.txtItemDescription.Name = "txtItemDescription"
-        Me.txtItemDescription.Size = New System.Drawing.Size(588, 45)
+        Me.txtItemDescription.Size = New System.Drawing.Size(587, 45)
         Me.txtItemDescription.TabIndex = 248
         '
         'btnMoveNodeUp
@@ -655,7 +860,7 @@ Partial Class Main
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.txtNodePath.Location = New System.Drawing.Point(75, 83)
         Me.txtNodePath.Name = "txtNodePath"
-        Me.txtNodePath.Size = New System.Drawing.Size(588, 20)
+        Me.txtNodePath.Size = New System.Drawing.Size(587, 20)
         Me.txtNodePath.TabIndex = 252
         '
         'txtNodeKey
@@ -664,7 +869,7 @@ Partial Class Main
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.txtNodeKey.Location = New System.Drawing.Point(75, 6)
         Me.txtNodeKey.Name = "txtNodeKey"
-        Me.txtNodeKey.Size = New System.Drawing.Size(588, 20)
+        Me.txtNodeKey.Size = New System.Drawing.Size(587, 20)
         Me.txtNodeKey.TabIndex = 256
         '
         'Label19
@@ -692,11 +897,20 @@ Partial Class Main
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.txtNodeText.Location = New System.Drawing.Point(75, 109)
         Me.txtNodeText.Name = "txtNodeText"
-        Me.txtNodeText.Size = New System.Drawing.Size(588, 20)
+        Me.txtNodeText.Size = New System.Drawing.Size(587, 20)
         Me.txtNodeText.TabIndex = 254
         '
         'TabPage5
         '
+        Me.TabPage5.Controls.Add(Me.rbXMsg)
+        Me.TabPage5.Controls.Add(Me.rbXSeq)
+        Me.TabPage5.Controls.Add(Me.pbIconXmsg)
+        Me.TabPage5.Controls.Add(Me.pbIconXSeq)
+        Me.TabPage5.Controls.Add(Me.txtFolderLink)
+        Me.TabPage5.Controls.Add(Me.rbXls)
+        Me.TabPage5.Controls.Add(Me.pbIconXls)
+        Me.TabPage5.Controls.Add(Me.rbFolderLink)
+        Me.TabPage5.Controls.Add(Me.pbIconFolder)
         Me.TabPage5.Controls.Add(Me.txtAddItemNotes)
         Me.TabPage5.Controls.Add(Me.rbPdf)
         Me.TabPage5.Controls.Add(Me.rbTxt)
@@ -704,7 +918,7 @@ Partial Class Main
         Me.TabPage5.Controls.Add(Me.Label33)
         Me.TabPage5.Controls.Add(Me.GroupBox1)
         Me.TabPage5.Controls.Add(Me.btnFindItem)
-        Me.TabPage5.Controls.Add(Me.btnNewItem)
+        Me.TabPage5.Controls.Add(Me.btnCreateItem)
         Me.TabPage5.Controls.Add(Me.txtNewNodeDescr)
         Me.TabPage5.Controls.Add(Me.rbCollection)
         Me.TabPage5.Controls.Add(Me.txtNewNodeFileName)
@@ -722,19 +936,100 @@ Partial Class Main
         Me.TabPage5.Location = New System.Drawing.Point(4, 22)
         Me.TabPage5.Name = "TabPage5"
         Me.TabPage5.Padding = New System.Windows.Forms.Padding(3)
-        Me.TabPage5.Size = New System.Drawing.Size(667, 357)
+        Me.TabPage5.Size = New System.Drawing.Size(668, 580)
         Me.TabPage5.TabIndex = 1
-        Me.TabPage5.Text = "Add Item"
+        Me.TabPage5.Text = "Create Item"
         Me.TabPage5.UseVisualStyleBackColor = True
+        '
+        'rbXMsg
+        '
+        Me.rbXMsg.AutoSize = True
+        Me.rbXMsg.Location = New System.Drawing.Point(44, 361)
+        Me.rbXMsg.Name = "rbXMsg"
+        Me.rbXMsg.Size = New System.Drawing.Size(52, 17)
+        Me.rbXMsg.TabIndex = 276
+        Me.rbXMsg.Text = "XMsg"
+        Me.rbXMsg.UseVisualStyleBackColor = True
+        '
+        'rbXSeq
+        '
+        Me.rbXSeq.AutoSize = True
+        Me.rbXSeq.Location = New System.Drawing.Point(44, 400)
+        Me.rbXSeq.Name = "rbXSeq"
+        Me.rbXSeq.Size = New System.Drawing.Size(51, 17)
+        Me.rbXSeq.TabIndex = 275
+        Me.rbXSeq.Text = "XSeq"
+        Me.rbXSeq.UseVisualStyleBackColor = True
+        '
+        'pbIconXmsg
+        '
+        Me.pbIconXmsg.Location = New System.Drawing.Point(6, 354)
+        Me.pbIconXmsg.Name = "pbIconXmsg"
+        Me.pbIconXmsg.Size = New System.Drawing.Size(32, 34)
+        Me.pbIconXmsg.TabIndex = 274
+        Me.pbIconXmsg.TabStop = False
+        '
+        'pbIconXSeq
+        '
+        Me.pbIconXSeq.Location = New System.Drawing.Point(6, 394)
+        Me.pbIconXSeq.Name = "pbIconXSeq"
+        Me.pbIconXSeq.Size = New System.Drawing.Size(32, 34)
+        Me.pbIconXSeq.TabIndex = 273
+        Me.pbIconXSeq.TabStop = False
+        '
+        'txtFolderLink
+        '
+        Me.txtFolderLink.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.txtFolderLink.Location = New System.Drawing.Point(121, 280)
+        Me.txtFolderLink.Name = "txtFolderLink"
+        Me.txtFolderLink.Size = New System.Drawing.Size(541, 20)
+        Me.txtFolderLink.TabIndex = 272
+        '
+        'rbXls
+        '
+        Me.rbXls.AutoSize = True
+        Me.rbXls.Location = New System.Drawing.Point(44, 321)
+        Me.rbXls.Name = "rbXls"
+        Me.rbXls.Size = New System.Drawing.Size(45, 17)
+        Me.rbXls.TabIndex = 271
+        Me.rbXls.Text = "XLS"
+        Me.rbXls.UseVisualStyleBackColor = True
+        '
+        'pbIconXls
+        '
+        Me.pbIconXls.Location = New System.Drawing.Point(6, 314)
+        Me.pbIconXls.Name = "pbIconXls"
+        Me.pbIconXls.Size = New System.Drawing.Size(32, 34)
+        Me.pbIconXls.TabIndex = 270
+        Me.pbIconXls.TabStop = False
+        '
+        'rbFolderLink
+        '
+        Me.rbFolderLink.AutoSize = True
+        Me.rbFolderLink.Location = New System.Drawing.Point(44, 281)
+        Me.rbFolderLink.Name = "rbFolderLink"
+        Me.rbFolderLink.Size = New System.Drawing.Size(76, 17)
+        Me.rbFolderLink.TabIndex = 269
+        Me.rbFolderLink.Text = "Folder link:"
+        Me.rbFolderLink.UseVisualStyleBackColor = True
+        '
+        'pbIconFolder
+        '
+        Me.pbIconFolder.Location = New System.Drawing.Point(6, 274)
+        Me.pbIconFolder.Name = "pbIconFolder"
+        Me.pbIconFolder.Size = New System.Drawing.Size(32, 34)
+        Me.pbIconFolder.TabIndex = 268
+        Me.pbIconFolder.TabStop = False
         '
         'txtAddItemNotes
         '
         Me.txtAddItemNotes.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.txtAddItemNotes.Location = New System.Drawing.Point(6, 274)
+        Me.txtAddItemNotes.Location = New System.Drawing.Point(6, 497)
         Me.txtAddItemNotes.Multiline = True
         Me.txtAddItemNotes.Name = "txtAddItemNotes"
-        Me.txtAddItemNotes.Size = New System.Drawing.Size(595, 77)
+        Me.txtAddItemNotes.Size = New System.Drawing.Size(656, 77)
         Me.txtAddItemNotes.TabIndex = 267
         '
         'rbPdf
@@ -763,7 +1058,7 @@ Partial Class Main
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.txtItemText.Location = New System.Drawing.Point(121, 124)
         Me.txtItemText.Name = "txtItemText"
-        Me.txtItemText.Size = New System.Drawing.Size(480, 20)
+        Me.txtItemText.Size = New System.Drawing.Size(541, 20)
         Me.txtItemText.TabIndex = 262
         '
         'Label33
@@ -830,15 +1125,15 @@ Partial Class Main
         Me.ToolTip1.SetToolTip(Me.btnFindItem, "Find an item in the current project to add to the library.")
         Me.btnFindItem.UseVisualStyleBackColor = True
         '
-        'btnNewItem
+        'btnCreateItem
         '
-        Me.btnNewItem.Location = New System.Drawing.Point(6, 6)
-        Me.btnNewItem.Name = "btnNewItem"
-        Me.btnNewItem.Size = New System.Drawing.Size(48, 22)
-        Me.btnNewItem.TabIndex = 258
-        Me.btnNewItem.Text = "New"
-        Me.ToolTip1.SetToolTip(Me.btnNewItem, "Add a new item to the library. The item will be stored in the current project.")
-        Me.btnNewItem.UseVisualStyleBackColor = True
+        Me.btnCreateItem.Location = New System.Drawing.Point(6, 6)
+        Me.btnCreateItem.Name = "btnCreateItem"
+        Me.btnCreateItem.Size = New System.Drawing.Size(48, 22)
+        Me.btnCreateItem.TabIndex = 258
+        Me.btnCreateItem.Text = "Create"
+        Me.ToolTip1.SetToolTip(Me.btnCreateItem, "Add a new item to the library. The item will be stored in the current project.")
+        Me.btnCreateItem.UseVisualStyleBackColor = True
         '
         'txtNewNodeDescr
         '
@@ -847,7 +1142,7 @@ Partial Class Main
         Me.txtNewNodeDescr.Location = New System.Drawing.Point(121, 169)
         Me.txtNewNodeDescr.Multiline = True
         Me.txtNewNodeDescr.Name = "txtNewNodeDescr"
-        Me.txtNewNodeDescr.Size = New System.Drawing.Size(480, 78)
+        Me.txtNewNodeDescr.Size = New System.Drawing.Size(541, 78)
         Me.txtNewNodeDescr.TabIndex = 253
         '
         'rbCollection
@@ -868,7 +1163,7 @@ Partial Class Main
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.txtNewNodeFileName.Location = New System.Drawing.Point(121, 79)
         Me.txtNewNodeFileName.Name = "txtNewNodeFileName"
-        Me.txtNewNodeFileName.Size = New System.Drawing.Size(480, 20)
+        Me.txtNewNodeFileName.Size = New System.Drawing.Size(541, 20)
         Me.txtNewNodeFileName.TabIndex = 252
         '
         'Label31
@@ -978,7 +1273,7 @@ Partial Class Main
         Me.TabPage10.Controls.Add(Me.Label34)
         Me.TabPage10.Location = New System.Drawing.Point(4, 22)
         Me.TabPage10.Name = "TabPage10"
-        Me.TabPage10.Size = New System.Drawing.Size(667, 357)
+        Me.TabPage10.Size = New System.Drawing.Size(668, 580)
         Me.TabPage10.TabIndex = 2
         Me.TabPage10.Text = "Edit"
         Me.TabPage10.UseVisualStyleBackColor = True
@@ -990,7 +1285,7 @@ Partial Class Main
         Me.txtNodeKey2.Location = New System.Drawing.Point(9, 56)
         Me.txtNodeKey2.Name = "txtNodeKey2"
         Me.txtNodeKey2.ReadOnly = True
-        Me.txtNodeKey2.Size = New System.Drawing.Size(592, 20)
+        Me.txtNodeKey2.Size = New System.Drawing.Size(593, 20)
         Me.txtNodeKey2.TabIndex = 269
         '
         'Label36
@@ -1019,7 +1314,7 @@ Partial Class Main
         Me.txtEditDescription.Location = New System.Drawing.Point(9, 146)
         Me.txtEditDescription.Multiline = True
         Me.txtEditDescription.Name = "txtEditDescription"
-        Me.txtEditDescription.Size = New System.Drawing.Size(592, 78)
+        Me.txtEditDescription.Size = New System.Drawing.Size(593, 78)
         Me.txtEditDescription.TabIndex = 266
         '
         'Label35
@@ -1037,7 +1332,7 @@ Partial Class Main
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.txtEditNodeText.Location = New System.Drawing.Point(9, 101)
         Me.txtEditNodeText.Name = "txtEditNodeText"
-        Me.txtEditNodeText.Size = New System.Drawing.Size(592, 20)
+        Me.txtEditNodeText.Size = New System.Drawing.Size(593, 20)
         Me.txtEditNodeText.TabIndex = 264
         '
         'Label34
@@ -1072,7 +1367,7 @@ Partial Class Main
         Me.TabPage8.Controls.Add(Me.Label28)
         Me.TabPage8.Location = New System.Drawing.Point(4, 22)
         Me.TabPage8.Name = "TabPage8"
-        Me.TabPage8.Size = New System.Drawing.Size(667, 357)
+        Me.TabPage8.Size = New System.Drawing.Size(668, 580)
         Me.TabPage8.TabIndex = 3
         Me.TabPage8.Text = "File"
         Me.TabPage8.UseVisualStyleBackColor = True
@@ -1102,7 +1397,7 @@ Partial Class Main
         Me.txtFileDescription.Location = New System.Drawing.Point(6, 151)
         Me.txtFileDescription.Multiline = True
         Me.txtFileDescription.Name = "txtFileDescription"
-        Me.txtFileDescription.Size = New System.Drawing.Size(598, 61)
+        Me.txtFileDescription.Size = New System.Drawing.Size(599, 61)
         Me.txtFileDescription.TabIndex = 246
         '
         'txtFileDirectory
@@ -1112,7 +1407,7 @@ Partial Class Main
         Me.txtFileDirectory.Location = New System.Drawing.Point(143, 81)
         Me.txtFileDirectory.Multiline = True
         Me.txtFileDirectory.Name = "txtFileDirectory"
-        Me.txtFileDirectory.Size = New System.Drawing.Size(461, 58)
+        Me.txtFileDirectory.Size = New System.Drawing.Size(462, 58)
         Me.txtFileDirectory.TabIndex = 250
         '
         'Label25
@@ -1197,13 +1492,13 @@ Partial Class Main
         Me.txtFileName.Location = New System.Drawing.Point(66, 6)
         Me.txtFileName.Name = "txtFileName"
         Me.txtFileName.ReadOnly = True
-        Me.txtFileName.Size = New System.Drawing.Size(338, 20)
+        Me.txtFileName.Size = New System.Drawing.Size(339, 20)
         Me.txtFileName.TabIndex = 239
         '
         'btnOpenFile
         '
         Me.btnOpenFile.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.btnOpenFile.Location = New System.Drawing.Point(410, 6)
+        Me.btnOpenFile.Location = New System.Drawing.Point(411, 6)
         Me.btnOpenFile.Name = "btnOpenFile"
         Me.btnOpenFile.Size = New System.Drawing.Size(42, 22)
         Me.btnOpenFile.TabIndex = 241
@@ -1213,7 +1508,7 @@ Partial Class Main
         'btnSaveFile
         '
         Me.btnSaveFile.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.btnSaveFile.Location = New System.Drawing.Point(458, 6)
+        Me.btnSaveFile.Location = New System.Drawing.Point(459, 6)
         Me.btnSaveFile.Name = "btnSaveFile"
         Me.btnSaveFile.Size = New System.Drawing.Size(40, 22)
         Me.btnSaveFile.TabIndex = 242
@@ -1223,7 +1518,7 @@ Partial Class Main
         'btnSaveFileAs
         '
         Me.btnSaveFileAs.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.btnSaveFileAs.Location = New System.Drawing.Point(504, 6)
+        Me.btnSaveFileAs.Location = New System.Drawing.Point(505, 6)
         Me.btnSaveFileAs.Name = "btnSaveFileAs"
         Me.btnSaveFileAs.Size = New System.Drawing.Size(56, 22)
         Me.btnSaveFileAs.TabIndex = 243
@@ -1240,7 +1535,7 @@ Partial Class Main
         'btnNewFile
         '
         Me.btnNewFile.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.btnNewFile.Location = New System.Drawing.Point(566, 6)
+        Me.btnNewFile.Location = New System.Drawing.Point(567, 6)
         Me.btnNewFile.Name = "btnNewFile"
         Me.btnNewFile.Size = New System.Drawing.Size(38, 22)
         Me.btnNewFile.TabIndex = 244
@@ -1263,7 +1558,7 @@ Partial Class Main
         Me.TabPage7.Controls.Add(Me.XmlHtmDisplay2)
         Me.TabPage7.Location = New System.Drawing.Point(4, 22)
         Me.TabPage7.Name = "TabPage7"
-        Me.TabPage7.Size = New System.Drawing.Size(667, 357)
+        Me.TabPage7.Size = New System.Drawing.Size(668, 580)
         Me.TabPage7.TabIndex = 4
         Me.TabPage7.Text = "Document View"
         Me.TabPage7.UseVisualStyleBackColor = True
@@ -1277,7 +1572,7 @@ Partial Class Main
         Me.AxAcroPDF1.Location = New System.Drawing.Point(3, 3)
         Me.AxAcroPDF1.Name = "AxAcroPDF1"
         Me.AxAcroPDF1.OcxState = CType(resources.GetObject("AxAcroPDF1.OcxState"), System.Windows.Forms.AxHost.State)
-        Me.AxAcroPDF1.Size = New System.Drawing.Size(661, 351)
+        Me.AxAcroPDF1.Size = New System.Drawing.Size(662, 574)
         Me.AxAcroPDF1.TabIndex = 67
         '
         'WebBrowser1
@@ -1288,7 +1583,7 @@ Partial Class Main
         Me.WebBrowser1.Location = New System.Drawing.Point(3, 3)
         Me.WebBrowser1.MinimumSize = New System.Drawing.Size(20, 20)
         Me.WebBrowser1.Name = "WebBrowser1"
-        Me.WebBrowser1.Size = New System.Drawing.Size(661, 351)
+        Me.WebBrowser1.Size = New System.Drawing.Size(662, 574)
         Me.WebBrowser1.TabIndex = 66
         '
         'XmlHtmDisplay2
@@ -1299,152 +1594,236 @@ Partial Class Main
         Me.XmlHtmDisplay2.Font = New System.Drawing.Font("Arial", 10.0!)
         Me.XmlHtmDisplay2.Location = New System.Drawing.Point(3, 3)
         Me.XmlHtmDisplay2.Name = "XmlHtmDisplay2"
-        TextSettings31.Bold = False
-        TextSettings31.Color = System.Drawing.Color.Black
-        TextSettings31.ColorIndex = 7
-        TextSettings31.FontIndex = 7
-        TextSettings31.FontName = "Arial"
-        TextSettings31.HalfPointSize = 20
-        TextSettings31.Italic = False
-        TextSettings31.PointSize = 10.0!
-        XmlHtmDisplaySettings3.DefaultText = TextSettings31
-        TextSettings32.Bold = False
-        TextSettings32.Color = System.Drawing.Color.Blue
-        TextSettings32.ColorIndex = 1
-        TextSettings32.FontIndex = 1
-        TextSettings32.FontName = "Arial"
-        TextSettings32.HalfPointSize = 20
-        TextSettings32.Italic = False
-        TextSettings32.PointSize = 10.0!
-        XmlHtmDisplaySettings3.HAttribute = TextSettings32
-        TextSettings33.Bold = False
-        TextSettings33.Color = System.Drawing.Color.Gray
-        TextSettings33.ColorIndex = 5
-        TextSettings33.FontIndex = 1
-        TextSettings33.FontName = "Arial"
-        TextSettings33.HalfPointSize = 20
-        TextSettings33.Italic = False
-        TextSettings33.PointSize = 10.0!
-        XmlHtmDisplaySettings3.HChar = TextSettings33
-        TextSettings34.Bold = False
-        TextSettings34.Color = System.Drawing.Color.Gray
-        TextSettings34.ColorIndex = 5
-        TextSettings34.FontIndex = 1
-        TextSettings34.FontName = "Arial"
-        TextSettings34.HalfPointSize = 20
-        TextSettings34.Italic = False
-        TextSettings34.PointSize = 10.0!
-        XmlHtmDisplaySettings3.HComment = TextSettings34
-        TextSettings35.Bold = False
-        TextSettings35.Color = System.Drawing.Color.DarkRed
-        TextSettings35.ColorIndex = 2
-        TextSettings35.FontIndex = 1
-        TextSettings35.FontName = "Arial"
-        TextSettings35.HalfPointSize = 20
-        TextSettings35.Italic = False
-        TextSettings35.PointSize = 10.0!
-        XmlHtmDisplaySettings3.HElement = TextSettings35
-        TextSettings36.Bold = False
-        TextSettings36.Color = System.Drawing.Color.Black
-        TextSettings36.ColorIndex = 4
-        TextSettings36.FontIndex = 1
-        TextSettings36.FontName = "Arial"
-        TextSettings36.HalfPointSize = 20
-        TextSettings36.Italic = False
-        TextSettings36.PointSize = 10.0!
-        XmlHtmDisplaySettings3.HStyle = TextSettings36
-        TextSettings37.Bold = False
-        TextSettings37.Color = System.Drawing.Color.Black
-        TextSettings37.ColorIndex = 4
-        TextSettings37.FontIndex = 1
-        TextSettings37.FontName = "Arial"
-        TextSettings37.HalfPointSize = 20
-        TextSettings37.Italic = False
-        TextSettings37.PointSize = 10.0!
-        XmlHtmDisplaySettings3.HText = TextSettings37
-        TextSettings38.Bold = False
-        TextSettings38.Color = System.Drawing.Color.Black
-        TextSettings38.ColorIndex = 4
-        TextSettings38.FontIndex = 1
-        TextSettings38.FontName = "Arial"
-        TextSettings38.HalfPointSize = 20
-        TextSettings38.Italic = False
-        TextSettings38.PointSize = 10.0!
-        XmlHtmDisplaySettings3.HValue = TextSettings38
-        TextSettings39.Bold = False
-        TextSettings39.Color = System.Drawing.Color.Black
-        TextSettings39.ColorIndex = 7
-        TextSettings39.FontIndex = 7
-        TextSettings39.FontName = "Arial"
-        TextSettings39.HalfPointSize = 20
-        TextSettings39.Italic = False
-        TextSettings39.PointSize = 10.0!
-        XmlHtmDisplaySettings3.PlainText = TextSettings39
-        TextSettings40.Bold = False
-        TextSettings40.Color = System.Drawing.Color.Red
-        TextSettings40.ColorIndex = 3
-        TextSettings40.FontIndex = 1
-        TextSettings40.FontName = "Arial"
-        TextSettings40.HalfPointSize = 20
-        TextSettings40.Italic = False
-        TextSettings40.PointSize = 10.0!
-        XmlHtmDisplaySettings3.XAttributeKey = TextSettings40
-        TextSettings41.Bold = False
-        TextSettings41.Color = System.Drawing.Color.Blue
-        TextSettings41.ColorIndex = 4
-        TextSettings41.FontIndex = 1
-        TextSettings41.FontName = "Arial"
-        TextSettings41.HalfPointSize = 20
-        TextSettings41.Italic = False
-        TextSettings41.PointSize = 10.0!
-        XmlHtmDisplaySettings3.XAttributeValue = TextSettings41
-        TextSettings42.Bold = False
-        TextSettings42.Color = System.Drawing.Color.Gray
-        TextSettings42.ColorIndex = 6
-        TextSettings42.FontIndex = 1
-        TextSettings42.FontName = "Arial"
-        TextSettings42.HalfPointSize = 20
-        TextSettings42.Italic = False
-        TextSettings42.PointSize = 10.0!
-        XmlHtmDisplaySettings3.XComment = TextSettings42
-        TextSettings43.Bold = False
-        TextSettings43.Color = System.Drawing.Color.DarkRed
-        TextSettings43.ColorIndex = 2
-        TextSettings43.FontIndex = 1
-        TextSettings43.FontName = "Arial"
-        TextSettings43.HalfPointSize = 20
-        TextSettings43.Italic = False
-        TextSettings43.PointSize = 10.0!
-        XmlHtmDisplaySettings3.XElement = TextSettings43
-        XmlHtmDisplaySettings3.XIndentSpaces = 4
-        XmlHtmDisplaySettings3.XmlLargeFileSizeLimit = 1000000
-        TextSettings44.Bold = False
-        TextSettings44.Color = System.Drawing.Color.Blue
-        TextSettings44.ColorIndex = 1
-        TextSettings44.FontIndex = 1
-        TextSettings44.FontName = "Arial"
-        TextSettings44.HalfPointSize = 20
-        TextSettings44.Italic = False
-        TextSettings44.PointSize = 10.0!
-        XmlHtmDisplaySettings3.XTag = TextSettings44
-        TextSettings45.Bold = False
-        TextSettings45.Color = System.Drawing.Color.Black
-        TextSettings45.ColorIndex = 5
-        TextSettings45.FontIndex = 1
-        TextSettings45.FontName = "Arial"
-        TextSettings45.HalfPointSize = 20
-        TextSettings45.Italic = False
-        TextSettings45.PointSize = 10.0!
-        XmlHtmDisplaySettings3.XValue = TextSettings45
-        Me.XmlHtmDisplay2.Settings = XmlHtmDisplaySettings3
-        Me.XmlHtmDisplay2.Size = New System.Drawing.Size(661, 351)
+        TextSettings1.Bold = False
+        TextSettings1.Color = System.Drawing.Color.Black
+        TextSettings1.ColorIndex = 7
+        TextSettings1.FontIndex = 7
+        TextSettings1.FontName = "Arial"
+        TextSettings1.HalfPointSize = 20
+        TextSettings1.Italic = False
+        TextSettings1.PointSize = 10.0!
+        XmlHtmDisplaySettings1.DefaultText = TextSettings1
+        TextSettings2.Bold = False
+        TextSettings2.Color = System.Drawing.Color.Blue
+        TextSettings2.ColorIndex = 1
+        TextSettings2.FontIndex = 1
+        TextSettings2.FontName = "Arial"
+        TextSettings2.HalfPointSize = 20
+        TextSettings2.Italic = False
+        TextSettings2.PointSize = 10.0!
+        XmlHtmDisplaySettings1.HAttribute = TextSettings2
+        TextSettings3.Bold = False
+        TextSettings3.Color = System.Drawing.Color.Gray
+        TextSettings3.ColorIndex = 5
+        TextSettings3.FontIndex = 1
+        TextSettings3.FontName = "Arial"
+        TextSettings3.HalfPointSize = 20
+        TextSettings3.Italic = False
+        TextSettings3.PointSize = 10.0!
+        XmlHtmDisplaySettings1.HChar = TextSettings3
+        TextSettings4.Bold = False
+        TextSettings4.Color = System.Drawing.Color.Gray
+        TextSettings4.ColorIndex = 5
+        TextSettings4.FontIndex = 1
+        TextSettings4.FontName = "Arial"
+        TextSettings4.HalfPointSize = 20
+        TextSettings4.Italic = False
+        TextSettings4.PointSize = 10.0!
+        XmlHtmDisplaySettings1.HComment = TextSettings4
+        TextSettings5.Bold = False
+        TextSettings5.Color = System.Drawing.Color.DarkRed
+        TextSettings5.ColorIndex = 2
+        TextSettings5.FontIndex = 1
+        TextSettings5.FontName = "Arial"
+        TextSettings5.HalfPointSize = 20
+        TextSettings5.Italic = False
+        TextSettings5.PointSize = 10.0!
+        XmlHtmDisplaySettings1.HElement = TextSettings5
+        TextSettings6.Bold = False
+        TextSettings6.Color = System.Drawing.Color.Black
+        TextSettings6.ColorIndex = 4
+        TextSettings6.FontIndex = 1
+        TextSettings6.FontName = "Arial"
+        TextSettings6.HalfPointSize = 20
+        TextSettings6.Italic = False
+        TextSettings6.PointSize = 10.0!
+        XmlHtmDisplaySettings1.HStyle = TextSettings6
+        TextSettings7.Bold = False
+        TextSettings7.Color = System.Drawing.Color.Black
+        TextSettings7.ColorIndex = 4
+        TextSettings7.FontIndex = 1
+        TextSettings7.FontName = "Arial"
+        TextSettings7.HalfPointSize = 20
+        TextSettings7.Italic = False
+        TextSettings7.PointSize = 10.0!
+        XmlHtmDisplaySettings1.HText = TextSettings7
+        TextSettings8.Bold = False
+        TextSettings8.Color = System.Drawing.Color.Black
+        TextSettings8.ColorIndex = 4
+        TextSettings8.FontIndex = 1
+        TextSettings8.FontName = "Arial"
+        TextSettings8.HalfPointSize = 20
+        TextSettings8.Italic = False
+        TextSettings8.PointSize = 10.0!
+        XmlHtmDisplaySettings1.HValue = TextSettings8
+        TextSettings9.Bold = False
+        TextSettings9.Color = System.Drawing.Color.Black
+        TextSettings9.ColorIndex = 7
+        TextSettings9.FontIndex = 7
+        TextSettings9.FontName = "Arial"
+        TextSettings9.HalfPointSize = 20
+        TextSettings9.Italic = False
+        TextSettings9.PointSize = 10.0!
+        XmlHtmDisplaySettings1.PlainText = TextSettings9
+        TextSettings10.Bold = False
+        TextSettings10.Color = System.Drawing.Color.Red
+        TextSettings10.ColorIndex = 3
+        TextSettings10.FontIndex = 1
+        TextSettings10.FontName = "Arial"
+        TextSettings10.HalfPointSize = 20
+        TextSettings10.Italic = False
+        TextSettings10.PointSize = 10.0!
+        XmlHtmDisplaySettings1.XAttributeKey = TextSettings10
+        TextSettings11.Bold = False
+        TextSettings11.Color = System.Drawing.Color.Blue
+        TextSettings11.ColorIndex = 4
+        TextSettings11.FontIndex = 1
+        TextSettings11.FontName = "Arial"
+        TextSettings11.HalfPointSize = 20
+        TextSettings11.Italic = False
+        TextSettings11.PointSize = 10.0!
+        XmlHtmDisplaySettings1.XAttributeValue = TextSettings11
+        TextSettings12.Bold = False
+        TextSettings12.Color = System.Drawing.Color.Gray
+        TextSettings12.ColorIndex = 6
+        TextSettings12.FontIndex = 1
+        TextSettings12.FontName = "Arial"
+        TextSettings12.HalfPointSize = 20
+        TextSettings12.Italic = False
+        TextSettings12.PointSize = 10.0!
+        XmlHtmDisplaySettings1.XComment = TextSettings12
+        TextSettings13.Bold = False
+        TextSettings13.Color = System.Drawing.Color.DarkRed
+        TextSettings13.ColorIndex = 2
+        TextSettings13.FontIndex = 1
+        TextSettings13.FontName = "Arial"
+        TextSettings13.HalfPointSize = 20
+        TextSettings13.Italic = False
+        TextSettings13.PointSize = 10.0!
+        XmlHtmDisplaySettings1.XElement = TextSettings13
+        XmlHtmDisplaySettings1.XIndentSpaces = 4
+        XmlHtmDisplaySettings1.XmlLargeFileSizeLimit = 1000000
+        TextSettings14.Bold = False
+        TextSettings14.Color = System.Drawing.Color.Blue
+        TextSettings14.ColorIndex = 1
+        TextSettings14.FontIndex = 1
+        TextSettings14.FontName = "Arial"
+        TextSettings14.HalfPointSize = 20
+        TextSettings14.Italic = False
+        TextSettings14.PointSize = 10.0!
+        XmlHtmDisplaySettings1.XTag = TextSettings14
+        TextSettings15.Bold = False
+        TextSettings15.Color = System.Drawing.Color.Black
+        TextSettings15.ColorIndex = 5
+        TextSettings15.FontIndex = 1
+        TextSettings15.FontName = "Arial"
+        TextSettings15.HalfPointSize = 20
+        TextSettings15.Italic = False
+        TextSettings15.PointSize = 10.0!
+        XmlHtmDisplaySettings1.XValue = TextSettings15
+        Me.XmlHtmDisplay2.Settings = XmlHtmDisplaySettings1
+        Me.XmlHtmDisplay2.Size = New System.Drawing.Size(662, 574)
         Me.XmlHtmDisplay2.TabIndex = 65
         Me.XmlHtmDisplay2.Text = ""
+        '
+        'TabPage11
+        '
+        Me.TabPage11.Controls.Add(Me.Label46)
+        Me.TabPage11.Controls.Add(Me.txtDocDescr)
+        Me.TabPage11.Controls.Add(Me.txtDocFileName)
+        Me.TabPage11.Controls.Add(Me.Label44)
+        Me.TabPage11.Controls.Add(Me.btnUpdateDocList)
+        Me.TabPage11.Controls.Add(Me.btnOpenDocInNewWindow2)
+        Me.TabPage11.Controls.Add(Me.dgvDocList)
+        Me.TabPage11.Location = New System.Drawing.Point(4, 22)
+        Me.TabPage11.Name = "TabPage11"
+        Me.TabPage11.Size = New System.Drawing.Size(668, 580)
+        Me.TabPage11.TabIndex = 5
+        Me.TabPage11.Text = "Document List"
+        Me.TabPage11.UseVisualStyleBackColor = True
+        '
+        'Label46
+        '
+        Me.Label46.AutoSize = True
+        Me.Label46.Location = New System.Drawing.Point(4, 38)
+        Me.Label46.Name = "Label46"
+        Me.Label46.Size = New System.Drawing.Size(63, 13)
+        Me.Label46.TabIndex = 267
+        Me.Label46.Text = "Description:"
+        '
+        'txtDocDescr
+        '
+        Me.txtDocDescr.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.txtDocDescr.Location = New System.Drawing.Point(73, 35)
+        Me.txtDocDescr.Multiline = True
+        Me.txtDocDescr.Name = "txtDocDescr"
+        Me.txtDocDescr.Size = New System.Drawing.Size(592, 45)
+        Me.txtDocDescr.TabIndex = 268
+        '
+        'txtDocFileName
+        '
+        Me.txtDocFileName.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.txtDocFileName.Location = New System.Drawing.Point(331, 9)
+        Me.txtDocFileName.Name = "txtDocFileName"
+        Me.txtDocFileName.Size = New System.Drawing.Size(334, 20)
+        Me.txtDocFileName.TabIndex = 266
+        '
+        'Label44
+        '
+        Me.Label44.AutoSize = True
+        Me.Label44.Location = New System.Drawing.Point(269, 12)
+        Me.Label44.Name = "Label44"
+        Me.Label44.Size = New System.Drawing.Size(55, 13)
+        Me.Label44.TabIndex = 265
+        Me.Label44.Text = "File name:"
+        Me.ToolTip1.SetToolTip(Me.Label44, "The is also the document file name")
+        '
+        'btnUpdateDocList
+        '
+        Me.btnUpdateDocList.Location = New System.Drawing.Point(188, 7)
+        Me.btnUpdateDocList.Name = "btnUpdateDocList"
+        Me.btnUpdateDocList.Size = New System.Drawing.Size(75, 22)
+        Me.btnUpdateDocList.TabIndex = 264
+        Me.btnUpdateDocList.Text = "Update List"
+        Me.btnUpdateDocList.UseVisualStyleBackColor = True
+        '
+        'btnOpenDocInNewWindow2
+        '
+        Me.btnOpenDocInNewWindow2.Location = New System.Drawing.Point(7, 7)
+        Me.btnOpenDocInNewWindow2.Name = "btnOpenDocInNewWindow2"
+        Me.btnOpenDocInNewWindow2.Size = New System.Drawing.Size(175, 22)
+        Me.btnOpenDocInNewWindow2.TabIndex = 263
+        Me.btnOpenDocInNewWindow2.Text = "Open Document in New Window"
+        Me.btnOpenDocInNewWindow2.UseVisualStyleBackColor = True
+        '
+        'dgvDocList
+        '
+        Me.dgvDocList.Anchor = CType((((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
+            Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.dgvDocList.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
+        Me.dgvDocList.Location = New System.Drawing.Point(3, 86)
+        Me.dgvDocList.Name = "dgvDocList"
+        Me.dgvDocList.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect
+        Me.dgvDocList.Size = New System.Drawing.Size(662, 491)
+        Me.dgvDocList.TabIndex = 0
         '
         'btnSaveLibraryAs
         '
         Me.btnSaveLibraryAs.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.btnSaveLibraryAs.Location = New System.Drawing.Point(471, 6)
+        Me.btnSaveLibraryAs.Location = New System.Drawing.Point(464, 6)
         Me.btnSaveLibraryAs.Name = "btnSaveLibraryAs"
         Me.btnSaveLibraryAs.Size = New System.Drawing.Size(56, 22)
         Me.btnSaveLibraryAs.TabIndex = 241
@@ -1454,7 +1833,7 @@ Partial Class Main
         'btnSaveLibrary
         '
         Me.btnSaveLibrary.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.btnSaveLibrary.Location = New System.Drawing.Point(425, 6)
+        Me.btnSaveLibrary.Location = New System.Drawing.Point(418, 6)
         Me.btnSaveLibrary.Name = "btnSaveLibrary"
         Me.btnSaveLibrary.Size = New System.Drawing.Size(40, 22)
         Me.btnSaveLibrary.TabIndex = 240
@@ -1473,7 +1852,7 @@ Partial Class Main
         'btnOpenLibrary
         '
         Me.btnOpenLibrary.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.btnOpenLibrary.Location = New System.Drawing.Point(377, 6)
+        Me.btnOpenLibrary.Location = New System.Drawing.Point(370, 6)
         Me.btnOpenLibrary.Name = "btnOpenLibrary"
         Me.btnOpenLibrary.Size = New System.Drawing.Size(42, 22)
         Me.btnOpenLibrary.TabIndex = 239
@@ -1487,7 +1866,7 @@ Partial Class Main
         Me.txtLibraryName.Location = New System.Drawing.Point(39, 6)
         Me.txtLibraryName.Name = "txtLibraryName"
         Me.txtLibraryName.ReadOnly = True
-        Me.txtLibraryName.Size = New System.Drawing.Size(332, 20)
+        Me.txtLibraryName.Size = New System.Drawing.Size(325, 20)
         Me.txtLibraryName.TabIndex = 84
         '
         'TabPage1
@@ -1501,7 +1880,7 @@ Partial Class Main
         Me.TabPage1.Location = New System.Drawing.Point(4, 22)
         Me.TabPage1.Name = "TabPage1"
         Me.TabPage1.Padding = New System.Windows.Forms.Padding(3)
-        Me.TabPage1.Size = New System.Drawing.Size(939, 421)
+        Me.TabPage1.Size = New System.Drawing.Size(956, 649)
         Me.TabPage1.TabIndex = 1
         Me.TabPage1.Text = "Document"
         Me.TabPage1.UseVisualStyleBackColor = True
@@ -1512,154 +1891,154 @@ Partial Class Main
             Or System.Windows.Forms.AnchorStyles.Left) _
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.XmlHtmDisplay1.Font = New System.Drawing.Font("Arial", 10.0!)
-        Me.XmlHtmDisplay1.Location = New System.Drawing.Point(6, 32)
+        Me.XmlHtmDisplay1.Location = New System.Drawing.Point(3, 32)
         Me.XmlHtmDisplay1.Name = "XmlHtmDisplay1"
-        TextSettings46.Bold = False
-        TextSettings46.Color = System.Drawing.Color.Black
-        TextSettings46.ColorIndex = 7
-        TextSettings46.FontIndex = 7
-        TextSettings46.FontName = "Arial"
-        TextSettings46.HalfPointSize = 20
-        TextSettings46.Italic = False
-        TextSettings46.PointSize = 10.0!
-        XmlHtmDisplaySettings4.DefaultText = TextSettings46
-        TextSettings47.Bold = False
-        TextSettings47.Color = System.Drawing.Color.Blue
-        TextSettings47.ColorIndex = 1
-        TextSettings47.FontIndex = 1
-        TextSettings47.FontName = "Arial"
-        TextSettings47.HalfPointSize = 20
-        TextSettings47.Italic = False
-        TextSettings47.PointSize = 10.0!
-        XmlHtmDisplaySettings4.HAttribute = TextSettings47
-        TextSettings48.Bold = False
-        TextSettings48.Color = System.Drawing.Color.Gray
-        TextSettings48.ColorIndex = 5
-        TextSettings48.FontIndex = 1
-        TextSettings48.FontName = "Arial"
-        TextSettings48.HalfPointSize = 20
-        TextSettings48.Italic = False
-        TextSettings48.PointSize = 10.0!
-        XmlHtmDisplaySettings4.HChar = TextSettings48
-        TextSettings49.Bold = False
-        TextSettings49.Color = System.Drawing.Color.Gray
-        TextSettings49.ColorIndex = 5
-        TextSettings49.FontIndex = 1
-        TextSettings49.FontName = "Arial"
-        TextSettings49.HalfPointSize = 20
-        TextSettings49.Italic = False
-        TextSettings49.PointSize = 10.0!
-        XmlHtmDisplaySettings4.HComment = TextSettings49
-        TextSettings50.Bold = False
-        TextSettings50.Color = System.Drawing.Color.DarkRed
-        TextSettings50.ColorIndex = 2
-        TextSettings50.FontIndex = 1
-        TextSettings50.FontName = "Arial"
-        TextSettings50.HalfPointSize = 20
-        TextSettings50.Italic = False
-        TextSettings50.PointSize = 10.0!
-        XmlHtmDisplaySettings4.HElement = TextSettings50
-        TextSettings51.Bold = False
-        TextSettings51.Color = System.Drawing.Color.Black
-        TextSettings51.ColorIndex = 4
-        TextSettings51.FontIndex = 1
-        TextSettings51.FontName = "Arial"
-        TextSettings51.HalfPointSize = 20
-        TextSettings51.Italic = False
-        TextSettings51.PointSize = 10.0!
-        XmlHtmDisplaySettings4.HStyle = TextSettings51
-        TextSettings52.Bold = False
-        TextSettings52.Color = System.Drawing.Color.Black
-        TextSettings52.ColorIndex = 4
-        TextSettings52.FontIndex = 1
-        TextSettings52.FontName = "Arial"
-        TextSettings52.HalfPointSize = 20
-        TextSettings52.Italic = False
-        TextSettings52.PointSize = 10.0!
-        XmlHtmDisplaySettings4.HText = TextSettings52
-        TextSettings53.Bold = False
-        TextSettings53.Color = System.Drawing.Color.Black
-        TextSettings53.ColorIndex = 4
-        TextSettings53.FontIndex = 1
-        TextSettings53.FontName = "Arial"
-        TextSettings53.HalfPointSize = 20
-        TextSettings53.Italic = False
-        TextSettings53.PointSize = 10.0!
-        XmlHtmDisplaySettings4.HValue = TextSettings53
-        TextSettings54.Bold = False
-        TextSettings54.Color = System.Drawing.Color.Black
-        TextSettings54.ColorIndex = 7
-        TextSettings54.FontIndex = 7
-        TextSettings54.FontName = "Arial"
-        TextSettings54.HalfPointSize = 20
-        TextSettings54.Italic = False
-        TextSettings54.PointSize = 10.0!
-        XmlHtmDisplaySettings4.PlainText = TextSettings54
-        TextSettings55.Bold = False
-        TextSettings55.Color = System.Drawing.Color.Red
-        TextSettings55.ColorIndex = 3
-        TextSettings55.FontIndex = 1
-        TextSettings55.FontName = "Arial"
-        TextSettings55.HalfPointSize = 20
-        TextSettings55.Italic = False
-        TextSettings55.PointSize = 10.0!
-        XmlHtmDisplaySettings4.XAttributeKey = TextSettings55
-        TextSettings56.Bold = False
-        TextSettings56.Color = System.Drawing.Color.Blue
-        TextSettings56.ColorIndex = 4
-        TextSettings56.FontIndex = 1
-        TextSettings56.FontName = "Arial"
-        TextSettings56.HalfPointSize = 20
-        TextSettings56.Italic = False
-        TextSettings56.PointSize = 10.0!
-        XmlHtmDisplaySettings4.XAttributeValue = TextSettings56
-        TextSettings57.Bold = False
-        TextSettings57.Color = System.Drawing.Color.Gray
-        TextSettings57.ColorIndex = 6
-        TextSettings57.FontIndex = 1
-        TextSettings57.FontName = "Arial"
-        TextSettings57.HalfPointSize = 20
-        TextSettings57.Italic = False
-        TextSettings57.PointSize = 10.0!
-        XmlHtmDisplaySettings4.XComment = TextSettings57
-        TextSettings58.Bold = False
-        TextSettings58.Color = System.Drawing.Color.DarkRed
-        TextSettings58.ColorIndex = 2
-        TextSettings58.FontIndex = 1
-        TextSettings58.FontName = "Arial"
-        TextSettings58.HalfPointSize = 20
-        TextSettings58.Italic = False
-        TextSettings58.PointSize = 10.0!
-        XmlHtmDisplaySettings4.XElement = TextSettings58
-        XmlHtmDisplaySettings4.XIndentSpaces = 4
-        XmlHtmDisplaySettings4.XmlLargeFileSizeLimit = 1000000
-        TextSettings59.Bold = False
-        TextSettings59.Color = System.Drawing.Color.Blue
-        TextSettings59.ColorIndex = 1
-        TextSettings59.FontIndex = 1
-        TextSettings59.FontName = "Arial"
-        TextSettings59.HalfPointSize = 20
-        TextSettings59.Italic = False
-        TextSettings59.PointSize = 10.0!
-        XmlHtmDisplaySettings4.XTag = TextSettings59
-        TextSettings60.Bold = False
-        TextSettings60.Color = System.Drawing.Color.Black
-        TextSettings60.ColorIndex = 5
-        TextSettings60.FontIndex = 1
-        TextSettings60.FontName = "Arial"
-        TextSettings60.HalfPointSize = 20
-        TextSettings60.Italic = False
-        TextSettings60.PointSize = 10.0!
-        XmlHtmDisplaySettings4.XValue = TextSettings60
-        Me.XmlHtmDisplay1.Settings = XmlHtmDisplaySettings4
-        Me.XmlHtmDisplay1.Size = New System.Drawing.Size(927, 383)
+        TextSettings16.Bold = False
+        TextSettings16.Color = System.Drawing.Color.Black
+        TextSettings16.ColorIndex = 7
+        TextSettings16.FontIndex = 7
+        TextSettings16.FontName = "Arial"
+        TextSettings16.HalfPointSize = 20
+        TextSettings16.Italic = False
+        TextSettings16.PointSize = 10.0!
+        XmlHtmDisplaySettings2.DefaultText = TextSettings16
+        TextSettings17.Bold = False
+        TextSettings17.Color = System.Drawing.Color.Blue
+        TextSettings17.ColorIndex = 1
+        TextSettings17.FontIndex = 1
+        TextSettings17.FontName = "Arial"
+        TextSettings17.HalfPointSize = 20
+        TextSettings17.Italic = False
+        TextSettings17.PointSize = 10.0!
+        XmlHtmDisplaySettings2.HAttribute = TextSettings17
+        TextSettings18.Bold = False
+        TextSettings18.Color = System.Drawing.Color.Gray
+        TextSettings18.ColorIndex = 5
+        TextSettings18.FontIndex = 1
+        TextSettings18.FontName = "Arial"
+        TextSettings18.HalfPointSize = 20
+        TextSettings18.Italic = False
+        TextSettings18.PointSize = 10.0!
+        XmlHtmDisplaySettings2.HChar = TextSettings18
+        TextSettings19.Bold = False
+        TextSettings19.Color = System.Drawing.Color.Gray
+        TextSettings19.ColorIndex = 5
+        TextSettings19.FontIndex = 1
+        TextSettings19.FontName = "Arial"
+        TextSettings19.HalfPointSize = 20
+        TextSettings19.Italic = False
+        TextSettings19.PointSize = 10.0!
+        XmlHtmDisplaySettings2.HComment = TextSettings19
+        TextSettings20.Bold = False
+        TextSettings20.Color = System.Drawing.Color.DarkRed
+        TextSettings20.ColorIndex = 2
+        TextSettings20.FontIndex = 1
+        TextSettings20.FontName = "Arial"
+        TextSettings20.HalfPointSize = 20
+        TextSettings20.Italic = False
+        TextSettings20.PointSize = 10.0!
+        XmlHtmDisplaySettings2.HElement = TextSettings20
+        TextSettings21.Bold = False
+        TextSettings21.Color = System.Drawing.Color.Black
+        TextSettings21.ColorIndex = 4
+        TextSettings21.FontIndex = 1
+        TextSettings21.FontName = "Arial"
+        TextSettings21.HalfPointSize = 20
+        TextSettings21.Italic = False
+        TextSettings21.PointSize = 10.0!
+        XmlHtmDisplaySettings2.HStyle = TextSettings21
+        TextSettings22.Bold = False
+        TextSettings22.Color = System.Drawing.Color.Black
+        TextSettings22.ColorIndex = 4
+        TextSettings22.FontIndex = 1
+        TextSettings22.FontName = "Arial"
+        TextSettings22.HalfPointSize = 20
+        TextSettings22.Italic = False
+        TextSettings22.PointSize = 10.0!
+        XmlHtmDisplaySettings2.HText = TextSettings22
+        TextSettings23.Bold = False
+        TextSettings23.Color = System.Drawing.Color.Black
+        TextSettings23.ColorIndex = 4
+        TextSettings23.FontIndex = 1
+        TextSettings23.FontName = "Arial"
+        TextSettings23.HalfPointSize = 20
+        TextSettings23.Italic = False
+        TextSettings23.PointSize = 10.0!
+        XmlHtmDisplaySettings2.HValue = TextSettings23
+        TextSettings24.Bold = False
+        TextSettings24.Color = System.Drawing.Color.Black
+        TextSettings24.ColorIndex = 7
+        TextSettings24.FontIndex = 7
+        TextSettings24.FontName = "Arial"
+        TextSettings24.HalfPointSize = 20
+        TextSettings24.Italic = False
+        TextSettings24.PointSize = 10.0!
+        XmlHtmDisplaySettings2.PlainText = TextSettings24
+        TextSettings25.Bold = False
+        TextSettings25.Color = System.Drawing.Color.Red
+        TextSettings25.ColorIndex = 3
+        TextSettings25.FontIndex = 1
+        TextSettings25.FontName = "Arial"
+        TextSettings25.HalfPointSize = 20
+        TextSettings25.Italic = False
+        TextSettings25.PointSize = 10.0!
+        XmlHtmDisplaySettings2.XAttributeKey = TextSettings25
+        TextSettings26.Bold = False
+        TextSettings26.Color = System.Drawing.Color.Blue
+        TextSettings26.ColorIndex = 4
+        TextSettings26.FontIndex = 1
+        TextSettings26.FontName = "Arial"
+        TextSettings26.HalfPointSize = 20
+        TextSettings26.Italic = False
+        TextSettings26.PointSize = 10.0!
+        XmlHtmDisplaySettings2.XAttributeValue = TextSettings26
+        TextSettings27.Bold = False
+        TextSettings27.Color = System.Drawing.Color.Gray
+        TextSettings27.ColorIndex = 6
+        TextSettings27.FontIndex = 1
+        TextSettings27.FontName = "Arial"
+        TextSettings27.HalfPointSize = 20
+        TextSettings27.Italic = False
+        TextSettings27.PointSize = 10.0!
+        XmlHtmDisplaySettings2.XComment = TextSettings27
+        TextSettings28.Bold = False
+        TextSettings28.Color = System.Drawing.Color.DarkRed
+        TextSettings28.ColorIndex = 2
+        TextSettings28.FontIndex = 1
+        TextSettings28.FontName = "Arial"
+        TextSettings28.HalfPointSize = 20
+        TextSettings28.Italic = False
+        TextSettings28.PointSize = 10.0!
+        XmlHtmDisplaySettings2.XElement = TextSettings28
+        XmlHtmDisplaySettings2.XIndentSpaces = 4
+        XmlHtmDisplaySettings2.XmlLargeFileSizeLimit = 1000000
+        TextSettings29.Bold = False
+        TextSettings29.Color = System.Drawing.Color.Blue
+        TextSettings29.ColorIndex = 1
+        TextSettings29.FontIndex = 1
+        TextSettings29.FontName = "Arial"
+        TextSettings29.HalfPointSize = 20
+        TextSettings29.Italic = False
+        TextSettings29.PointSize = 10.0!
+        XmlHtmDisplaySettings2.XTag = TextSettings29
+        TextSettings30.Bold = False
+        TextSettings30.Color = System.Drawing.Color.Black
+        TextSettings30.ColorIndex = 5
+        TextSettings30.FontIndex = 1
+        TextSettings30.FontName = "Arial"
+        TextSettings30.HalfPointSize = 20
+        TextSettings30.Italic = False
+        TextSettings30.PointSize = 10.0!
+        XmlHtmDisplaySettings2.XValue = TextSettings30
+        Me.XmlHtmDisplay1.Settings = XmlHtmDisplaySettings2
+        Me.XmlHtmDisplay1.Size = New System.Drawing.Size(940, 614)
         Me.XmlHtmDisplay1.TabIndex = 64
         Me.XmlHtmDisplay1.Text = ""
         '
         'btnSaveAs
         '
         Me.btnSaveAs.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.btnSaveAs.Location = New System.Drawing.Point(1270, 4)
+        Me.btnSaveAs.Location = New System.Drawing.Point(884, 8)
         Me.btnSaveAs.Name = "btnSaveAs"
         Me.btnSaveAs.Size = New System.Drawing.Size(56, 22)
         Me.btnSaveAs.TabIndex = 63
@@ -1669,7 +2048,7 @@ Partial Class Main
         'txtFileType
         '
         Me.txtFileType.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.txtFileType.Location = New System.Drawing.Point(1203, 6)
+        Me.txtFileType.Location = New System.Drawing.Point(817, 10)
         Me.txtFileType.Name = "txtFileType"
         Me.txtFileType.Size = New System.Drawing.Size(61, 20)
         Me.txtFileType.TabIndex = 63
@@ -1678,7 +2057,7 @@ Partial Class Main
         '
         Me.Label16.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.Label16.AutoSize = True
-        Me.Label16.Location = New System.Drawing.Point(1163, 9)
+        Me.Label16.Location = New System.Drawing.Point(777, 13)
         Me.Label16.Name = "Label16"
         Me.Label16.Size = New System.Drawing.Size(34, 13)
         Me.Label16.TabIndex = 62
@@ -1699,7 +2078,7 @@ Partial Class Main
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.txtFileName2.Location = New System.Drawing.Point(69, 6)
         Me.txtFileName2.Name = "txtFileName2"
-        Me.txtFileName2.Size = New System.Drawing.Size(864, 20)
+        Me.txtFileName2.Size = New System.Drawing.Size(702, 20)
         Me.txtFileName2.TabIndex = 59
         '
         'TabPage3
@@ -1721,7 +2100,7 @@ Partial Class Main
         Me.TabPage3.Controls.Add(Me.DataGridView1)
         Me.TabPage3.Location = New System.Drawing.Point(4, 22)
         Me.TabPage3.Name = "TabPage3"
-        Me.TabPage3.Size = New System.Drawing.Size(963, 421)
+        Me.TabPage3.Size = New System.Drawing.Size(956, 649)
         Me.TabPage3.TabIndex = 2
         Me.TabPage3.Text = "Settings"
         Me.TabPage3.UseVisualStyleBackColor = True
@@ -1775,7 +2154,7 @@ Partial Class Main
         'btnFindSettingsFile
         '
         Me.btnFindSettingsFile.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.btnFindSettingsFile.Location = New System.Drawing.Point(716, 7)
+        Me.btnFindSettingsFile.Location = New System.Drawing.Point(735, 7)
         Me.btnFindSettingsFile.Name = "btnFindSettingsFile"
         Me.btnFindSettingsFile.Size = New System.Drawing.Size(48, 22)
         Me.btnFindSettingsFile.TabIndex = 226
@@ -1785,7 +2164,7 @@ Partial Class Main
         'btnSaveSettingsFile
         '
         Me.btnSaveSettingsFile.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.btnSaveSettingsFile.Location = New System.Drawing.Point(770, 7)
+        Me.btnSaveSettingsFile.Location = New System.Drawing.Point(789, 7)
         Me.btnSaveSettingsFile.Name = "btnSaveSettingsFile"
         Me.btnSaveSettingsFile.Size = New System.Drawing.Size(48, 22)
         Me.btnSaveSettingsFile.TabIndex = 225
@@ -1798,7 +2177,7 @@ Partial Class Main
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.txtSettingsFileName.Location = New System.Drawing.Point(76, 9)
         Me.txtSettingsFileName.Name = "txtSettingsFileName"
-        Me.txtSettingsFileName.Size = New System.Drawing.Size(634, 20)
+        Me.txtSettingsFileName.Size = New System.Drawing.Size(653, 20)
         Me.txtSettingsFileName.TabIndex = 224
         '
         'Label1
@@ -1859,7 +2238,7 @@ Partial Class Main
         Me.DataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
         Me.DataGridView1.Location = New System.Drawing.Point(3, 61)
         Me.DataGridView1.Name = "DataGridView1"
-        Me.DataGridView1.Size = New System.Drawing.Size(957, 357)
+        Me.DataGridView1.Size = New System.Drawing.Size(940, 585)
         Me.DataGridView1.TabIndex = 0
         '
         'TabPage2
@@ -1869,7 +2248,7 @@ Partial Class Main
         Me.TabPage2.Controls.Add(Me.Label5)
         Me.TabPage2.Controls.Add(Me.txtProjectPath)
         Me.TabPage2.Controls.Add(Me.Label8)
-        Me.TabPage2.Controls.Add(Me.txtAppNetName)
+        Me.TabPage2.Controls.Add(Me.txtProNetName)
         Me.TabPage2.Controls.Add(Me.btnAdd)
         Me.TabPage2.Controls.Add(Me.txtParentProject)
         Me.TabPage2.Controls.Add(Me.Label45)
@@ -1907,7 +2286,7 @@ Partial Class Main
         Me.TabPage2.Location = New System.Drawing.Point(4, 22)
         Me.TabPage2.Name = "TabPage2"
         Me.TabPage2.Padding = New System.Windows.Forms.Padding(3)
-        Me.TabPage2.Size = New System.Drawing.Size(963, 421)
+        Me.TabPage2.Size = New System.Drawing.Size(956, 649)
         Me.TabPage2.TabIndex = 0
         Me.TabPage2.Text = "Project Information"
         Me.TabPage2.UseVisualStyleBackColor = True
@@ -1947,7 +2326,7 @@ Partial Class Main
         Me.txtProjectPath.Location = New System.Drawing.Point(138, 160)
         Me.txtProjectPath.Multiline = True
         Me.txtProjectPath.Name = "txtProjectPath"
-        Me.txtProjectPath.Size = New System.Drawing.Size(819, 46)
+        Me.txtProjectPath.Size = New System.Drawing.Size(802, 46)
         Me.txtProjectPath.TabIndex = 306
         '
         'Label8
@@ -1955,19 +2334,19 @@ Partial Class Main
         Me.Label8.AutoSize = True
         Me.Label8.Location = New System.Drawing.Point(162, 37)
         Me.Label8.Name = "Label8"
-        Me.Label8.Size = New System.Drawing.Size(103, 13)
+        Me.Label8.Size = New System.Drawing.Size(84, 13)
         Me.Label8.TabIndex = 305
-        Me.Label8.Text = "Application network:"
+        Me.Label8.Text = "Project network:"
         '
-        'txtAppNetName
+        'txtProNetName
         '
-        Me.txtAppNetName.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
+        Me.txtProNetName.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.txtAppNetName.Location = New System.Drawing.Point(271, 34)
-        Me.txtAppNetName.Name = "txtAppNetName"
-        Me.txtAppNetName.Size = New System.Drawing.Size(686, 20)
-        Me.txtAppNetName.TabIndex = 304
-        Me.ToolTip1.SetToolTip(Me.txtAppNetName, "The name of the Application Network containing this project")
+        Me.txtProNetName.Location = New System.Drawing.Point(271, 34)
+        Me.txtProNetName.Name = "txtProNetName"
+        Me.txtProNetName.Size = New System.Drawing.Size(669, 20)
+        Me.txtProNetName.TabIndex = 304
+        Me.ToolTip1.SetToolTip(Me.txtProNetName, "The name of the Application Network containing this project")
         '
         'btnAdd
         '
@@ -1985,7 +2364,7 @@ Partial Class Main
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.txtParentProject.Location = New System.Drawing.Point(271, 8)
         Me.txtParentProject.Name = "txtParentProject"
-        Me.txtParentProject.Size = New System.Drawing.Size(686, 20)
+        Me.txtParentProject.Size = New System.Drawing.Size(669, 20)
         Me.txtParentProject.TabIndex = 301
         '
         'Label45
@@ -2083,7 +2462,7 @@ Partial Class Main
         Me.txtSystemPath.Location = New System.Drawing.Point(138, 316)
         Me.txtSystemPath.Multiline = True
         Me.txtSystemPath.Name = "txtSystemPath"
-        Me.txtSystemPath.Size = New System.Drawing.Size(819, 46)
+        Me.txtSystemPath.Size = New System.Drawing.Size(802, 46)
         Me.txtSystemPath.TabIndex = 88
         '
         'txtCurrentDuration
@@ -2166,7 +2545,7 @@ Partial Class Main
         Me.txtDataPath.Location = New System.Drawing.Point(138, 264)
         Me.txtDataPath.Multiline = True
         Me.txtDataPath.Name = "txtDataPath"
-        Me.txtDataPath.Size = New System.Drawing.Size(819, 46)
+        Me.txtDataPath.Size = New System.Drawing.Size(802, 46)
         Me.txtDataPath.TabIndex = 61
         '
         'txtDataLocationType
@@ -2192,7 +2571,7 @@ Partial Class Main
         Me.txtSettingsPath.Location = New System.Drawing.Point(138, 212)
         Me.txtSettingsPath.Multiline = True
         Me.txtSettingsPath.Name = "txtSettingsPath"
-        Me.txtSettingsPath.Size = New System.Drawing.Size(819, 46)
+        Me.txtSettingsPath.Size = New System.Drawing.Size(802, 46)
         Me.txtSettingsPath.TabIndex = 57
         '
         'Label7
@@ -2225,7 +2604,7 @@ Partial Class Main
         Me.txtProjectDescription.Location = New System.Drawing.Point(83, 88)
         Me.txtProjectDescription.Multiline = True
         Me.txtProjectDescription.Name = "txtProjectDescription"
-        Me.txtProjectDescription.Size = New System.Drawing.Size(874, 40)
+        Me.txtProjectDescription.Size = New System.Drawing.Size(857, 40)
         Me.txtProjectDescription.TabIndex = 51
         '
         'Label4
@@ -2243,7 +2622,7 @@ Partial Class Main
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.txtProjectName.Location = New System.Drawing.Point(83, 62)
         Me.txtProjectName.Name = "txtProjectName"
-        Me.txtProjectName.Size = New System.Drawing.Size(874, 20)
+        Me.txtProjectName.Size = New System.Drawing.Size(857, 20)
         Me.txtProjectName.TabIndex = 49
         '
         'Label3
@@ -2264,74 +2643,9 @@ Partial Class Main
         Me.btnProject.Text = "Project List"
         Me.btnProject.UseVisualStyleBackColor = True
         '
-        'btnOpen
-        '
-        Me.btnOpen.Location = New System.Drawing.Point(129, 12)
-        Me.btnOpen.Name = "btnOpen"
-        Me.btnOpen.Size = New System.Drawing.Size(42, 22)
-        Me.btnOpen.TabIndex = 51
-        Me.btnOpen.Text = "Open"
-        Me.btnOpen.UseVisualStyleBackColor = True
-        '
-        'btnEdit
-        '
-        Me.btnEdit.Location = New System.Drawing.Point(177, 12)
-        Me.btnEdit.Name = "btnEdit"
-        Me.btnEdit.Size = New System.Drawing.Size(42, 22)
-        Me.btnEdit.TabIndex = 53
-        Me.btnEdit.Text = "Edit"
-        Me.btnEdit.UseVisualStyleBackColor = True
-        '
-        'btnNewDisplay
-        '
-        Me.btnNewDisplay.Location = New System.Drawing.Point(369, 12)
-        Me.btnNewDisplay.Name = "btnNewDisplay"
-        Me.btnNewDisplay.Size = New System.Drawing.Size(78, 22)
-        Me.btnNewDisplay.TabIndex = 54
-        Me.btnNewDisplay.Text = "New Display"
-        Me.btnNewDisplay.UseVisualStyleBackColor = True
-        '
-        'btnSave
-        '
-        Me.btnSave.Location = New System.Drawing.Point(225, 12)
-        Me.btnSave.Name = "btnSave"
-        Me.btnSave.Size = New System.Drawing.Size(42, 22)
-        Me.btnSave.TabIndex = 59
-        Me.btnSave.Text = "Save"
-        Me.btnSave.UseVisualStyleBackColor = True
-        '
-        'Timer1
-        '
-        '
         'OpenFileDialog1
         '
         Me.OpenFileDialog1.FileName = "OpenFileDialog1"
-        '
-        'cmbDocType
-        '
-        Me.cmbDocType.FormattingEnabled = True
-        Me.cmbDocType.Location = New System.Drawing.Point(453, 13)
-        Me.cmbDocType.Name = "cmbDocType"
-        Me.cmbDocType.Size = New System.Drawing.Size(59, 21)
-        Me.cmbDocType.TabIndex = 60
-        '
-        'btnNew
-        '
-        Me.btnNew.Location = New System.Drawing.Point(273, 12)
-        Me.btnNew.Name = "btnNew"
-        Me.btnNew.Size = New System.Drawing.Size(42, 22)
-        Me.btnNew.TabIndex = 61
-        Me.btnNew.Text = "New"
-        Me.btnNew.UseVisualStyleBackColor = True
-        '
-        'btnClose
-        '
-        Me.btnClose.Location = New System.Drawing.Point(321, 12)
-        Me.btnClose.Name = "btnClose"
-        Me.btnClose.Size = New System.Drawing.Size(42, 22)
-        Me.btnClose.TabIndex = 62
-        Me.btnClose.Text = "Close"
-        Me.btnClose.UseVisualStyleBackColor = True
         '
         'ImageList1
         '
@@ -2340,17 +2654,25 @@ Partial Class Main
         Me.ImageList1.Images.SetKeyName(0, "CLibV3.jpg")
         Me.ImageList1.Images.SetKeyName(1, "OLibV3.jpg")
         Me.ImageList1.Images.SetKeyName(2, "Collection.jpg")
-        Me.ImageList1.Images.SetKeyName(3, "OpenCollection.jpg")
+        Me.ImageList1.Images.SetKeyName(3, "Open Collection V3.jpg")
         Me.ImageList1.Images.SetKeyName(4, "ClosedRtf100.jpg")
-        Me.ImageList1.Images.SetKeyName(5, "OpenRtf100.jpg")
+        Me.ImageList1.Images.SetKeyName(5, "Open Rtf V3.jpg")
         Me.ImageList1.Images.SetKeyName(6, "ClosedXml100.jpg")
-        Me.ImageList1.Images.SetKeyName(7, "OpenXml100.jpg")
+        Me.ImageList1.Images.SetKeyName(7, "Open Xml V2.jpg")
         Me.ImageList1.Images.SetKeyName(8, "ClosedHtml100.jpg")
-        Me.ImageList1.Images.SetKeyName(9, "OpenHtml100.jpg")
+        Me.ImageList1.Images.SetKeyName(9, "Open Htm V2.jpg")
         Me.ImageList1.Images.SetKeyName(10, "Text File.jpg")
-        Me.ImageList1.Images.SetKeyName(11, "Open Text File.jpg")
+        Me.ImageList1.Images.SetKeyName(11, "Open Text V2.jpg")
         Me.ImageList1.Images.SetKeyName(12, "Closed PDF 100.jpg")
-        Me.ImageList1.Images.SetKeyName(13, "Open PDF 100.jpg")
+        Me.ImageList1.Images.SetKeyName(13, "Open Pdf V3.jpg")
+        Me.ImageList1.Images.SetKeyName(14, "Closed Xls V2.jpg")
+        Me.ImageList1.Images.SetKeyName(15, "Open Xls V2.jpg")
+        Me.ImageList1.Images.SetKeyName(16, "DirectoryProject.jpg")
+        Me.ImageList1.Images.SetKeyName(17, "OpenDirectoryProject.jpg")
+        Me.ImageList1.Images.SetKeyName(18, "Closed XMsg.jpg")
+        Me.ImageList1.Images.SetKeyName(19, "Open XMsg.jpg")
+        Me.ImageList1.Images.SetKeyName(20, "Closed XSeq.jpg")
+        Me.ImageList1.Images.SetKeyName(21, "Open XSeq.jpg")
         '
         'btnAndorville
         '
@@ -2369,30 +2691,57 @@ Partial Class Main
         'btnWebPages
         '
         Me.btnWebPages.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.btnWebPages.Location = New System.Drawing.Point(620, 12)
+        Me.btnWebPages.ContextMenuStrip = Me.ContextMenuStrip2
+        Me.btnWebPages.Location = New System.Drawing.Point(613, 12)
         Me.btnWebPages.Name = "btnWebPages"
         Me.btnWebPages.Size = New System.Drawing.Size(68, 22)
         Me.btnWebPages.TabIndex = 280
         Me.btnWebPages.Text = "Workflows"
         Me.btnWebPages.UseVisualStyleBackColor = True
         '
-        'Timer3
+        'ContextMenuStrip2
         '
+        Me.ContextMenuStrip2.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.ToolStripMenuItem1_EditWorkflowTabPage, Me.ToolStripMenuItem1_ShowStartPageInWorkflowTab})
+        Me.ContextMenuStrip2.Name = "ContextMenuStrip2"
+        Me.ContextMenuStrip2.Size = New System.Drawing.Size(248, 48)
+        '
+        'ToolStripMenuItem1_EditWorkflowTabPage
+        '
+        Me.ToolStripMenuItem1_EditWorkflowTabPage.Name = "ToolStripMenuItem1_EditWorkflowTabPage"
+        Me.ToolStripMenuItem1_EditWorkflowTabPage.Size = New System.Drawing.Size(247, 22)
+        Me.ToolStripMenuItem1_EditWorkflowTabPage.Text = "Edit Workflow Tab Page"
+        '
+        'ToolStripMenuItem1_ShowStartPageInWorkflowTab
+        '
+        Me.ToolStripMenuItem1_ShowStartPageInWorkflowTab.Name = "ToolStripMenuItem1_ShowStartPageInWorkflowTab"
+        Me.ToolStripMenuItem1_ShowStartPageInWorkflowTab.Size = New System.Drawing.Size(247, 22)
+        Me.ToolStripMenuItem1_ShowStartPageInWorkflowTab.Text = "Show Start Page In Workflow Tab"
+        '
+        'Label41
+        '
+        Me.Label41.AutoSize = True
+        Me.Label41.Location = New System.Drawing.Point(129, 16)
+        Me.Label41.Name = "Label41"
+        Me.Label41.Size = New System.Drawing.Size(82, 13)
+        Me.Label41.TabIndex = 281
+        Me.Label41.Text = "Document type:"
+        '
+        'txtDocType
+        '
+        Me.txtDocType.Location = New System.Drawing.Point(217, 10)
+        Me.txtDocType.Name = "txtDocType"
+        Me.txtDocType.Size = New System.Drawing.Size(61, 20)
+        Me.txtDocType.TabIndex = 282
         '
         'Main
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(995, 499)
+        Me.ClientSize = New System.Drawing.Size(988, 727)
+        Me.Controls.Add(Me.txtDocType)
+        Me.Controls.Add(Me.Label41)
         Me.Controls.Add(Me.btnWebPages)
-        Me.Controls.Add(Me.btnClose)
-        Me.Controls.Add(Me.btnNew)
-        Me.Controls.Add(Me.btnSave)
-        Me.Controls.Add(Me.cmbDocType)
-        Me.Controls.Add(Me.btnNewDisplay)
-        Me.Controls.Add(Me.btnEdit)
         Me.Controls.Add(Me.btnAndorville)
-        Me.Controls.Add(Me.btnOpen)
         Me.Controls.Add(Me.TabControl1)
         Me.Controls.Add(Me.btnAppInfo)
         Me.Controls.Add(Me.btnOnline)
@@ -2417,6 +2766,10 @@ Partial Class Main
         Me.GroupBox2.PerformLayout()
         Me.TabPage5.ResumeLayout(False)
         Me.TabPage5.PerformLayout()
+        CType(Me.pbIconXmsg, System.ComponentModel.ISupportInitialize).EndInit()
+        CType(Me.pbIconXSeq, System.ComponentModel.ISupportInitialize).EndInit()
+        CType(Me.pbIconXls, System.ComponentModel.ISupportInitialize).EndInit()
+        CType(Me.pbIconFolder, System.ComponentModel.ISupportInitialize).EndInit()
         Me.GroupBox1.ResumeLayout(False)
         Me.GroupBox1.PerformLayout()
         CType(Me.pbIconPdf, System.ComponentModel.ISupportInitialize).EndInit()
@@ -2431,6 +2784,9 @@ Partial Class Main
         Me.TabPage8.PerformLayout()
         Me.TabPage7.ResumeLayout(False)
         CType(Me.AxAcroPDF1, System.ComponentModel.ISupportInitialize).EndInit()
+        Me.TabPage11.ResumeLayout(False)
+        Me.TabPage11.PerformLayout()
+        CType(Me.dgvDocList, System.ComponentModel.ISupportInitialize).EndInit()
         Me.TabPage1.ResumeLayout(False)
         Me.TabPage1.PerformLayout()
         Me.TabPage3.ResumeLayout(False)
@@ -2438,7 +2794,9 @@ Partial Class Main
         CType(Me.DataGridView1, System.ComponentModel.ISupportInitialize).EndInit()
         Me.TabPage2.ResumeLayout(False)
         Me.TabPage2.PerformLayout()
+        Me.ContextMenuStrip2.ResumeLayout(False)
         Me.ResumeLayout(False)
+        Me.PerformLayout()
 
     End Sub
 
@@ -2465,13 +2823,8 @@ Partial Class Main
     Friend WithEvents txtProjectName As TextBox
     Friend WithEvents Label3 As Label
     Friend WithEvents btnProject As Button
-    Friend WithEvents btnOpen As Button
     Friend WithEvents btnAndorville As Button
-    Friend WithEvents btnEdit As Button
-    Friend WithEvents btnNewDisplay As Button
     Friend WithEvents TabPage3 As TabPage
-    Friend WithEvents btnSave As Button
-    Friend WithEvents Timer1 As Timer
     Friend WithEvents OpenFileDialog1 As OpenFileDialog
     Friend WithEvents DataGridView1 As DataGridView
     Friend WithEvents Label12 As Label
@@ -2488,11 +2841,8 @@ Partial Class Main
     Friend WithEvents btnApply As Button
     Friend WithEvents ToolTip1 As ToolTip
     Friend WithEvents btnShowTextTypes As Button
-    Friend WithEvents cmbDocType As ComboBox
     Friend WithEvents txtFileType As TextBox
     Friend WithEvents Label16 As Label
-    Friend WithEvents btnNew As Button
-    Friend WithEvents btnClose As Button
     Friend WithEvents btnSaveAs As Button
     Friend WithEvents SaveFileDialog1 As SaveFileDialog
     Friend WithEvents TabPage6 As TabPage
@@ -2547,7 +2897,7 @@ Partial Class Main
     Friend WithEvents pbIconRtf As PictureBox
     Friend WithEvents rbCollection As RadioButton
     Friend WithEvents pbIconCollection As PictureBox
-    Friend WithEvents btnNewItem As Button
+    Friend WithEvents btnCreateItem As Button
     Friend WithEvents btnFindItem As Button
     Friend WithEvents TabControl3 As TabControl
     Friend WithEvents TabPage4 As TabPage
@@ -2619,10 +2969,47 @@ Partial Class Main
     Friend WithEvents btnWebPages As Button
     Friend WithEvents WebBrowser2 As WebBrowser
     Friend WithEvents Label8 As Label
-    Friend WithEvents txtAppNetName As TextBox
+    Friend WithEvents txtProNetName As TextBox
     Friend WithEvents btnOpenProject As Button
     Friend WithEvents Label5 As Label
     Friend WithEvents txtProjectPath As TextBox
     Friend WithEvents chkConnect As CheckBox
-    Friend WithEvents Timer3 As Timer
+    Friend WithEvents btnFindText As Button
+    Friend WithEvents txtFindText As TextBox
+    Friend WithEvents chkHighlight As CheckBox
+    Friend WithEvents chkFindFirst As CheckBox
+    Friend WithEvents ContextMenuStrip2 As ContextMenuStrip
+    Friend WithEvents ToolStripMenuItem1_EditWorkflowTabPage As ToolStripMenuItem
+    Friend WithEvents ToolStripMenuItem1_ShowStartPageInWorkflowTab As ToolStripMenuItem
+    Friend WithEvents txtFilePath As TextBox
+    Friend WithEvents Label14 As Label
+    Friend WithEvents rbXls As RadioButton
+    Friend WithEvents pbIconXls As PictureBox
+    Friend WithEvents rbFolderLink As RadioButton
+    Friend WithEvents pbIconFolder As PictureBox
+    Friend WithEvents txtFolderLink As TextBox
+    Friend WithEvents txtFolderPath As TextBox
+    Friend WithEvents Label40 As Label
+    Friend WithEvents btnShowItemList As Button
+    Friend WithEvents Label41 As Label
+    Friend WithEvents btnSaveDocument As Button
+    Friend WithEvents chkWordWrap As CheckBox
+    Friend WithEvents txtDocType As TextBox
+    Friend WithEvents btnCopy As Button
+    Friend WithEvents rbXMsg As RadioButton
+    Friend WithEvents rbXSeq As RadioButton
+    Friend WithEvents pbIconXmsg As PictureBox
+    Friend WithEvents pbIconXSeq As PictureBox
+    Friend WithEvents TabPage11 As TabPage
+    Friend WithEvents btnOpenDocInNewWindow2 As Button
+    Friend WithEvents dgvDocList As DataGridView
+    Friend WithEvents txtDocEditDate As TextBox
+    Friend WithEvents Label43 As Label
+    Friend WithEvents txtDocCreationDate As TextBox
+    Friend WithEvents Label42 As Label
+    Friend WithEvents btnUpdateDocList As Button
+    Friend WithEvents Label46 As Label
+    Friend WithEvents txtDocDescr As TextBox
+    Friend WithEvents txtDocFileName As TextBox
+    Friend WithEvents Label44 As Label
 End Class

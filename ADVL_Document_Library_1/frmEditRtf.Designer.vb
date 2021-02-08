@@ -1,9 +1,9 @@
-﻿<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()> _
+﻿<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
 Partial Class frmEditRtf
     Inherits System.Windows.Forms.Form
 
     'Form overrides dispose to clean up the component list.
-    <System.Diagnostics.DebuggerNonUserCode()> _
+    <System.Diagnostics.DebuggerNonUserCode()>
     Protected Overrides Sub Dispose(ByVal disposing As Boolean)
         Try
             If disposing AndAlso components IsNot Nothing Then
@@ -20,7 +20,7 @@ Partial Class frmEditRtf
     'NOTE: The following procedure is required by the Windows Form Designer
     'It can be modified using the Windows Form Designer.  
     'Do not modify it using the code editor.
-    <System.Diagnostics.DebuggerStepThrough()> _
+    <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
         Me.components = New System.ComponentModel.Container()
         Me.btnExit = New System.Windows.Forms.Button()
@@ -61,13 +61,13 @@ Partial Class frmEditRtf
         Me.txtCharCode = New System.Windows.Forms.TextBox()
         Me.btnInsertChar = New System.Windows.Forms.Button()
         Me.TabPage3 = New System.Windows.Forms.TabPage()
-        Me.Label3 = New System.Windows.Forms.Label()
-        Me.Label4 = New System.Windows.Forms.Label()
-        Me.Label5 = New System.Windows.Forms.Label()
-        Me.LinkLabel1 = New System.Windows.Forms.LinkLabel()
-        Me.LinkLabel2 = New System.Windows.Forms.LinkLabel()
-        Me.Label6 = New System.Windows.Forms.Label()
         Me.LinkLabel3 = New System.Windows.Forms.LinkLabel()
+        Me.Label6 = New System.Windows.Forms.Label()
+        Me.LinkLabel2 = New System.Windows.Forms.LinkLabel()
+        Me.LinkLabel1 = New System.Windows.Forms.LinkLabel()
+        Me.Label5 = New System.Windows.Forms.Label()
+        Me.Label4 = New System.Windows.Forms.Label()
+        Me.Label3 = New System.Windows.Forms.Label()
         Me.TabControl1.SuspendLayout()
         Me.TabPage1.SuspendLayout()
         Me.TabPage2.SuspendLayout()
@@ -77,7 +77,7 @@ Partial Class frmEditRtf
         'btnExit
         '
         Me.btnExit.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.btnExit.Location = New System.Drawing.Point(381, 12)
+        Me.btnExit.Location = New System.Drawing.Point(392, 12)
         Me.btnExit.Name = "btnExit"
         Me.btnExit.Size = New System.Drawing.Size(48, 22)
         Me.btnExit.TabIndex = 8
@@ -282,7 +282,7 @@ Partial Class frmEditRtf
         Me.TabControl1.Location = New System.Drawing.Point(12, 88)
         Me.TabControl1.Name = "TabControl1"
         Me.TabControl1.SelectedIndex = 0
-        Me.TabControl1.Size = New System.Drawing.Size(417, 274)
+        Me.TabControl1.Size = New System.Drawing.Size(428, 274)
         Me.TabControl1.TabIndex = 27
         '
         'TabPage1
@@ -294,7 +294,7 @@ Partial Class frmEditRtf
         Me.TabPage1.Location = New System.Drawing.Point(4, 22)
         Me.TabPage1.Name = "TabPage1"
         Me.TabPage1.Padding = New System.Windows.Forms.Padding(3)
-        Me.TabPage1.Size = New System.Drawing.Size(409, 248)
+        Me.TabPage1.Size = New System.Drawing.Size(420, 248)
         Me.TabPage1.TabIndex = 0
         Me.TabPage1.Text = "Insert Text"
         Me.TabPage1.UseVisualStyleBackColor = True
@@ -307,7 +307,7 @@ Partial Class frmEditRtf
         Me.txtNewText.Location = New System.Drawing.Point(6, 35)
         Me.txtNewText.Multiline = True
         Me.txtNewText.Name = "txtNewText"
-        Me.txtNewText.Size = New System.Drawing.Size(397, 207)
+        Me.txtNewText.Size = New System.Drawing.Size(408, 207)
         Me.txtNewText.TabIndex = 20
         '
         'Label2
@@ -326,13 +326,13 @@ Partial Class frmEditRtf
         Me.cmbTextType.FormattingEnabled = True
         Me.cmbTextType.Location = New System.Drawing.Point(46, 8)
         Me.cmbTextType.Name = "cmbTextType"
-        Me.cmbTextType.Size = New System.Drawing.Size(303, 21)
+        Me.cmbTextType.Size = New System.Drawing.Size(314, 21)
         Me.cmbTextType.TabIndex = 18
         '
         'btnInsert
         '
         Me.btnInsert.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.btnInsert.Location = New System.Drawing.Point(355, 7)
+        Me.btnInsert.Location = New System.Drawing.Point(366, 7)
         Me.btnInsert.Name = "btnInsert"
         Me.btnInsert.Size = New System.Drawing.Size(48, 22)
         Me.btnInsert.TabIndex = 17
@@ -355,7 +355,7 @@ Partial Class frmEditRtf
         Me.TabPage2.Location = New System.Drawing.Point(4, 22)
         Me.TabPage2.Name = "TabPage2"
         Me.TabPage2.Padding = New System.Windows.Forms.Padding(3)
-        Me.TabPage2.Size = New System.Drawing.Size(409, 248)
+        Me.TabPage2.Size = New System.Drawing.Size(420, 248)
         Me.TabPage2.TabIndex = 1
         Me.TabPage2.Text = "Insert Symbol"
         Me.TabPage2.UseVisualStyleBackColor = True
@@ -483,66 +483,10 @@ Partial Class frmEditRtf
         Me.TabPage3.Controls.Add(Me.Label3)
         Me.TabPage3.Location = New System.Drawing.Point(4, 22)
         Me.TabPage3.Name = "TabPage3"
-        Me.TabPage3.Size = New System.Drawing.Size(409, 248)
+        Me.TabPage3.Size = New System.Drawing.Size(420, 248)
         Me.TabPage3.TabIndex = 2
         Me.TabPage3.Text = "Icon License"
         Me.TabPage3.UseVisualStyleBackColor = True
-        '
-        'Label3
-        '
-        Me.Label3.AutoSize = True
-        Me.Label3.Location = New System.Drawing.Point(13, 15)
-        Me.Label3.Name = "Label3"
-        Me.Label3.Size = New System.Drawing.Size(173, 13)
-        Me.Label3.TabIndex = 0
-        Me.Label3.Text = "The icons shown on this page are: "
-        '
-        'Label4
-        '
-        Me.Label4.AutoSize = True
-        Me.Label4.Location = New System.Drawing.Point(13, 41)
-        Me.Label4.Name = "Label4"
-        Me.Label4.Size = New System.Drawing.Size(93, 13)
-        Me.Label4.TabIndex = 1
-        Me.Label4.Text = "All rights reserved."
-        '
-        'Label5
-        '
-        Me.Label5.AutoSize = True
-        Me.Label5.Location = New System.Drawing.Point(13, 88)
-        Me.Label5.Name = "Label5"
-        Me.Label5.Size = New System.Drawing.Size(366, 13)
-        Me.Label5.TabIndex = 2
-        Me.Label5.Text = "These icons are licensed under a Creative Commons Attribution 3.0 License."
-        '
-        'LinkLabel1
-        '
-        Me.LinkLabel1.AutoSize = True
-        Me.LinkLabel1.Location = New System.Drawing.Point(13, 101)
-        Me.LinkLabel1.Name = "LinkLabel1"
-        Me.LinkLabel1.Size = New System.Drawing.Size(239, 13)
-        Me.LinkLabel1.TabIndex = 3
-        Me.LinkLabel1.TabStop = True
-        Me.LinkLabel1.Text = "http://creativecommons.org/licenses/by/3.0/us/"
-        '
-        'LinkLabel2
-        '
-        Me.LinkLabel2.AutoSize = True
-        Me.LinkLabel2.Location = New System.Drawing.Point(13, 54)
-        Me.LinkLabel2.Name = "LinkLabel2"
-        Me.LinkLabel2.Size = New System.Drawing.Size(125, 13)
-        Me.LinkLabel2.TabIndex = 4
-        Me.LinkLabel2.TabStop = True
-        Me.LinkLabel2.Text = "https://www.fatcow.com"
-        '
-        'Label6
-        '
-        Me.Label6.AutoSize = True
-        Me.Label6.Location = New System.Drawing.Point(13, 28)
-        Me.Label6.Name = "Label6"
-        Me.Label6.Size = New System.Drawing.Size(224, 13)
-        Me.Label6.TabIndex = 5
-        Me.Label6.Text = "© Copyright 2009-2014 FatCow Web Hosting."
         '
         'LinkLabel3
         '
@@ -554,11 +498,67 @@ Partial Class frmEditRtf
         Me.LinkLabel3.TabStop = True
         Me.LinkLabel3.Text = "https://www.fatcow.com/free-icons"
         '
+        'Label6
+        '
+        Me.Label6.AutoSize = True
+        Me.Label6.Location = New System.Drawing.Point(13, 28)
+        Me.Label6.Name = "Label6"
+        Me.Label6.Size = New System.Drawing.Size(224, 13)
+        Me.Label6.TabIndex = 5
+        Me.Label6.Text = "© Copyright 2009-2014 FatCow Web Hosting."
+        '
+        'LinkLabel2
+        '
+        Me.LinkLabel2.AutoSize = True
+        Me.LinkLabel2.Location = New System.Drawing.Point(13, 54)
+        Me.LinkLabel2.Name = "LinkLabel2"
+        Me.LinkLabel2.Size = New System.Drawing.Size(125, 13)
+        Me.LinkLabel2.TabIndex = 4
+        Me.LinkLabel2.TabStop = True
+        Me.LinkLabel2.Text = "https://www.fatcow.com"
+        '
+        'LinkLabel1
+        '
+        Me.LinkLabel1.AutoSize = True
+        Me.LinkLabel1.Location = New System.Drawing.Point(13, 101)
+        Me.LinkLabel1.Name = "LinkLabel1"
+        Me.LinkLabel1.Size = New System.Drawing.Size(239, 13)
+        Me.LinkLabel1.TabIndex = 3
+        Me.LinkLabel1.TabStop = True
+        Me.LinkLabel1.Text = "http://creativecommons.org/licenses/by/3.0/us/"
+        '
+        'Label5
+        '
+        Me.Label5.AutoSize = True
+        Me.Label5.Location = New System.Drawing.Point(13, 88)
+        Me.Label5.Name = "Label5"
+        Me.Label5.Size = New System.Drawing.Size(366, 13)
+        Me.Label5.TabIndex = 2
+        Me.Label5.Text = "These icons are licensed under a Creative Commons Attribution 3.0 License."
+        '
+        'Label4
+        '
+        Me.Label4.AutoSize = True
+        Me.Label4.Location = New System.Drawing.Point(13, 41)
+        Me.Label4.Name = "Label4"
+        Me.Label4.Size = New System.Drawing.Size(93, 13)
+        Me.Label4.TabIndex = 1
+        Me.Label4.Text = "All rights reserved."
+        '
+        'Label3
+        '
+        Me.Label3.AutoSize = True
+        Me.Label3.Location = New System.Drawing.Point(13, 15)
+        Me.Label3.Name = "Label3"
+        Me.Label3.Size = New System.Drawing.Size(173, 13)
+        Me.Label3.TabIndex = 0
+        Me.Label3.Text = "The icons shown on this page are: "
+        '
         'frmEditRtf
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(441, 374)
+        Me.ClientSize = New System.Drawing.Size(452, 374)
         Me.Controls.Add(Me.TabControl1)
         Me.Controls.Add(Me.btnHighlight)
         Me.Controls.Add(Me.btnPaste)
