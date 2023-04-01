@@ -18,6 +18,8 @@
 
 Imports System.ComponentModel
 Imports System.Security.Permissions
+Imports ADVL_Utilities_Library_1
+
 <PermissionSet(SecurityAction.Demand, Name:="FullTrust")>
 <System.Runtime.InteropServices.ComVisibleAttribute(True)>
 Public Class Main
@@ -91,6 +93,10 @@ Public Class Main
 
     'Declare Forms used by the application:
     Public WithEvents WebPageList As frmWebPageList
+    Public WithEvents ProjectArchive As frmArchive 'Form used to view the files in a Project archive
+    Public WithEvents SettingsArchive As frmArchive 'Form used to view the files in a Settings archive
+    Public WithEvents DataArchive As frmArchive 'Form used to view the files in a Data archive
+    Public WithEvents SystemArchive As frmArchive 'Form used to view the files in a System archive
 
     Public WithEvents NewWFHtmlDisplay As frmWFHtmlDisplay
     Public WFHtmlDisplayFormList As New ArrayList 'Used for displaying multiple HtmlDisplay forms.
@@ -262,23 +268,23 @@ Public Class Main
 
         'If Instructions.StartsWith("<XMsg>") Then 'This is an XMessage set of instructions.
         If MsgType = "XMsg" Or MsgType = "XSys" Then 'This is an XMessage or XSystem set of instructions.
-                Try
-                    'Inititalise the reply message:
-                    ClientProNetName = ""
-                    ClientConnName = ""
-                    ClientAppName = ""
+            Try
+                'Inititalise the reply message:
+                ClientProNetName = ""
+                ClientConnName = ""
+                ClientAppName = ""
                 xlocns.Clear() 'Clear the list of locations in the reply message.
 
                 Dim Decl As New XDeclaration("1.0", "utf-8", "yes")
-                    MessageXDoc = New XDocument(Decl, Nothing) 'Reply message - this will be sent to the Client App.
+                MessageXDoc = New XDocument(Decl, Nothing) 'Reply message - this will be sent to the Client App.
                 'xmessage = New XElement("XMsg")
                 xmessage = New XElement(MsgType)
                 xlocns.Add(New XElement("Main")) 'Initially set the location in the Client App to Main.
 
-                    'Run the received message:
-                    Dim XmlHeader As String = "<?xml version=""1.0"" encoding=""utf-8"" standalone=""yes""?>"
+                'Run the received message:
+                Dim XmlHeader As String = "<?xml version=""1.0"" encoding=""utf-8"" standalone=""yes""?>"
 
-                    XDoc.LoadXml(XmlHeader & vbCrLf & Instructions.Replace("&", "&amp;")) 'Replace "&" with "&amp:" before loading the XML text.
+                XDoc.LoadXml(XmlHeader & vbCrLf & Instructions.Replace("&", "&amp;")) 'Replace "&" with "&amp:" before loading the XML text.
                 'If ShowXMessages Then
                 '    Message.XAddXml(XDoc)   'Add the message to the XMessages window.
                 '    Message.XAddText(vbCrLf, "Normal") 'Add extra line
@@ -291,19 +297,19 @@ Public Class Main
                     Message.XAddText(vbCrLf, "Normal") 'Add extra line
                 End If
                 XMsg.Run(XDoc, Status)
-                Catch ex As Exception
-                    Message.Add("Error running XMsg: " & ex.Message & vbCrLf)
-                End Try
+            Catch ex As Exception
+                Message.Add("Error running XMsg: " & ex.Message & vbCrLf)
+            End Try
 
-                'XMessage has been run.
-                'Reply to this message:
-                'Add the message reply to the XMessages window:
-                'Complete the MessageXDoc:
-                xmessage.Add(xlocns(xlocns.Count - 1)) 'Add the last location reply instructions to the message.
-                MessageXDoc.Add(xmessage)
-                MessageText = MessageXDoc.ToString
+            'XMessage has been run.
+            'Reply to this message:
+            'Add the message reply to the XMessages window:
+            'Complete the MessageXDoc:
+            xmessage.Add(xlocns(xlocns.Count - 1)) 'Add the last location reply instructions to the message.
+            MessageXDoc.Add(xmessage)
+            MessageText = MessageXDoc.ToString
 
-                If ClientConnName = "" Then
+            If ClientConnName = "" Then
                 'No client to send a message to - process the message locally.
                 'If ShowXMessages Then
                 '    Message.XAddText("Message processed locally:" & vbCrLf, "XmlSentNotice")
@@ -320,7 +326,7 @@ Public Class Main
                     Message.XAddText(vbCrLf, "Normal") 'Add extra line
                 End If
                 ProcessLocalInstructions(MessageText)
-                Else
+            Else
                 'If ShowXMessages Then
                 '    Message.XAddText("Message sent to [" & ClientProNetName & "]." & ClientConnName & ":" & vbCrLf, "XmlSentNotice")
                 '    Message.XAddXml(MessageText)
@@ -338,50 +344,50 @@ Public Class Main
 
                 'Send Message on a new thread:
                 SendMessageParams.ProjectNetworkName = ClientProNetName
-                    SendMessageParams.ConnectionName = ClientConnName
-                    SendMessageParams.Message = MessageText
-                    If bgwSendMessage.IsBusy Then
-                        Message.AddWarning("Send Message backgroundworker is busy." & vbCrLf)
-                    Else
-                        bgwSendMessage.RunWorkerAsync(SendMessageParams)
-                    End If
+                SendMessageParams.ConnectionName = ClientConnName
+                SendMessageParams.Message = MessageText
+                If bgwSendMessage.IsBusy Then
+                    Message.AddWarning("Send Message backgroundworker is busy." & vbCrLf)
+                Else
+                    bgwSendMessage.RunWorkerAsync(SendMessageParams)
                 End If
-
-            Else 'This is not an XMessage!
-                If Instructions.StartsWith("<XMsgBlk>") Then 'This is an XMessageBlock.
-                'Process the received message:
-                Dim XmlHeader As String = "<?xml version=""1.0"" encoding=""utf-8"" standalone=""yes""?>"
-                XDoc.LoadXml(XmlHeader & vbCrLf & Instructions.Replace("&", "&amp;")) 'Replace "&" with "&amp:" before loading the XML text.
-                'NOTE: The message is an <XMsgBlk> - use the ShowXMessages property to determine if the message is shown:
-                If ShowXMessages Then
-                    Message.XAddXml(XDoc)   'Add the message to the XMessages window.
-                    Message.XAddText(vbCrLf, "Normal") 'Add extra line
-                End If
-                'If (MsgType = "XMsg") And ShowXMessages Then
-                '    Message.XAddXml(XDoc)   'Add the message to the XMessages window.
-                '    Message.XAddText(vbCrLf, "Normal") 'Add extra line
-                'ElseIf (MsgType = "XSys") And ShowSysMessages Then
-                '    Message.XAddXml(XDoc)   'Add the message to the XMessages window.
-                '    Message.XAddText(vbCrLf, "Normal") 'Add extra line
-                'End If
-
-                'Process the XMessageBlock:
-                Dim XMsgBlkLocn As String
-                XMsgBlkLocn = XDoc.GetElementsByTagName("ClientLocn")(0).InnerText
-                Select Case XMsgBlkLocn
-                    Case "TestLocn" 'Replace this with the required location name.
-                        Dim XInfo As Xml.XmlNodeList = XDoc.GetElementsByTagName("XInfo") 'Get the XInfo node list
-                        Dim InfoXDoc As New Xml.Linq.XDocument 'Create an XDocument to hold the information contained in XInfo 
-                        InfoXDoc = XDocument.Parse("<?xml version=""1.0"" encoding=""utf-8"" standalone=""yes""?>" & vbCrLf & XInfo(0).InnerXml) 'Read the information into InfoXDoc
-                        'Add processing instructions here - The information in the InfoXDoc is usually stored in an XDocument in the application or as an XML file in the project.
-
-                    Case Else
-                        Message.AddWarning("Unknown XInfo Message location: " & XMsgBlkLocn & vbCrLf)
-                End Select
-            Else
-                Message.XAddText("The message is not an XMessage or XMessageBlock: " & vbCrLf & Instructions & vbCrLf & vbCrLf, "Normal")
             End If
-            'Message.XAddText("The message is not an XMessage: " & Instructions & vbCrLf, "Normal")
+            'End If
+        Else 'This is not an XMessage!
+        If Instructions.StartsWith("<XMsgBlk>") Then 'This is an XMessageBlock.
+            'Process the received message:
+            Dim XmlHeader As String = "<?xml version=""1.0"" encoding=""utf-8"" standalone=""yes""?>"
+            XDoc.LoadXml(XmlHeader & vbCrLf & Instructions.Replace("&", "&amp;")) 'Replace "&" with "&amp:" before loading the XML text.
+            'NOTE: The message is an <XMsgBlk> - use the ShowXMessages property to determine if the message is shown:
+            If ShowXMessages Then
+                Message.XAddXml(XDoc)   'Add the message to the XMessages window.
+                Message.XAddText(vbCrLf, "Normal") 'Add extra line
+            End If
+            'If (MsgType = "XMsg") And ShowXMessages Then
+            '    Message.XAddXml(XDoc)   'Add the message to the XMessages window.
+            '    Message.XAddText(vbCrLf, "Normal") 'Add extra line
+            'ElseIf (MsgType = "XSys") And ShowSysMessages Then
+            '    Message.XAddXml(XDoc)   'Add the message to the XMessages window.
+            '    Message.XAddText(vbCrLf, "Normal") 'Add extra line
+            'End If
+
+            'Process the XMessageBlock:
+            Dim XMsgBlkLocn As String
+            XMsgBlkLocn = XDoc.GetElementsByTagName("ClientLocn")(0).InnerText
+            Select Case XMsgBlkLocn
+                Case "TestLocn" 'Replace this with the required location name.
+                    Dim XInfo As Xml.XmlNodeList = XDoc.GetElementsByTagName("XInfo") 'Get the XInfo node list
+                    Dim InfoXDoc As New Xml.Linq.XDocument 'Create an XDocument to hold the information contained in XInfo 
+                    InfoXDoc = XDocument.Parse("<?xml version=""1.0"" encoding=""utf-8"" standalone=""yes""?>" & vbCrLf & XInfo(0).InnerXml) 'Read the information into InfoXDoc
+                    'Add processing instructions here - The information in the InfoXDoc is usually stored in an XDocument in the application or as an XML file in the project.
+
+                Case Else
+                    Message.AddWarning("Unknown XInfo Message location: " & XMsgBlkLocn & vbCrLf)
+            End Select
+        Else
+            Message.XAddText("The message is not an XMessage or XMessageBlock: " & vbCrLf & Instructions & vbCrLf & vbCrLf, "Normal")
+        End If
+        'Message.XAddText("The message is not an XMessage: " & Instructions & vbCrLf, "Normal")
         End If
     End Sub
 
@@ -577,7 +583,7 @@ Public Class Main
         End Get
         Set(value As FileTypes)
             _fileType = value
-            txtFileType.Text = _fileType.ToString
+            'txtFileType.Text = _fileType.ToString
             txtFileType2.Text = _fileType.ToString
             'cmbDocType.SelectedIndex = cmbDocType.FindStringExact(_fileType.ToString)
             txtDocType.Text = _fileType.ToString
@@ -591,7 +597,7 @@ Public Class Main
         End Get
         Set(value As String)
             _fileName = value
-            txtFileName2.Text = _fileName
+            'txtFileName2.Text = _fileName
             txtFileName.Text = _fileName
         End Set
     End Property
@@ -715,7 +721,7 @@ Public Class Main
         End Get
         Set(value As String)
             _xmlFileName = value
-            txtFileName2.Text = _xmlFileName
+            'txtFileName2.Text = _xmlFileName
         End Set
     End Property
 
@@ -1087,6 +1093,7 @@ Public Class Main
                                <AdvlNetworkExePath><%= AdvlNetworkExePath %></AdvlNetworkExePath>
                                <ShowXMessages><%= ShowXMessages %></ShowXMessages>
                                <ShowSysMessages><%= ShowSysMessages %></ShowSysMessages>
+                               <WorkFlowFileName><%= WorkflowFileName %></WorkFlowFileName>
                                <!---->
                                <LibraryFileName><%= LibraryFileName %></LibraryFileName>
                                <NewItemType><%= NewItemType.ToString %></NewItemType>
@@ -1120,7 +1127,6 @@ Public Class Main
     Private Sub RestoreFormSettings()
         'Read the form settings from an XML document.
 
-        'Dim SettingsFileName As String = "FormSettings_" & ApplicationInfo.Name & "_" & Me.Text & ".xml"
         Dim SettingsFileName As String = "FormSettings_" & ApplicationInfo.Name & " - Main.xml"
 
         If Project.SettingsFileExists(SettingsFileName) Then
@@ -1137,13 +1143,13 @@ Public Class Main
             If Settings.<FormSettings>.<Height>.Value <> Nothing Then Me.Height = Settings.<FormSettings>.<Height>.Value
             If Settings.<FormSettings>.<Width>.Value <> Nothing Then Me.Width = Settings.<FormSettings>.<Width>.Value
 
-            'If Settings.<FormSettings>.<MsgServiceAppPath>.Value <> Nothing Then MsgServiceAppPath = Settings.<FormSettings>.<MsgServiceAppPath>.Value
-            'If Settings.<FormSettings>.<MsgServiceExePath>.Value <> Nothing Then MsgServiceExePath = Settings.<FormSettings>.<MsgServiceExePath>.Value
             If Settings.<FormSettings>.<AdvlNetworkAppPath>.Value <> Nothing Then AdvlNetworkAppPath = Settings.<FormSettings>.<AdvlNetworkAppPath>.Value
             If Settings.<FormSettings>.<AdvlNetworkExePath>.Value <> Nothing Then AdvlNetworkExePath = Settings.<FormSettings>.<AdvlNetworkExePath>.Value
 
             If Settings.<FormSettings>.<ShowXMessages>.Value <> Nothing Then ShowXMessages = Settings.<FormSettings>.<ShowXMessages>.Value
             If Settings.<FormSettings>.<ShowSysMessages>.Value <> Nothing Then ShowSysMessages = Settings.<FormSettings>.<ShowSysMessages>.Value
+
+            If Settings.<FormSettings>.<WorkFlowFileName>.Value <> Nothing Then WorkflowFileName = Settings.<FormSettings>.<WorkFlowFileName>.Value
 
             'Add code to read other saved setting here:
             If Settings.<FormSettings>.<SelectedTabIndex>.Value <> Nothing Then TabControl1.SelectedIndex = Settings.<FormSettings>.<SelectedTabIndex>.Value
@@ -1554,7 +1560,8 @@ Public Class Main
     End Sub
 
     'Save the form settings if the form is being minimised:
-    Protected Overrides Sub WndProc(ByRef m As Message)
+    'Protected Overrides Sub WndProc(ByRef m As Message) 'NOTE: This may incorrectly refer to ADVL_Utilities_Library.Message
+    Protected Overrides Sub WndProc(ByRef m As System.Windows.Forms.Message)
         If m.Msg = &H112 Then 'SysCommand
             If m.WParam.ToInt32 = &HF020 Then 'Form is being minimised
                 SaveFormSettings()
@@ -1615,11 +1622,12 @@ Public Class Main
 
         'Read the Application Information file: ---------------------------------------------
         ApplicationInfo.ApplicationDir = My.Application.Info.DirectoryPath.ToString 'Set the Application Directory property
-        'Get the Application Version Information:
-        ApplicationInfo.Version.Major = My.Application.Info.Version.Major
-        ApplicationInfo.Version.Minor = My.Application.Info.Version.Minor
-        ApplicationInfo.Version.Build = My.Application.Info.Version.Build
-        ApplicationInfo.Version.Revision = My.Application.Info.Version.Revision
+
+        ''Get the Application Version Information:
+        'ApplicationInfo.Version.Major = My.Application.Info.Version.Major
+        'ApplicationInfo.Version.Minor = My.Application.Info.Version.Minor
+        'ApplicationInfo.Version.Build = My.Application.Info.Version.Build
+        'ApplicationInfo.Version.Revision = My.Application.Info.Version.Revision
 
         If ApplicationInfo.ApplicationLocked Then
             MessageBox.Show("The application is locked. If the application is not already in use, remove the 'Application_Info.lock file from the application directory: " & ApplicationInfo.ApplicationDir, "Notice", MessageBoxButtons.OK)
@@ -1655,7 +1663,12 @@ Public Class Main
         Me.Show() 'Show this form before showing the Message form - This will show the App icon on top in the TaskBar.
 
         Message.AddText("------------------- Starting Application: ADVL Document Library ---------------------- " & vbCrLf, "Heading")
-        Message.AddText("Application usage: Total duration = " & Format(ApplicationUsage.TotalDuration.TotalHours, "#.##") & " hours" & vbCrLf, "Normal")
+        'Message.AddText("Application usage: Total duration = " & Format(ApplicationUsage.TotalDuration.TotalHours, "#.##") & " hours" & vbCrLf, "Normal")
+        Dim TotalDuration As String = ApplicationUsage.TotalDuration.Days.ToString.PadLeft(5, "0"c) & "d:" &
+                           ApplicationUsage.TotalDuration.Hours.ToString.PadLeft(2, "0"c) & "h:" &
+                           ApplicationUsage.TotalDuration.Minutes.ToString.PadLeft(2, "0"c) & "m:" &
+                           ApplicationUsage.TotalDuration.Seconds.ToString.PadLeft(2, "0"c) & "s"
+        Message.AddText("Application usage: Total duration = " & TotalDuration & vbCrLf, "Normal")
 
         'https://msdn.microsoft.com/en-us/library/z2d603cy(v=vs.80).aspx#Y550
         'Process any command line arguments:
@@ -1786,26 +1799,26 @@ Public Class Main
 
         rbDefaultWindow.Checked = True ' Default - Display new item in default window.
 
-        XmlHtmDisplay1.WordWrap = False
+        'XmlHtmDisplay1.WordWrap = False
 
-        XmlHtmDisplay1.Settings.ClearAllTextTypes()
-        'Default message display settings:
-        XmlHtmDisplay1.Settings.AddNewTextType("Warning")
-        XmlHtmDisplay1.Settings.TextType("Warning").FontName = "Arial"
-        XmlHtmDisplay1.Settings.TextType("Warning").Bold = True
-        XmlHtmDisplay1.Settings.TextType("Warning").Color = Color.Red
-        XmlHtmDisplay1.Settings.TextType("Warning").PointSize = 12
+        'XmlHtmDisplay1.Settings.ClearAllTextTypes()
+        ''Default message display settings:
+        'XmlHtmDisplay1.Settings.AddNewTextType("Warning")
+        'XmlHtmDisplay1.Settings.TextType("Warning").FontName = "Arial"
+        'XmlHtmDisplay1.Settings.TextType("Warning").Bold = True
+        'XmlHtmDisplay1.Settings.TextType("Warning").Color = Color.Red
+        'XmlHtmDisplay1.Settings.TextType("Warning").PointSize = 12
 
-        XmlHtmDisplay1.Settings.AddNewTextType("Default")
-        XmlHtmDisplay1.Settings.TextType("Default").FontName = "Arial"
-        XmlHtmDisplay1.Settings.TextType("Default").Bold = False
-        XmlHtmDisplay1.Settings.TextType("Default").Color = Color.Black
-        XmlHtmDisplay1.Settings.TextType("Default").PointSize = 10
+        'XmlHtmDisplay1.Settings.AddNewTextType("Default")
+        'XmlHtmDisplay1.Settings.TextType("Default").FontName = "Arial"
+        'XmlHtmDisplay1.Settings.TextType("Default").Bold = False
+        'XmlHtmDisplay1.Settings.TextType("Default").Color = Color.Black
+        'XmlHtmDisplay1.Settings.TextType("Default").PointSize = 10
 
-        XmlHtmDisplay1.Settings.UpdateFontIndexes()
-        XmlHtmDisplay1.Settings.UpdateColorIndexes()
+        'XmlHtmDisplay1.Settings.UpdateFontIndexes()
+        'XmlHtmDisplay1.Settings.UpdateColorIndexes()
 
-        XmlHtmDisplay1.AllowDrop = True
+        'XmlHtmDisplay1.AllowDrop = True
 
         'Settings tab:
         DataGridView1.AllowUserToAddRows = False
@@ -1871,7 +1884,28 @@ Public Class Main
 
         ShowSettings()   'Show the XML and other Text Type display settings
 
-        XmlHtmDisplay2.Settings = XmlHtmDisplay1.Settings
+        XmlHtmDisplay2.WordWrap = False
+
+        XmlHtmDisplay2.Settings.ClearAllTextTypes()
+        'Default message display settings:
+        XmlHtmDisplay2.Settings.AddNewTextType("Warning")
+        XmlHtmDisplay2.Settings.TextType("Warning").FontName = "Arial"
+        XmlHtmDisplay2.Settings.TextType("Warning").Bold = True
+        XmlHtmDisplay2.Settings.TextType("Warning").Color = Color.Red
+        XmlHtmDisplay2.Settings.TextType("Warning").PointSize = 12
+
+        XmlHtmDisplay2.Settings.AddNewTextType("Default")
+        XmlHtmDisplay2.Settings.TextType("Default").FontName = "Arial"
+        XmlHtmDisplay2.Settings.TextType("Default").Bold = False
+        XmlHtmDisplay2.Settings.TextType("Default").Color = Color.Black
+        XmlHtmDisplay2.Settings.TextType("Default").PointSize = 10
+
+        XmlHtmDisplay2.Settings.UpdateFontIndexes()
+        XmlHtmDisplay2.Settings.UpdateColorIndexes()
+
+        XmlHtmDisplay2.AllowDrop = True
+
+        'XmlHtmDisplay2.Settings = XmlHtmDisplay1.Settings
         XmlHtmDisplay2.WordWrap = False
         WebBrowser1.Visible = False
 
@@ -1917,6 +1951,7 @@ Public Class Main
         '------------------------------------------------------------------------------------
 
         RestoreFormSettings() 'Restore the form settings
+        OpenStartPage()
         Message.ShowXMessages = ShowXMessages
         Message.ShowSysMessages = ShowSysMessages
         RestoreProjectSettings() 'Restore the Project settings
@@ -1938,11 +1973,32 @@ Public Class Main
             ConnectToComNet(StartupConnectionName)
         End If
 
+        'Get the Application Version Information:
+        If System.Deployment.Application.ApplicationDeployment.IsNetworkDeployed Then
+            'Application is network deployed.
+            ApplicationInfo.Version.Number = System.Deployment.Application.ApplicationDeployment.CurrentDeployment.CurrentVersion.ToString
+            ApplicationInfo.Version.Major = System.Deployment.Application.ApplicationDeployment.CurrentDeployment.CurrentVersion.Major
+            ApplicationInfo.Version.Minor = System.Deployment.Application.ApplicationDeployment.CurrentDeployment.CurrentVersion.Minor
+            ApplicationInfo.Version.Build = System.Deployment.Application.ApplicationDeployment.CurrentDeployment.CurrentVersion.Build
+            ApplicationInfo.Version.Revision = System.Deployment.Application.ApplicationDeployment.CurrentDeployment.CurrentVersion.Revision
+            ApplicationInfo.Version.Source = "Publish"
+            Message.Add("Application version: " & System.Deployment.Application.ApplicationDeployment.CurrentDeployment.CurrentVersion.ToString & vbCrLf)
+        Else
+            'Application is not network deployed.
+            ApplicationInfo.Version.Number = My.Application.Info.Version.ToString
+            ApplicationInfo.Version.Major = My.Application.Info.Version.Major
+            ApplicationInfo.Version.Minor = My.Application.Info.Version.Minor
+            ApplicationInfo.Version.Build = My.Application.Info.Version.Build
+            ApplicationInfo.Version.Revision = My.Application.Info.Version.Revision
+            ApplicationInfo.Version.Source = "Assembly"
+            Message.Add("Application version: " & My.Application.Info.Version.ToString & vbCrLf)
+        End If
+
     End Sub
 
     Private Sub InitialiseForm()
         'Initialise the form for a new project.
-        OpenStartPage()
+        'OpenStartPage()
     End Sub
 
     Private Sub ShowProjectInfo()
@@ -1996,15 +2052,26 @@ Public Class Main
             chkConnect.Checked = False
         End If
 
-        txtTotalDuration.Text = Project.Usage.TotalDuration.Days.ToString.PadLeft(5, "0"c) & ":" &
-                                Project.Usage.TotalDuration.Hours.ToString.PadLeft(2, "0"c) & ":" &
-                                Project.Usage.TotalDuration.Minutes.ToString.PadLeft(2, "0"c) & ":" &
-                                Project.Usage.TotalDuration.Seconds.ToString.PadLeft(2, "0"c)
+        'txtTotalDuration.Text = Project.Usage.TotalDuration.Days.ToString.PadLeft(5, "0"c) & ":" &
+        '                        Project.Usage.TotalDuration.Hours.ToString.PadLeft(2, "0"c) & ":" &
+        '                        Project.Usage.TotalDuration.Minutes.ToString.PadLeft(2, "0"c) & ":" &
+        '                        Project.Usage.TotalDuration.Seconds.ToString.PadLeft(2, "0"c)
 
-        txtCurrentDuration.Text = Project.Usage.CurrentDuration.Days.ToString.PadLeft(5, "0"c) & ":" &
-                                  Project.Usage.CurrentDuration.Hours.ToString.PadLeft(2, "0"c) & ":" &
-                                  Project.Usage.CurrentDuration.Minutes.ToString.PadLeft(2, "0"c) & ":" &
-                                  Project.Usage.CurrentDuration.Seconds.ToString.PadLeft(2, "0"c)
+        'txtCurrentDuration.Text = Project.Usage.CurrentDuration.Days.ToString.PadLeft(5, "0"c) & ":" &
+        '                          Project.Usage.CurrentDuration.Hours.ToString.PadLeft(2, "0"c) & ":" &
+        '                          Project.Usage.CurrentDuration.Minutes.ToString.PadLeft(2, "0"c) & ":" &
+        '                          Project.Usage.CurrentDuration.Seconds.ToString.PadLeft(2, "0"c)
+
+        txtTotalDuration.Text = Project.Usage.TotalDuration.Days.ToString.PadLeft(5, "0"c) & "d:" &
+                        Project.Usage.TotalDuration.Hours.ToString.PadLeft(2, "0"c) & "h:" &
+                        Project.Usage.TotalDuration.Minutes.ToString.PadLeft(2, "0"c) & "m:" &
+                        Project.Usage.TotalDuration.Seconds.ToString.PadLeft(2, "0"c) & "s"
+
+        txtCurrentDuration.Text = Project.Usage.CurrentDuration.Days.ToString.PadLeft(5, "0"c) & "d:" &
+                                  Project.Usage.CurrentDuration.Hours.ToString.PadLeft(2, "0"c) & "h:" &
+                                  Project.Usage.CurrentDuration.Minutes.ToString.PadLeft(2, "0"c) & "m:" &
+                                  Project.Usage.CurrentDuration.Seconds.ToString.PadLeft(2, "0"c) & "s"
+
 
     End Sub
 
@@ -2018,29 +2085,64 @@ Public Class Main
     Private Sub btnExit_Click(sender As Object, e As EventArgs) Handles btnExit.Click
         'Exit the Application
 
-        'Save any open documents:
-        'For Each formItem In RtfDisplayFormList
-        '    If formItem Is Nothing Then
+        Application.Exit()
+
+        'ExitApplication()
+
+        ''Save any open documents:
+        'Dim I As Integer
+        'For I = RtfDisplayFormList.Count - 1 To 0 Step -1
+        '    If RtfDisplayFormList(I) Is Nothing Then
         '        'The form is already closed
         '    Else
-        '        formItem.Close
+        '        RtfDisplayFormList(I).Close
         '    End If
         'Next
-        'For Each formItem In HtmlDisplayFormList
-        '    If formItem Is Nothing Then
+        'For I = HtmlDisplayFormList.Count - 1 To 0 Step -1
+        '    If HtmlDisplayFormList(I) Is Nothing Then
         '        'The form is already closed
         '    Else
-        '        formItem.Close
+        '        HtmlDisplayFormList(I).Close
         '    End If
         'Next
-        'For Each formItem In TextDisplayFormList
-        '    If formItem Is Nothing Then
+        'For I = TextDisplayFormList.Count - 1 To 0 Step -1
+        '    If TextDisplayFormList(I) Is Nothing Then
         '        'The form is already closed
         '    Else
-        '        formItem.Close
+        '        TextDisplayFormList(I).Close
         '    End If
         'Next
 
+        'DisconnectFromComNet() 'Disconnect from the Application Network.
+
+        'SaveProjectSettings() 'Save project settings.
+
+        'SaveLibrary()
+
+        'ApplicationInfo.WriteFile() 'Update the Application Information file.
+
+        'Project.SaveLastProjectInfo() 'Save information about the last project used.
+        'Project.SaveParameters() 'ADDED 3Feb19
+
+        'Project.Usage.SaveUsageInfo() 'Save Project usage information.
+
+        'Project.UnlockProject() 'Unlock the project.
+
+        'ApplicationUsage.SaveUsageInfo() 'Save Application usage information.
+        'ApplicationInfo.UnlockApplication()
+
+        'Debug.Print("Exiting the application. --------------------------------")
+
+        'Debug.Print("==================================================================================================")
+
+        'Application.Exit()
+
+    End Sub
+
+    Private Sub ExitAppCode()
+        'Exit the Application
+
+        'Save any open documents:
         Dim I As Integer
         For I = RtfDisplayFormList.Count - 1 To 0 Step -1
             If RtfDisplayFormList(I) Is Nothing Then
@@ -2086,11 +2188,14 @@ Public Class Main
 
         Debug.Print("==================================================================================================")
 
-        Application.Exit()
-
+        'Application.Exit()
     End Sub
 
+
     Private Sub Main_FormClosing(sender As Object, e As FormClosingEventArgs) Handles Me.FormClosing
+
+        ExitAppCode()
+
         'Save the form settings if the form state is normal. (A minimised form will have the incorrect size and location.)
         If WindowState = FormWindowState.Normal Then
             SaveFormSettings()
@@ -2724,32 +2829,263 @@ Public Class Main
 
     Private Sub btnOpenProject_Click(sender As Object, e As EventArgs) Handles btnOpenProject.Click
         If Project.Type = ADVL_Utilities_Library_1.Project.Types.Archive Then
-
+            If IsNothing(ProjectArchive) Then
+                ProjectArchive = New frmArchive
+                ProjectArchive.Show()
+                ProjectArchive.Title = "Project Archive"
+                ProjectArchive.Path = Project.Path
+            Else
+                ProjectArchive.Show()
+                ProjectArchive.BringToFront()
+            End If
         Else
             Process.Start(Project.Path)
         End If
     End Sub
 
+    Private Sub ProjectArchive_FormClosed(sender As Object, e As FormClosedEventArgs) Handles ProjectArchive.FormClosed
+        ProjectArchive = Nothing
+    End Sub
+
+
     Private Sub btnOpenSettings_Click(sender As Object, e As EventArgs) Handles btnOpenSettings.Click
         If Project.SettingsLocn.Type = ADVL_Utilities_Library_1.FileLocation.Types.Directory Then
             Process.Start(Project.SettingsLocn.Path)
+        ElseIf Project.SettingsLocn.Type = ADVL_Utilities_Library_1.FileLocation.Types.Archive Then
+            If IsNothing(SettingsArchive) Then
+                SettingsArchive = New frmArchive
+                SettingsArchive.Show()
+                SettingsArchive.Title = "Settings Archive"
+                SettingsArchive.Path = Project.SettingsLocn.Path
+            Else
+                SettingsArchive.Show()
+                SettingsArchive.BringToFront()
+            End If
         End If
     End Sub
+
+    Private Sub SettingsArchive_FormClosed(sender As Object, e As FormClosedEventArgs) Handles SettingsArchive.FormClosed
+        SettingsArchive = Nothing
+    End Sub
+
 
     Private Sub btnOpenData_Click(sender As Object, e As EventArgs) Handles btnOpenData.Click
         If Project.DataLocn.Type = ADVL_Utilities_Library_1.FileLocation.Types.Directory Then
             Process.Start(Project.DataLocn.Path)
+        ElseIf Project.DataLocn.Type = ADVL_Utilities_Library_1.FileLocation.Types.Archive Then
+            If IsNothing(DataArchive) Then
+                DataArchive = New frmArchive
+                DataArchive.Show()
+                DataArchive.Title = "Data Archive"
+                DataArchive.Path = Project.DataLocn.Path
+            Else
+                DataArchive.Show()
+                DataArchive.BringToFront()
+            End If
         End If
     End Sub
+
+    Private Sub DataArchive_FormClosed(sender As Object, e As FormClosedEventArgs) Handles DataArchive.FormClosed
+        DataArchive = Nothing
+    End Sub
+
 
     Private Sub btnOpenSystem_Click(sender As Object, e As EventArgs) Handles btnOpenSystem.Click
         If Project.SystemLocn.Type = ADVL_Utilities_Library_1.FileLocation.Types.Directory Then
             Process.Start(Project.SystemLocn.Path)
+        ElseIf Project.SystemLocn.Type = ADVL_Utilities_Library_1.FileLocation.Types.Archive Then
+            If IsNothing(SystemArchive) Then
+                SystemArchive = New frmArchive
+                SystemArchive.Show()
+                SystemArchive.Title = "System Archive"
+                SystemArchive.Path = Project.SystemLocn.Path
+            Else
+                SystemArchive.Show()
+                SystemArchive.BringToFront()
+            End If
         End If
     End Sub
 
-    Private Sub btnOpenAppDir_Click(sender As Object, e As EventArgs) Handles btnOpenAppDir.Click
+    Private Sub SystemArchive_FormClosed(sender As Object, e As FormClosedEventArgs) Handles SystemArchive.FormClosed
+        SystemArchive = Nothing
+    End Sub
 
+
+    Private Sub btnOpenAppDir_Click(sender As Object, e As EventArgs) Handles btnOpenAppDir.Click
+        Process.Start(ApplicationInfo.ApplicationDir)
+    End Sub
+
+    Private Sub btnShowProjectInfo_Click(sender As Object, e As EventArgs) Handles btnShowProjectInfo.Click
+        'Show the current Project information:
+        Message.Add("--------------------------------------------------------------------------------------" & vbCrLf)
+        Message.Add("Project ------------------------ " & vbCrLf)
+        Message.Add("   Name: " & Project.Name & vbCrLf)
+        Message.Add("   Type: " & Project.Type.ToString & vbCrLf)
+        Message.Add("   Description: " & Project.Description & vbCrLf)
+        Message.Add("   Creation Date: " & Project.CreationDate & vbCrLf)
+        Message.Add("   ID: " & Project.ID & vbCrLf)
+        Message.Add("   Relative Path: " & Project.RelativePath & vbCrLf)
+        Message.Add("   Path: " & Project.Path & vbCrLf & vbCrLf)
+
+        Message.Add("Parent Project ----------------- " & vbCrLf)
+        Message.Add("   Name: " & Project.ParentProjectName & vbCrLf)
+        Message.Add("   Path: " & Project.ParentProjectPath & vbCrLf)
+
+        Message.Add("Application -------------------- " & vbCrLf)
+        Message.Add("   Name: " & Project.Application.Name & vbCrLf)
+        Message.Add("   Description: " & Project.Application.Description & vbCrLf)
+        Message.Add("   Path: " & Project.ApplicationDir & vbCrLf)
+
+        Message.Add("Settings ----------------------- " & vbCrLf)
+        Message.Add("   Settings Relative Location Type: " & Project.SettingsRelLocn.Type.ToString & vbCrLf)
+        Message.Add("   Settings Relative Location Path: " & Project.SettingsRelLocn.Path & vbCrLf)
+        Message.Add("   Settings Location Type: " & Project.SettingsLocn.Type.ToString & vbCrLf)
+        Message.Add("   Settings Location Path: " & Project.SettingsLocn.Path & vbCrLf)
+
+        Message.Add("Data --------------------------- " & vbCrLf)
+        Message.Add("   Data Relative Location Type: " & Project.DataRelLocn.Type.ToString & vbCrLf)
+        Message.Add("   Data Relative Location Path: " & Project.DataRelLocn.Path & vbCrLf)
+        Message.Add("   Data Location Type: " & Project.DataLocn.Type.ToString & vbCrLf)
+        Message.Add("   Data Location Path: " & Project.DataLocn.Path & vbCrLf)
+
+        Message.Add("System ------------------------- " & vbCrLf)
+        Message.Add("   System Relative Location Type: " & Project.SystemRelLocn.Type.ToString & vbCrLf)
+        Message.Add("   System Relative Location Path: " & Project.SystemRelLocn.Path & vbCrLf)
+        Message.Add("   System Location Type: " & Project.SystemLocn.Type.ToString & vbCrLf)
+        Message.Add("   System Location Path: " & Project.SystemLocn.Path & vbCrLf)
+        Message.Add("======================================================================================" & vbCrLf)
+
+    End Sub
+
+    Private Sub btnOpenParentDir_Click(sender As Object, e As EventArgs) Handles btnOpenParentDir.Click
+        'Open the Parent directory of the selected project.
+        Dim ParentDir As String = System.IO.Directory.GetParent(Project.Path).FullName
+        If System.IO.Directory.Exists(ParentDir) Then
+            Process.Start(ParentDir)
+        Else
+            Message.AddWarning("The parent directory was not found: " & ParentDir & vbCrLf)
+        End If
+    End Sub
+
+    Private Sub btnCreateArchive_Click(sender As Object, e As EventArgs) Handles btnCreateArchive.Click
+        'Create a Project Archive file.
+        If Project.Type = ADVL_Utilities_Library_1.Project.Types.Archive Then
+            Message.Add("The Project is an Archive type. It is already in an archived format." & vbCrLf)
+
+        Else
+            'The project is contained in the directory Project.Path.
+            'This directory and contents will be saved in a zip file in the parent directory with the same name but with extension .AdvlArchive.
+
+            Dim ParentDir As String = System.IO.Directory.GetParent(Project.Path).FullName
+            Dim ProjectArchiveName As String = System.IO.Path.GetFileName(Project.Path) & ".AdvlArchive"
+
+            If My.Computer.FileSystem.FileExists(ParentDir & "\" & ProjectArchiveName) Then 'The Project Archive file already exists.
+                Message.Add("The Project Archive file already exists: " & ParentDir & "\" & ProjectArchiveName & vbCrLf)
+            Else 'The Project Archive file does not exist. OK to create the Archive.
+                System.IO.Compression.ZipFile.CreateFromDirectory(Project.Path, ParentDir & "\" & ProjectArchiveName)
+
+                'Remove all Lock files:
+                Dim Zip As System.IO.Compression.ZipArchive
+                Zip = System.IO.Compression.ZipFile.Open(ParentDir & "\" & ProjectArchiveName, IO.Compression.ZipArchiveMode.Update)
+                Dim DeleteList As New List(Of String) 'List of entry names to delete
+                Dim myEntry As System.IO.Compression.ZipArchiveEntry
+                For Each entry As System.IO.Compression.ZipArchiveEntry In Zip.Entries
+                    If entry.Name = "Project.Lock" Then
+                        DeleteList.Add(entry.FullName)
+                    End If
+                Next
+                For Each item In DeleteList
+                    myEntry = Zip.GetEntry(item)
+                    myEntry.Delete()
+                Next
+                Zip.Dispose()
+
+                Message.Add("Project Archive file created: " & ParentDir & "\" & ProjectArchiveName & vbCrLf)
+            End If
+        End If
+    End Sub
+
+    Private Sub btnOpenArchive_Click(sender As Object, e As EventArgs) Handles btnOpenArchive.Click
+        'Open a Project Archive file.
+
+        'Use the OpenFileDialog to look for an .AdvlArchive file.      
+        OpenFileDialog1.Title = "Select an Archived Project File"
+        OpenFileDialog1.InitialDirectory = System.IO.Directory.GetParent(Project.Path).FullName 'Start looking in the ParentDir.
+        OpenFileDialog1.Filter = "Archived Project|*.AdvlArchive"
+        If OpenFileDialog1.ShowDialog = DialogResult.OK Then
+            Dim FileName As String = OpenFileDialog1.FileName
+            OpenArchivedProject(FileName)
+        End If
+    End Sub
+
+    Private Sub OpenArchivedProject(ByVal FilePath As String)
+        'Open the archived project at the specified path.
+
+        Dim Zip As System.IO.Compression.ZipArchive
+        Try
+            Zip = System.IO.Compression.ZipFile.OpenRead(FilePath)
+
+            Dim Entry As System.IO.Compression.ZipArchiveEntry = Zip.GetEntry("Project_Info_ADVL_2.xml")
+            If IsNothing(Entry) Then
+                Message.AddWarning("The file is not an Archived Andorville Project." & vbCrLf)
+                'Check if it is an Archive project type with a .AdvlProject extension.
+                'NOTE: These are already zip files so no need to archive.
+
+            Else
+                Message.Add("The file is an Archived Andorville Project." & vbCrLf)
+                Dim ParentDir As String = System.IO.Directory.GetParent(FilePath).FullName
+                Dim ProjectName As String = System.IO.Path.GetFileNameWithoutExtension(FilePath)
+                Message.Add("The Project will be expanded in the directory: " & ParentDir & vbCrLf)
+                Message.Add("The Project name will be: " & ProjectName & vbCrLf)
+                Zip.Dispose()
+                If System.IO.Directory.Exists(ParentDir & "\" & ProjectName) Then
+                    Message.AddWarning("The Project already exists: " & ParentDir & "\" & ProjectName & vbCrLf)
+                Else
+                    System.IO.Compression.ZipFile.ExtractToDirectory(FilePath, ParentDir & "\" & ProjectName) 'Extract the project from the archive                   
+                    Project.AddProjectToList(ParentDir & "\" & ProjectName)
+                    'Open the new project                 
+                    CloseProject()  'Close the current project
+                    Project.SelectProject(ParentDir & "\" & ProjectName) 'Select the project at the specifed path.
+                    OpenProject() 'Open the selected project.
+                End If
+            End If
+        Catch ex As Exception
+            Message.AddWarning("Error opening Archived Andorville Project: " & ex.Message & vbCrLf)
+        End Try
+    End Sub
+
+    Private Sub TabPage2_DragEnter(sender As Object, e As DragEventArgs) Handles TabPage2.DragEnter
+        'DragEnter: An object has been dragged into TabPage2 - Project Information tab.
+        'This code is required to get the link to the item(s) being dragged into Project Information:
+        If e.Data.GetDataPresent(DataFormats.FileDrop) Then
+            e.Effect = DragDropEffects.Link
+        End If
+    End Sub
+
+    Private Sub TabPage2_DragDrop(sender As Object, e As DragEventArgs) Handles TabPage2.DragDrop
+        'A file has been dropped into the Project Information tab.
+
+        Dim Path As String()
+        Path = e.Data.GetData(DataFormats.FileDrop)
+        'Dim I As Integer
+
+        If Path.Count > 0 Then
+            If Path.Count > 1 Then
+                Message.AddWarning("More than one file has been dropped into the Project Information tab. Only the first one will be opened." & vbCrLf)
+            End If
+
+            Try
+                Dim ArchivedProjectPath As String = Path(0)
+                If ArchivedProjectPath.EndsWith(".AdvlArchive") Then
+                    Message.Add("The archived project will be opened: " & vbCrLf & ArchivedProjectPath & vbCrLf)
+                    OpenArchivedProject(ArchivedProjectPath)
+                Else
+                    Message.Add("The dropped file is not an archived project: " & vbCrLf & ArchivedProjectPath & vbCrLf)
+                End If
+            Catch ex As Exception
+                Message.AddWarning("Error opening dropped archived project. " & ex.Message & vbCrLf)
+            End Try
+        End If
     End Sub
 
     Private Sub btnAdd_Click(sender As Object, e As EventArgs) Handles btnAdd.Click
@@ -2761,7 +3097,7 @@ Public Class Main
             Exit Sub
         End If
 
-        If ConnectedToComnet = False Then
+        If ConnectedToComNet = False Then
             Message.AddWarning("The application is not connected to the Message Service." & vbCrLf)
         Else 'Connected to the Message Service (ComNet).
             If IsNothing(client) Then
@@ -2824,20 +3160,35 @@ Public Class Main
 #Region " Start Page Code" '=========================================================================================================================================
 
     Public Sub OpenStartPage()
-        'Open the StartPage.html file and display in the Start Page tab.
+        'Open the workflow page:
 
-        If Project.DataFileExists("StartPage.html") Then
-            'StartPageFileName = "StartPage.html"
+        If Project.DataFileExists(WorkflowFileName) Then
+            'Note: WorkflowFileName should have been restored when the application started.
+            DisplayWorkflow()
+        ElseIf Project.DataFileExists("StartPage.html") Then
             WorkflowFileName = "StartPage.html"
-            'DisplayStartPage()
             DisplayWorkflow()
         Else
             CreateStartPage()
-            'StartPageFileName = "StartPage.html"
             WorkflowFileName = "StartPage.html"
-            'DisplayStartPage()
             DisplayWorkflow()
         End If
+
+
+        ''Open the StartPage.html file and display in the Start Page tab.
+        ''Old Code:
+        'If Project.DataFileExists("StartPage.html") Then
+        '    'StartPageFileName = "StartPage.html"
+        '    WorkflowFileName = "StartPage.html"
+        '    'DisplayStartPage()
+        '    DisplayWorkflow()
+        'Else
+        '    CreateStartPage()
+        '    'StartPageFileName = "StartPage.html"
+        '    WorkflowFileName = "StartPage.html"
+        '    'DisplayStartPage()
+        '    DisplayWorkflow()
+        'End If
 
     End Sub
 
@@ -3079,12 +3430,22 @@ Public Class Main
 
     Private Sub Project_Closing() Handles Project.Closing
         'The current project is closing.
+        CloseProject()
+        'SaveFormSettings() 'Save the form settings - they are saved in the Project before is closes.
+        'SaveProjectSettings() 'Update this subroutine if project settings need to be saved.
+        'Project.Usage.SaveUsageInfo()   'Save the current project usage information.
+        'ClearCurrentProjectData()  'Clear the current project data before opening another project.    
+        'Project.UnlockProject() 'Unlock the current project before it Is closed.
+        'If ConnectedToComnet Then DisconnectFromComNet()
+    End Sub
+
+    Private Sub CloseProject()
+        'Close the Project:
         SaveFormSettings() 'Save the form settings - they are saved in the Project before is closes.
         SaveProjectSettings() 'Update this subroutine if project settings need to be saved.
-        Project.Usage.SaveUsageInfo()   'Save the current project usage information.
-        ClearCurrentProjectData()  'Clear the current project data before opening another project.    
+        Project.Usage.SaveUsageInfo() 'Save the current project usage information.
         Project.UnlockProject() 'Unlock the current project before it Is closed.
-        If ConnectedToComnet Then DisconnectFromComNet()
+        If ConnectedToComNet Then DisconnectFromComNet() 'ADDED 9Apr20
     End Sub
 
     Private Sub ClearCurrentProjectData()
@@ -3169,7 +3530,7 @@ Public Class Main
         txtEditDescription.Text = ""
 
         txtFileName.Text = ""
-        txtFileType2.Text = ""
+        'txtFileType2.Text = ""
         txtDocLocation.Text = ""
         txtFileDirectory.Text = ""
         txtFileDescription.Text = ""
@@ -3177,8 +3538,8 @@ Public Class Main
         WebBrowser1.DocumentText = ""
         XmlHtmDisplay2.Clear()
 
-        txtFileName2.Text = ""
-        XmlHtmDisplay1.Clear()
+        'txtFileName2.Text = ""
+        'XmlHtmDisplay1.Clear()
 
         txtSettingsFileName.Text = ""
         txtXmlIndentSpaces.Text = ""
@@ -3197,7 +3558,82 @@ Public Class Main
 
     Private Sub Project_Selected() Handles Project.Selected
         'A new project has been selected.
+        OpenProject()
+        'RestoreFormSettings()
+        'Project.ReadProjectInfoFile()
 
+        'Project.ReadParameters()
+        'Project.ReadParentParameters()
+        'If Project.ParentParameterExists("ProNetName") Then
+        '    Project.AddParameter("ProNetName", Project.ParentParameter("ProNetName").Value, Project.ParentParameter("ProNetName").Description) 'AddParameter will update the parameter if it already exists.
+        '    ProNetName = Project.Parameter("ProNetName").Value
+        'Else
+        '    ProNetName = Project.GetParameter("ProNetName")
+        'End If
+        'If Project.ParentParameterExists("ProNetPath") Then 'Get the parent parameter value - it may have been updated.
+        '    Project.AddParameter("ProNetPath", Project.ParentParameter("ProNetPath").Value, Project.ParentParameter("ProNetPath").Description) 'AddParameter will update the parameter if it already exists.
+        '    ProNetPath = Project.Parameter("ProNetPath").Value
+        'Else
+        '    ProNetPath = Project.GetParameter("ProNetPath") 'If the parameter does not exist, the value is set to ""
+        'End If
+        'Project.SaveParameters() 'These should be saved now - child projects look for parent parameters in the parameter file.
+
+        'Project.LockProject() 'Lock the project while it is open in this application.
+
+        'Project.Usage.StartTime = Now
+
+        'ApplicationInfo.SettingsLocn = Project.SettingsLocn
+        'Message.SettingsLocn = Project.SettingsLocn
+        'Message.Show()
+
+        ''Restore the new project settings:
+        'RestoreProjectSettings() 'Update this subroutine if project settings need to be restored.
+
+        'ShowProjectInfo()
+
+        ''Show the project information:
+        ''txtProjectName.Text = Project.Name
+        ''txtProjectDescription.Text = Project.Description
+        ''Select Case Project.Type
+        ''    Case ADVL_Utilities_Library_1.Project.Types.Directory
+        ''        txtProjectType.Text = "Directory"
+        ''    Case ADVL_Utilities_Library_1.Project.Types.Archive
+        ''        txtProjectType.Text = "Archive"
+        ''    Case ADVL_Utilities_Library_1.Project.Types.Hybrid
+        ''        txtProjectType.Text = "Hybrid"
+        ''    Case ADVL_Utilities_Library_1.Project.Types.None
+        ''        txtProjectType.Text = "None"
+        ''End Select
+
+        ''txtCreationDate.Text = Format(Project.CreationDate, "d-MMM-yyyy H:mm:ss")
+        ''txtLastUsed.Text = Format(Project.Usage.LastUsed, "d-MMM-yyyy H:mm:ss")
+        ''Select Case Project.SettingsLocn.Type
+        ''    Case ADVL_Utilities_Library_1.FileLocation.Types.Directory
+        ''        txtSettingsLocationType.Text = "Directory"
+        ''    Case ADVL_Utilities_Library_1.FileLocation.Types.Archive
+        ''        txtSettingsLocationType.Text = "Archive"
+        ''End Select
+        ''txtSettingsPath.Text = Project.SettingsLocn.Path
+        ''Select Case Project.DataLocn.Type
+        ''    Case ADVL_Utilities_Library_1.FileLocation.Types.Directory
+        ''        txtDataLocationType.Text = "Directory"
+        ''    Case ADVL_Utilities_Library_1.FileLocation.Types.Archive
+        ''        txtDataLocationType.Text = "Archive"
+        ''End Select
+        ''txtDataPath.Text = Project.DataLocn.Path
+
+        'If Project.ConnectOnOpen Then
+        '    ConnectToComNet() 'The Project is set to connect when it is opened.
+        'ElseIf ApplicationInfo.ConnectOnStartup Then
+        '    ConnectToComNet() 'The Application is set to connect when it is started.
+        'Else
+        '    'Don't connect to ComNet.
+        'End If
+
+    End Sub
+
+    Private Sub OpenProject()
+        'Open the Project:
         RestoreFormSettings()
         Project.ReadProjectInfoFile()
 
@@ -3223,43 +3659,12 @@ Public Class Main
 
         ApplicationInfo.SettingsLocn = Project.SettingsLocn
         Message.SettingsLocn = Project.SettingsLocn
-        Message.Show()
+        Message.Show() 'Added 18May19
 
         'Restore the new project settings:
         RestoreProjectSettings() 'Update this subroutine if project settings need to be restored.
 
         ShowProjectInfo()
-
-        ''Show the project information:
-        'txtProjectName.Text = Project.Name
-        'txtProjectDescription.Text = Project.Description
-        'Select Case Project.Type
-        '    Case ADVL_Utilities_Library_1.Project.Types.Directory
-        '        txtProjectType.Text = "Directory"
-        '    Case ADVL_Utilities_Library_1.Project.Types.Archive
-        '        txtProjectType.Text = "Archive"
-        '    Case ADVL_Utilities_Library_1.Project.Types.Hybrid
-        '        txtProjectType.Text = "Hybrid"
-        '    Case ADVL_Utilities_Library_1.Project.Types.None
-        '        txtProjectType.Text = "None"
-        'End Select
-
-        'txtCreationDate.Text = Format(Project.CreationDate, "d-MMM-yyyy H:mm:ss")
-        'txtLastUsed.Text = Format(Project.Usage.LastUsed, "d-MMM-yyyy H:mm:ss")
-        'Select Case Project.SettingsLocn.Type
-        '    Case ADVL_Utilities_Library_1.FileLocation.Types.Directory
-        '        txtSettingsLocationType.Text = "Directory"
-        '    Case ADVL_Utilities_Library_1.FileLocation.Types.Archive
-        '        txtSettingsLocationType.Text = "Archive"
-        'End Select
-        'txtSettingsPath.Text = Project.SettingsLocn.Path
-        'Select Case Project.DataLocn.Type
-        '    Case ADVL_Utilities_Library_1.FileLocation.Types.Directory
-        '        txtDataLocationType.Text = "Directory"
-        '    Case ADVL_Utilities_Library_1.FileLocation.Types.Archive
-        '        txtDataLocationType.Text = "Archive"
-        'End Select
-        'txtDataPath.Text = Project.DataLocn.Path
 
         If Project.ConnectOnOpen Then
             ConnectToComNet() 'The Project is set to connect when it is opened.
@@ -3268,8 +3673,9 @@ Public Class Main
         Else
             'Don't connect to ComNet.
         End If
-
     End Sub
+
+
 
 #End Region 'Project Events Code
 
@@ -3277,7 +3683,7 @@ Public Class Main
 
     Private Sub btnOnline_Click(sender As Object, e As EventArgs) Handles btnOnline.Click
         'Connect to or disconnect from the Application Network.
-        If ConnectedToComnet = False Then
+        If ConnectedToComNet = False Then
             ConnectToComNet()
         Else
             DisconnectFromComNet()
@@ -3366,7 +3772,7 @@ Public Class Main
                     client.Endpoint.Binding.SendTimeout = New System.TimeSpan(1, 0, 0) 'Restore the send timeaout to 1 hour
                     btnOnline.Text = "Online"
                     btnOnline.ForeColor = Color.ForestGreen
-                    ConnectedToComnet = True
+                    ConnectedToComNet = True
                     SendApplicationInfo()
                     SendProjectInfo()
                     client.GetAdvlNetworkAppInfoAsync() 'Update the Exe Path in case it has changed. This path may be needed in the future to start the ComNet (Message Service).
@@ -3440,7 +3846,7 @@ Public Class Main
         End Try
 
 
-        If ConnectedToComnet = False Then
+        If ConnectedToComNet = False Then
             'Dim Result As Boolean
 
             If IsNothing(client) Then
@@ -3467,7 +3873,7 @@ Public Class Main
                         client.Endpoint.Binding.SendTimeout = New System.TimeSpan(1, 0, 0) 'Restore the send timeout to 1 hour
                         btnOnline.Text = "Online"
                         btnOnline.ForeColor = Color.ForestGreen
-                        ConnectedToComnet = True
+                        ConnectedToComNet = True
                         SendApplicationInfo()
                         SendProjectInfo()
                         client.GetAdvlNetworkAppInfoAsync() 'Update the Exe Path in case it has changed. This path may be needed in the future to start the ComNet (Message Service).
@@ -3500,13 +3906,13 @@ Public Class Main
     Private Sub DisconnectFromComNet()
         'Disconnect from the Communication Network (Message Service).
 
-        If ConnectedToComnet = True Then
+        If ConnectedToComNet = True Then
             If IsNothing(client) Then
                 'Message.Add("Already disconnected from the Application Network." & vbCrLf)
                 Message.Add("Already disconnected from the Andorville™ Network (Message Service)." & vbCrLf)
                 btnOnline.Text = "Offline"
                 btnOnline.ForeColor = Color.Red
-                ConnectedToComnet = False
+                ConnectedToComNet = False
                 ConnectionName = ""
             Else
                 If client.State = ServiceModel.CommunicationState.Faulted Then
@@ -3519,7 +3925,7 @@ Public Class Main
 
                         btnOnline.Text = "Offline"
                         btnOnline.ForeColor = Color.Red
-                        ConnectedToComnet = False
+                        ConnectedToComNet = False
                         ConnectionName = ""
                         'Message.Add("Disconnected from the Application Network." & vbCrLf)
                         Message.Add("Disconnected from the Andorville™ Network (Message Service)." & vbCrLf)
@@ -3582,7 +3988,7 @@ Public Class Main
     Private Sub SendProjectInfo()
         'Send the project information to the Network application.
 
-        If ConnectedToComnet = False Then
+        If ConnectedToComNet = False Then
             Message.AddWarning("The application is not connected to the Message Service." & vbCrLf)
         Else 'Connected to the Message Service (ComNet).
             If IsNothing(client) Then
@@ -3616,7 +4022,7 @@ Public Class Main
         'Send the project information to the Network application.
         'This version of SendProjectInfo uses the ProjectPath argument.
 
-        If ConnectedToComnet = False Then
+        If ConnectedToComNet = False Then
             Message.AddWarning("The application is not connected to the Message Service." & vbCrLf)
         Else 'Connected to the Message Service (ComNet).
             If IsNothing(client) Then
@@ -3793,11 +4199,45 @@ Public Class Main
                 Case "ProjectID"
                     Message.AddWarning("Add code to handle ProjectID parameter at StartUp!" & vbCrLf)
 
+                'Case "ProjectPath"
+                '    If Project.OpenProjectPath(Data) = True Then
+                '        ProjectSelected = True 'Project has been opened OK.
+                '    Else
+                '        ProjectSelected = False 'Project could not be opened.
+                '    End If
+
                 Case "ProjectPath"
                     If Project.OpenProjectPath(Data) = True Then
                         ProjectSelected = True 'Project has been opened OK.
+                        'THE PROJECT IS LOCKED IN THE Form.Load EVENT:
+
+                        ApplicationInfo.SettingsLocn = Project.SettingsLocn
+                        Message.SettingsLocn = Project.SettingsLocn 'Set up the Message object
+                        Message.Show() 'Added 18May19
+
+                        'txtTotalDuration.Text = Project.Usage.TotalDuration.Days.ToString.PadLeft(5, "0"c) & ":" &
+                        '              Project.Usage.TotalDuration.Hours.ToString.PadLeft(2, "0"c) & ":" &
+                        '              Project.Usage.TotalDuration.Minutes.ToString.PadLeft(2, "0"c) & ":" &
+                        '              Project.Usage.TotalDuration.Seconds.ToString.PadLeft(2, "0"c)
+
+                        'txtCurrentDuration.Text = Project.Usage.CurrentDuration.Days.ToString.PadLeft(5, "0"c) & ":" &
+                        '               Project.Usage.CurrentDuration.Hours.ToString.PadLeft(2, "0"c) & ":" &
+                        '               Project.Usage.CurrentDuration.Minutes.ToString.PadLeft(2, "0"c) & ":" &
+                        '               Project.Usage.CurrentDuration.Seconds.ToString.PadLeft(2, "0"c)
+
+                        txtTotalDuration.Text = Project.Usage.TotalDuration.Days.ToString.PadLeft(5, "0"c) & "d:" &
+                                        Project.Usage.TotalDuration.Hours.ToString.PadLeft(2, "0"c) & "h:" &
+                                        Project.Usage.TotalDuration.Minutes.ToString.PadLeft(2, "0"c) & "m:" &
+                                        Project.Usage.TotalDuration.Seconds.ToString.PadLeft(2, "0"c) & "s"
+
+                        txtCurrentDuration.Text = Project.Usage.CurrentDuration.Days.ToString.PadLeft(5, "0"c) & "d:" &
+                                       Project.Usage.CurrentDuration.Hours.ToString.PadLeft(2, "0"c) & "h:" &
+                                       Project.Usage.CurrentDuration.Minutes.ToString.PadLeft(2, "0"c) & "m:" &
+                                       Project.Usage.CurrentDuration.Seconds.ToString.PadLeft(2, "0"c) & "s"
+
                     Else
                         ProjectSelected = False 'Project could not be opened.
+                        Message.AddWarning("Project could not be opened at path: " & Data & vbCrLf)
                     End If
 
                 Case "ConnectionName"
@@ -4033,9 +4473,11 @@ Public Class Main
                             Message.AddWarning("No data read!" & vbCrLf)
                             Exit Sub
                         End If
-                        XmlHtmDisplay1.Clear()
+                        'XmlHtmDisplay1.Clear()
+                        XmlHtmDisplay2.Clear()
                         rtbData.Position = 0
-                        XmlHtmDisplay1.LoadFile(rtbData, RichTextBoxStreamType.RichText)
+                        'XmlHtmDisplay1.LoadFile(rtbData, RichTextBoxStreamType.RichText)
+                        XmlHtmDisplay2.LoadFile(rtbData, RichTextBoxStreamType.RichText)
                         DocumentTextChanged = False
                         FileName = RtfFileName
                         FileLocationType = LocationTypes.Project
@@ -4058,7 +4500,8 @@ Public Class Main
                         RtfFileName = System.IO.Path.GetFileName(OpenFileDialog1.FileName)
                         RtfFileLocationType = LocationTypes.FileSystem
                         RtfFileDirectory = System.IO.Path.GetDirectoryName(OpenFileDialog1.FileName)
-                        XmlHtmDisplay1.LoadFile(RtfFileDirectory & "\" & RtfFileName)
+                        'XmlHtmDisplay1.LoadFile(RtfFileDirectory & "\" & RtfFileName)
+                        XmlHtmDisplay2.LoadFile(RtfFileDirectory & "\" & RtfFileName)
                         DocumentTextChanged = False
                         FileName = RtfFileName
                         FileLocationType = LocationTypes.FileSystem
@@ -4083,7 +4526,8 @@ Public Class Main
                         XmlFileLocationType = LocationTypes.Project
                         Dim xmlDoc As New System.Xml.XmlDocument
                         Project.ReadXmlDocData(XmlFileName, xmlDoc)
-                        XmlHtmDisplay1.Rtf = XmlHtmDisplay1.XmlToRtf(xmlDoc, True)
+                        'XmlHtmDisplay1.Rtf = XmlHtmDisplay1.XmlToRtf(xmlDoc, True)
+                        XmlHtmDisplay2.Rtf = XmlHtmDisplay2.XmlToRtf(xmlDoc, True)
                         DocumentTextChanged = False
                         FileName = XmlFileName
                         FileLocationType = LocationTypes.Project
@@ -4107,7 +4551,8 @@ Public Class Main
                         XmlFileLocationType = LocationTypes.FileSystem
                         XmlFileDirectory = System.IO.Path.GetDirectoryName(OpenFileDialog1.FileName)
                         'Read file as XML:
-                        XmlHtmDisplay1.ReadXmlFile(XmlFileDirectory & "\" & XmlFileName, False)
+                        'XmlHtmDisplay1.ReadXmlFile(XmlFileDirectory & "\" & XmlFileName, False)
+                        XmlHtmDisplay2.ReadXmlFile(XmlFileDirectory & "\" & XmlFileName, False)
                         DocumentTextChanged = False
                         FileName = XmlFileName
                         FileLocationType = LocationTypes.FileSystem
@@ -4129,11 +4574,12 @@ Public Class Main
                         HtmlFileLocationType = LocationTypes.Project
                         Dim htmlData As New IO.MemoryStream
                         Project.ReadData(HtmlFileName, htmlData)
-                        XmlHtmDisplay1.Clear()
+                        'XmlHtmDisplay1.Clear()
+                        XmlHtmDisplay2.Clear()
                         htmlData.Position = 0
-                        XmlHtmDisplay1.LoadFile(htmlData, RichTextBoxStreamType.PlainText)
-                        Dim htmText As String = XmlHtmDisplay1.Text
-                        XmlHtmDisplay1.Rtf = XmlHtmDisplay1.HmlToRtf(htmText)
+                        XmlHtmDisplay2.LoadFile(htmlData, RichTextBoxStreamType.PlainText)
+                        Dim htmText As String = XmlHtmDisplay2.Text
+                        XmlHtmDisplay2.Rtf = XmlHtmDisplay2.HmlToRtf(htmText)
                         DocumentTextChanged = False
                         FileName = HtmlFileName
                         FileLocationType = LocationTypes.Project
@@ -4157,10 +4603,10 @@ Public Class Main
                         HtmlFileLocationType = LocationTypes.FileSystem
                         HtmlFileDirectory = System.IO.Path.GetDirectoryName(OpenFileDialog1.FileName)
                         'Read file as HTML:
-                        XmlHtmDisplay1.ReadXmlFile(XmlFileDirectory & "\" & XmlFileName, False)
-                        XmlHtmDisplay1.LoadFile(XmlFileDirectory & "\" & XmlFileName, RichTextBoxStreamType.PlainText)
-                        Dim htmText As String = XmlHtmDisplay1.Text
-                        XmlHtmDisplay1.Rtf = XmlHtmDisplay1.HmlToRtf(htmText)
+                        XmlHtmDisplay2.ReadXmlFile(XmlFileDirectory & "\" & XmlFileName, False)
+                        XmlHtmDisplay2.LoadFile(XmlFileDirectory & "\" & XmlFileName, RichTextBoxStreamType.PlainText)
+                        Dim htmText As String = XmlHtmDisplay2.Text
+                        XmlHtmDisplay2.Rtf = XmlHtmDisplay2.HmlToRtf(htmText)
                         DocumentTextChanged = False
                         FileName = HtmlFileName
                         FileLocationType = LocationTypes.FileSystem
@@ -4176,41 +4622,41 @@ Public Class Main
     Private Sub ShowSettings()
         'Show the XML, HTML and RTF display settings in the Settings tab.
 
-        XmlHtmDisplay1.Settings.UpdateFontIndexes()
-        XmlHtmDisplay1.Settings.UpdateColorIndexes()
+        XmlHtmDisplay2.Settings.UpdateFontIndexes()
+        XmlHtmDisplay2.Settings.UpdateColorIndexes()
 
         'Show the XML and other Text Type display settings
-        txtXmlIndentSpaces.Text = XmlHtmDisplay1.Settings.XIndentSpaces
-        txtXmlFileSizeLimit.Text = XmlHtmDisplay1.Settings.XmlLargeFileSizeLimit
+        txtXmlIndentSpaces.Text = XmlHtmDisplay2.Settings.XIndentSpaces
+        txtXmlFileSizeLimit.Text = XmlHtmDisplay2.Settings.XmlLargeFileSizeLimit
 
         DataGridView1.Rows.Clear()
         'Show XML Document display settings:
         'DataGridView1.Rows.Add("Row1", "Col2", "Col3", "Col4", "Col5", "Col6", "Col7", "Col8", "Col9")
-        DataGridView1.Rows.Add("XML Tag", XmlHtmDisplay1.Settings.XTag.FontName, XmlHtmDisplay1.Settings.XTag.FontIndex, XmlHtmDisplay1.Settings.XTag.Color.Name, XmlHtmDisplay1.Settings.XTag.ColorIndex, XmlHtmDisplay1.Settings.XTag.HalfPointSize, XmlHtmDisplay1.Settings.XTag.PointSize, XmlHtmDisplay1.Settings.XTag.Bold.ToString, XmlHtmDisplay1.Settings.XTag.Italic.ToString)
-        DataGridView1.Rows.Add("XML Value", XmlHtmDisplay1.Settings.XValue.FontName, XmlHtmDisplay1.Settings.XValue.FontIndex, XmlHtmDisplay1.Settings.XValue.Color.Name, XmlHtmDisplay1.Settings.XValue.ColorIndex, XmlHtmDisplay1.Settings.XValue.HalfPointSize, XmlHtmDisplay1.Settings.XValue.PointSize, XmlHtmDisplay1.Settings.XValue.Bold.ToString, XmlHtmDisplay1.Settings.XValue.Italic.ToString)
-        DataGridView1.Rows.Add("XML Comment", XmlHtmDisplay1.Settings.XComment.FontName, XmlHtmDisplay1.Settings.XComment.FontIndex, XmlHtmDisplay1.Settings.XComment.Color.Name, XmlHtmDisplay1.Settings.XComment.ColorIndex, XmlHtmDisplay1.Settings.XComment.HalfPointSize, XmlHtmDisplay1.Settings.XComment.PointSize, XmlHtmDisplay1.Settings.XComment.Bold.ToString, XmlHtmDisplay1.Settings.XComment.Italic.ToString)
-        DataGridView1.Rows.Add("XML Element", XmlHtmDisplay1.Settings.XElement.FontName, XmlHtmDisplay1.Settings.XElement.FontIndex, XmlHtmDisplay1.Settings.XElement.Color.Name, XmlHtmDisplay1.Settings.XElement.ColorIndex, XmlHtmDisplay1.Settings.XElement.HalfPointSize, XmlHtmDisplay1.Settings.XElement.PointSize, XmlHtmDisplay1.Settings.XElement.Bold.ToString, XmlHtmDisplay1.Settings.XElement.Italic.ToString)
-        DataGridView1.Rows.Add("XML Attribute Key", XmlHtmDisplay1.Settings.XAttributeKey.FontName, XmlHtmDisplay1.Settings.XAttributeKey.FontIndex, XmlHtmDisplay1.Settings.XAttributeKey.Color.Name, XmlHtmDisplay1.Settings.XAttributeKey.ColorIndex, XmlHtmDisplay1.Settings.XAttributeKey.HalfPointSize, XmlHtmDisplay1.Settings.XAttributeKey.PointSize, XmlHtmDisplay1.Settings.XAttributeKey.Bold.ToString, XmlHtmDisplay1.Settings.XAttributeKey.Italic.ToString)
+        DataGridView1.Rows.Add("XML Tag", XmlHtmDisplay2.Settings.XTag.FontName, XmlHtmDisplay2.Settings.XTag.FontIndex, XmlHtmDisplay2.Settings.XTag.Color.Name, XmlHtmDisplay2.Settings.XTag.ColorIndex, XmlHtmDisplay2.Settings.XTag.HalfPointSize, XmlHtmDisplay2.Settings.XTag.PointSize, XmlHtmDisplay2.Settings.XTag.Bold.ToString, XmlHtmDisplay2.Settings.XTag.Italic.ToString)
+        DataGridView1.Rows.Add("XML Value", XmlHtmDisplay2.Settings.XValue.FontName, XmlHtmDisplay2.Settings.XValue.FontIndex, XmlHtmDisplay2.Settings.XValue.Color.Name, XmlHtmDisplay2.Settings.XValue.ColorIndex, XmlHtmDisplay2.Settings.XValue.HalfPointSize, XmlHtmDisplay2.Settings.XValue.PointSize, XmlHtmDisplay2.Settings.XValue.Bold.ToString, XmlHtmDisplay2.Settings.XValue.Italic.ToString)
+        DataGridView1.Rows.Add("XML Comment", XmlHtmDisplay2.Settings.XComment.FontName, XmlHtmDisplay2.Settings.XComment.FontIndex, XmlHtmDisplay2.Settings.XComment.Color.Name, XmlHtmDisplay2.Settings.XComment.ColorIndex, XmlHtmDisplay2.Settings.XComment.HalfPointSize, XmlHtmDisplay2.Settings.XComment.PointSize, XmlHtmDisplay2.Settings.XComment.Bold.ToString, XmlHtmDisplay2.Settings.XComment.Italic.ToString)
+        DataGridView1.Rows.Add("XML Element", XmlHtmDisplay2.Settings.XElement.FontName, XmlHtmDisplay2.Settings.XElement.FontIndex, XmlHtmDisplay2.Settings.XElement.Color.Name, XmlHtmDisplay2.Settings.XElement.ColorIndex, XmlHtmDisplay2.Settings.XElement.HalfPointSize, XmlHtmDisplay2.Settings.XElement.PointSize, XmlHtmDisplay2.Settings.XElement.Bold.ToString, XmlHtmDisplay2.Settings.XElement.Italic.ToString)
+        DataGridView1.Rows.Add("XML Attribute Key", XmlHtmDisplay2.Settings.XAttributeKey.FontName, XmlHtmDisplay2.Settings.XAttributeKey.FontIndex, XmlHtmDisplay2.Settings.XAttributeKey.Color.Name, XmlHtmDisplay2.Settings.XAttributeKey.ColorIndex, XmlHtmDisplay2.Settings.XAttributeKey.HalfPointSize, XmlHtmDisplay2.Settings.XAttributeKey.PointSize, XmlHtmDisplay2.Settings.XAttributeKey.Bold.ToString, XmlHtmDisplay2.Settings.XAttributeKey.Italic.ToString)
         'DataGridView1.Rows.Add("XML Attribute Value", XmlDisplay1.Settings.AttributeValue.FontName, XmlDisplay1.Settings.AttributeValue.FontIndex, XmlDisplay1.Settings.AttributeValue.Color.Name, XmlDisplay1.Settings.AttributeValue.ColorIndex, XmlDisplay1.Settings.AttributeValue.HalfPointSize, XmlDisplay1.Settings.AttributeValue.PointSize, XmlDisplay1.Settings.AttributeValue.Bold, XmlDisplay1.Settings.AttributeValue.Italic)
-        DataGridView1.Rows.Add("XML Attribute Value", XmlHtmDisplay1.Settings.XAttributeValue.FontName, XmlHtmDisplay1.Settings.XAttributeValue.FontIndex, XmlHtmDisplay1.Settings.XAttributeValue.Color.Name, XmlHtmDisplay1.Settings.XAttributeValue.ColorIndex, XmlHtmDisplay1.Settings.XAttributeValue.HalfPointSize, XmlHtmDisplay1.Settings.XAttributeValue.PointSize, XmlHtmDisplay1.Settings.XAttributeValue.Bold.ToString, XmlHtmDisplay1.Settings.XAttributeValue.Italic.ToString)
+        DataGridView1.Rows.Add("XML Attribute Value", XmlHtmDisplay2.Settings.XAttributeValue.FontName, XmlHtmDisplay2.Settings.XAttributeValue.FontIndex, XmlHtmDisplay2.Settings.XAttributeValue.Color.Name, XmlHtmDisplay2.Settings.XAttributeValue.ColorIndex, XmlHtmDisplay2.Settings.XAttributeValue.HalfPointSize, XmlHtmDisplay2.Settings.XAttributeValue.PointSize, XmlHtmDisplay2.Settings.XAttributeValue.Bold.ToString, XmlHtmDisplay2.Settings.XAttributeValue.Italic.ToString)
 
         'Show HTML document display settings:
-        DataGridView1.Rows.Add("HTML Text", XmlHtmDisplay1.Settings.HText.FontName, XmlHtmDisplay1.Settings.HText.FontIndex, XmlHtmDisplay1.Settings.HText.Color.Name, XmlHtmDisplay1.Settings.HText.ColorIndex, XmlHtmDisplay1.Settings.HText.HalfPointSize, XmlHtmDisplay1.Settings.HText.PointSize, XmlHtmDisplay1.Settings.HText.Bold.ToString, XmlHtmDisplay1.Settings.HText.Italic.ToString)
-        DataGridView1.Rows.Add("HTML Element", XmlHtmDisplay1.Settings.HElement.FontName, XmlHtmDisplay1.Settings.HElement.FontIndex, XmlHtmDisplay1.Settings.HElement.Color.Name, XmlHtmDisplay1.Settings.HElement.ColorIndex, XmlHtmDisplay1.Settings.HElement.HalfPointSize, XmlHtmDisplay1.Settings.HElement.PointSize, XmlHtmDisplay1.Settings.HElement.Bold.ToString, XmlHtmDisplay1.Settings.HElement.Italic.ToString)
-        DataGridView1.Rows.Add("HTML Attribute", XmlHtmDisplay1.Settings.HAttribute.FontName, XmlHtmDisplay1.Settings.HAttribute.FontIndex, XmlHtmDisplay1.Settings.HAttribute.Color.Name, XmlHtmDisplay1.Settings.HAttribute.ColorIndex, XmlHtmDisplay1.Settings.HAttribute.HalfPointSize, XmlHtmDisplay1.Settings.HAttribute.PointSize, XmlHtmDisplay1.Settings.HAttribute.Bold.ToString, XmlHtmDisplay1.Settings.HAttribute.Italic.ToString)
-        DataGridView1.Rows.Add("HTML Comment", XmlHtmDisplay1.Settings.HComment.FontName, XmlHtmDisplay1.Settings.HComment.FontIndex, XmlHtmDisplay1.Settings.HComment.Color.Name, XmlHtmDisplay1.Settings.HComment.ColorIndex, XmlHtmDisplay1.Settings.HComment.HalfPointSize, XmlHtmDisplay1.Settings.HComment.PointSize, XmlHtmDisplay1.Settings.HComment.Bold.ToString, XmlHtmDisplay1.Settings.HComment.Italic.ToString)
-        DataGridView1.Rows.Add("HTML Special Chars", XmlHtmDisplay1.Settings.HChar.FontName, XmlHtmDisplay1.Settings.HChar.FontIndex, XmlHtmDisplay1.Settings.HChar.Color.Name, XmlHtmDisplay1.Settings.HChar.ColorIndex, XmlHtmDisplay1.Settings.HChar.HalfPointSize, XmlHtmDisplay1.Settings.HChar.PointSize, XmlHtmDisplay1.Settings.HChar.Bold.ToString, XmlHtmDisplay1.Settings.HChar.Italic.ToString)
-        DataGridView1.Rows.Add("HTML Value", XmlHtmDisplay1.Settings.HValue.FontName, XmlHtmDisplay1.Settings.HValue.FontIndex, XmlHtmDisplay1.Settings.HValue.Color.Name, XmlHtmDisplay1.Settings.HValue.ColorIndex, XmlHtmDisplay1.Settings.HValue.HalfPointSize, XmlHtmDisplay1.Settings.HValue.PointSize, XmlHtmDisplay1.Settings.HValue.Bold.ToString, XmlHtmDisplay1.Settings.HValue.Italic.ToString)
-        DataGridView1.Rows.Add("HTML Style", XmlHtmDisplay1.Settings.HStyle.FontName, XmlHtmDisplay1.Settings.HStyle.FontIndex, XmlHtmDisplay1.Settings.HStyle.Color.Name, XmlHtmDisplay1.Settings.HStyle.ColorIndex, XmlHtmDisplay1.Settings.HStyle.HalfPointSize, XmlHtmDisplay1.Settings.HStyle.PointSize, XmlHtmDisplay1.Settings.HStyle.Bold.ToString, XmlHtmDisplay1.Settings.HStyle.Italic.ToString)
+        DataGridView1.Rows.Add("HTML Text", XmlHtmDisplay2.Settings.HText.FontName, XmlHtmDisplay2.Settings.HText.FontIndex, XmlHtmDisplay2.Settings.HText.Color.Name, XmlHtmDisplay2.Settings.HText.ColorIndex, XmlHtmDisplay2.Settings.HText.HalfPointSize, XmlHtmDisplay2.Settings.HText.PointSize, XmlHtmDisplay2.Settings.HText.Bold.ToString, XmlHtmDisplay2.Settings.HText.Italic.ToString)
+        DataGridView1.Rows.Add("HTML Element", XmlHtmDisplay2.Settings.HElement.FontName, XmlHtmDisplay2.Settings.HElement.FontIndex, XmlHtmDisplay2.Settings.HElement.Color.Name, XmlHtmDisplay2.Settings.HElement.ColorIndex, XmlHtmDisplay2.Settings.HElement.HalfPointSize, XmlHtmDisplay2.Settings.HElement.PointSize, XmlHtmDisplay2.Settings.HElement.Bold.ToString, XmlHtmDisplay2.Settings.HElement.Italic.ToString)
+        DataGridView1.Rows.Add("HTML Attribute", XmlHtmDisplay2.Settings.HAttribute.FontName, XmlHtmDisplay2.Settings.HAttribute.FontIndex, XmlHtmDisplay2.Settings.HAttribute.Color.Name, XmlHtmDisplay2.Settings.HAttribute.ColorIndex, XmlHtmDisplay2.Settings.HAttribute.HalfPointSize, XmlHtmDisplay2.Settings.HAttribute.PointSize, XmlHtmDisplay2.Settings.HAttribute.Bold.ToString, XmlHtmDisplay2.Settings.HAttribute.Italic.ToString)
+        DataGridView1.Rows.Add("HTML Comment", XmlHtmDisplay2.Settings.HComment.FontName, XmlHtmDisplay2.Settings.HComment.FontIndex, XmlHtmDisplay2.Settings.HComment.Color.Name, XmlHtmDisplay2.Settings.HComment.ColorIndex, XmlHtmDisplay2.Settings.HComment.HalfPointSize, XmlHtmDisplay2.Settings.HComment.PointSize, XmlHtmDisplay2.Settings.HComment.Bold.ToString, XmlHtmDisplay2.Settings.HComment.Italic.ToString)
+        DataGridView1.Rows.Add("HTML Special Chars", XmlHtmDisplay2.Settings.HChar.FontName, XmlHtmDisplay2.Settings.HChar.FontIndex, XmlHtmDisplay2.Settings.HChar.Color.Name, XmlHtmDisplay2.Settings.HChar.ColorIndex, XmlHtmDisplay2.Settings.HChar.HalfPointSize, XmlHtmDisplay2.Settings.HChar.PointSize, XmlHtmDisplay2.Settings.HChar.Bold.ToString, XmlHtmDisplay2.Settings.HChar.Italic.ToString)
+        DataGridView1.Rows.Add("HTML Value", XmlHtmDisplay2.Settings.HValue.FontName, XmlHtmDisplay2.Settings.HValue.FontIndex, XmlHtmDisplay2.Settings.HValue.Color.Name, XmlHtmDisplay2.Settings.HValue.ColorIndex, XmlHtmDisplay2.Settings.HValue.HalfPointSize, XmlHtmDisplay2.Settings.HValue.PointSize, XmlHtmDisplay2.Settings.HValue.Bold.ToString, XmlHtmDisplay2.Settings.HValue.Italic.ToString)
+        DataGridView1.Rows.Add("HTML Style", XmlHtmDisplay2.Settings.HStyle.FontName, XmlHtmDisplay2.Settings.HStyle.FontIndex, XmlHtmDisplay2.Settings.HStyle.Color.Name, XmlHtmDisplay2.Settings.HStyle.ColorIndex, XmlHtmDisplay2.Settings.HStyle.HalfPointSize, XmlHtmDisplay2.Settings.HStyle.PointSize, XmlHtmDisplay2.Settings.HStyle.Bold.ToString, XmlHtmDisplay2.Settings.HStyle.Italic.ToString)
 
-        DataGridView1.Rows.Add("TXT Plain Text", XmlHtmDisplay1.Settings.PlainText.FontName, XmlHtmDisplay1.Settings.PlainText.FontIndex, XmlHtmDisplay1.Settings.PlainText.Color.Name, XmlHtmDisplay1.Settings.PlainText.ColorIndex, XmlHtmDisplay1.Settings.PlainText.HalfPointSize, XmlHtmDisplay1.Settings.PlainText.PointSize, XmlHtmDisplay1.Settings.PlainText.Bold.ToString, XmlHtmDisplay1.Settings.PlainText.Italic.ToString)
+        DataGridView1.Rows.Add("TXT Plain Text", XmlHtmDisplay2.Settings.PlainText.FontName, XmlHtmDisplay2.Settings.PlainText.FontIndex, XmlHtmDisplay2.Settings.PlainText.Color.Name, XmlHtmDisplay2.Settings.PlainText.ColorIndex, XmlHtmDisplay2.Settings.PlainText.HalfPointSize, XmlHtmDisplay2.Settings.PlainText.PointSize, XmlHtmDisplay2.Settings.PlainText.Bold.ToString, XmlHtmDisplay2.Settings.PlainText.Italic.ToString)
 
-        DataGridView1.Rows.Add("Default Text", XmlHtmDisplay1.Settings.DefaultText.FontName, XmlHtmDisplay1.Settings.DefaultText.FontIndex, XmlHtmDisplay1.Settings.DefaultText.Color.Name, XmlHtmDisplay1.Settings.DefaultText.ColorIndex, XmlHtmDisplay1.Settings.DefaultText.HalfPointSize, XmlHtmDisplay1.Settings.DefaultText.PointSize, XmlHtmDisplay1.Settings.DefaultText.Bold.ToString, XmlHtmDisplay1.Settings.DefaultText.Italic.ToString)
+        DataGridView1.Rows.Add("Default Text", XmlHtmDisplay2.Settings.DefaultText.FontName, XmlHtmDisplay2.Settings.DefaultText.FontIndex, XmlHtmDisplay2.Settings.DefaultText.Color.Name, XmlHtmDisplay2.Settings.DefaultText.ColorIndex, XmlHtmDisplay2.Settings.DefaultText.HalfPointSize, XmlHtmDisplay2.Settings.DefaultText.PointSize, XmlHtmDisplay2.Settings.DefaultText.Bold.ToString, XmlHtmDisplay2.Settings.DefaultText.Italic.ToString)
 
         Dim I As Integer
 
-        For I = 0 To XmlHtmDisplay1.Settings.TextType.Count - 1
-            DataGridView1.Rows.Add(XmlHtmDisplay1.Settings.TextType.ElementAt(I).Key, XmlHtmDisplay1.Settings.TextType.ElementAt(I).Value.FontName, XmlHtmDisplay1.Settings.TextType.ElementAt(I).Value.FontIndex, XmlHtmDisplay1.Settings.TextType.ElementAt(I).Value.Color.Name, XmlHtmDisplay1.Settings.TextType.ElementAt(I).Value.ColorIndex, XmlHtmDisplay1.Settings.TextType.ElementAt(I).Value.HalfPointSize, XmlHtmDisplay1.Settings.TextType.ElementAt(I).Value.PointSize, XmlHtmDisplay1.Settings.TextType.ElementAt(I).Value.Bold.ToString, XmlHtmDisplay1.Settings.TextType.ElementAt(I).Value.Italic.ToString)
+        For I = 0 To XmlHtmDisplay2.Settings.TextType.Count - 1
+            DataGridView1.Rows.Add(XmlHtmDisplay2.Settings.TextType.ElementAt(I).Key, XmlHtmDisplay2.Settings.TextType.ElementAt(I).Value.FontName, XmlHtmDisplay2.Settings.TextType.ElementAt(I).Value.FontIndex, XmlHtmDisplay2.Settings.TextType.ElementAt(I).Value.Color.Name, XmlHtmDisplay2.Settings.TextType.ElementAt(I).Value.ColorIndex, XmlHtmDisplay2.Settings.TextType.ElementAt(I).Value.HalfPointSize, XmlHtmDisplay2.Settings.TextType.ElementAt(I).Value.PointSize, XmlHtmDisplay2.Settings.TextType.ElementAt(I).Value.Bold.ToString, XmlHtmDisplay2.Settings.TextType.ElementAt(I).Value.Italic.ToString)
         Next
 
         DataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells
@@ -4607,437 +5053,437 @@ Public Class Main
 
         'Set XML indent spaces: 
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlIndentSpaces>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XIndentSpaces = XDoc.<ListOfXmlHmlRtfSettings>.<XmlIndentSpaces>.Value
+            XmlHtmDisplay2.Settings.XIndentSpaces = XDoc.<ListOfXmlHmlRtfSettings>.<XmlIndentSpaces>.Value
         Else
-            XmlHtmDisplay1.Settings.XIndentSpaces = 4
+            XmlHtmDisplay2.Settings.XIndentSpaces = 4
         End If
 
         'Set XML large file size limit.
         '  The software will show a warning if an attemps is made to open an XML file larger than this size. (The software may have difficulty displaying very large files.)
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlLargeFileSizeLimit>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XmlLargeFileSizeLimit = XDoc.<ListOfXmlHmlRtfSettings>.<XmlLargeFileSizeLimit>.Value
+            XmlHtmDisplay2.Settings.XmlLargeFileSizeLimit = XDoc.<ListOfXmlHmlRtfSettings>.<XmlLargeFileSizeLimit>.Value
         Else
-            XmlHtmDisplay1.Settings.XmlLargeFileSizeLimit = 1000000
+            XmlHtmDisplay2.Settings.XmlLargeFileSizeLimit = 1000000
         End If
 
         'Set the XML Tag font:
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlTag>.<FontName>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XTag.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlTag>.<FontName>.Value
+            XmlHtmDisplay2.Settings.XTag.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlTag>.<FontName>.Value
         Else
-            XmlHtmDisplay1.Settings.XTag.FontName = "Arial"
+            XmlHtmDisplay2.Settings.XTag.FontName = "Arial"
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlTag>.<Color>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XTag.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlTag>.<Color>.Value)
+            XmlHtmDisplay2.Settings.XTag.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlTag>.<Color>.Value)
         Else
-            XmlHtmDisplay1.Settings.XTag.Color = Color.Blue
+            XmlHtmDisplay2.Settings.XTag.Color = Color.Blue
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlTag>.<HalfPointSize>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XTag.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlTag>.<HalfPointSize>.Value
+            XmlHtmDisplay2.Settings.XTag.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlTag>.<HalfPointSize>.Value
         Else
-            XmlHtmDisplay1.Settings.XTag.HalfPointSize = 20
+            XmlHtmDisplay2.Settings.XTag.HalfPointSize = 20
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlTag>.<Bold>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XTag.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlTag>.<Bold>.Value
+            XmlHtmDisplay2.Settings.XTag.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlTag>.<Bold>.Value
         Else
-            XmlHtmDisplay1.Settings.XTag.Bold = False
+            XmlHtmDisplay2.Settings.XTag.Bold = False
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlTag>.<Italic>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XTag.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlTag>.<Italic>.Value
+            XmlHtmDisplay2.Settings.XTag.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlTag>.<Italic>.Value
         Else
-            XmlHtmDisplay1.Settings.XTag.Italic = False
+            XmlHtmDisplay2.Settings.XTag.Italic = False
         End If
 
         'Set the XML Value font:
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlValue>.<FontName>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XValue.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlValue>.<FontName>.Value
+            XmlHtmDisplay2.Settings.XValue.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlValue>.<FontName>.Value
         Else
-            XmlHtmDisplay1.Settings.XValue.FontName = "Arial"
+            XmlHtmDisplay2.Settings.XValue.FontName = "Arial"
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlValue>.<Color>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XValue.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlValue>.<Color>.Value)
+            XmlHtmDisplay2.Settings.XValue.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlValue>.<Color>.Value)
         Else
-            XmlHtmDisplay1.Settings.XValue.Color = Color.Blue
+            XmlHtmDisplay2.Settings.XValue.Color = Color.Blue
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlValue>.<HalfPointSize>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XValue.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlValue>.<HalfPointSize>.Value
+            XmlHtmDisplay2.Settings.XValue.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlValue>.<HalfPointSize>.Value
         Else
-            XmlHtmDisplay1.Settings.XValue.HalfPointSize = 20
+            XmlHtmDisplay2.Settings.XValue.HalfPointSize = 20
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlValue>.<Bold>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XValue.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlValue>.<Bold>.Value
+            XmlHtmDisplay2.Settings.XValue.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlValue>.<Bold>.Value
         Else
-            XmlHtmDisplay1.Settings.XValue.Bold = False
+            XmlHtmDisplay2.Settings.XValue.Bold = False
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlValue>.<Italic>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XValue.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlValue>.<Italic>.Value
+            XmlHtmDisplay2.Settings.XValue.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlValue>.<Italic>.Value
         Else
-            XmlHtmDisplay1.Settings.XValue.Italic = False
+            XmlHtmDisplay2.Settings.XValue.Italic = False
         End If
 
         'Set the XML Comment font:
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlComment>.<FontName>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XComment.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlComment>.<FontName>.Value
+            XmlHtmDisplay2.Settings.XComment.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlComment>.<FontName>.Value
         Else
-            XmlHtmDisplay1.Settings.XComment.FontName = "Arial"
+            XmlHtmDisplay2.Settings.XComment.FontName = "Arial"
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlComment>.<Color>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XComment.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlComment>.<Color>.Value)
+            XmlHtmDisplay2.Settings.XComment.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlComment>.<Color>.Value)
         Else
-            XmlHtmDisplay1.Settings.XComment.Color = Color.Blue
+            XmlHtmDisplay2.Settings.XComment.Color = Color.Blue
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlComment>.<HalfPointSize>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XComment.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlComment>.<HalfPointSize>.Value
+            XmlHtmDisplay2.Settings.XComment.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlComment>.<HalfPointSize>.Value
         Else
-            XmlHtmDisplay1.Settings.XComment.HalfPointSize = 20
+            XmlHtmDisplay2.Settings.XComment.HalfPointSize = 20
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlComment>.<Bold>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XComment.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlComment>.<Bold>.Value
+            XmlHtmDisplay2.Settings.XComment.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlComment>.<Bold>.Value
         Else
-            XmlHtmDisplay1.Settings.XComment.Bold = False
+            XmlHtmDisplay2.Settings.XComment.Bold = False
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlComment>.<Italic>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XComment.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlComment>.<Italic>.Value
+            XmlHtmDisplay2.Settings.XComment.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlComment>.<Italic>.Value
         Else
-            XmlHtmDisplay1.Settings.XComment.Italic = False
+            XmlHtmDisplay2.Settings.XComment.Italic = False
         End If
 
         'Set the XML Element font:
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlElement>.<FontName>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XElement.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlElement>.<FontName>.Value
+            XmlHtmDisplay2.Settings.XElement.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlElement>.<FontName>.Value
         Else
-            XmlHtmDisplay1.Settings.XElement.FontName = "Arial"
+            XmlHtmDisplay2.Settings.XElement.FontName = "Arial"
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlElement>.<Color>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XElement.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlElement>.<Color>.Value)
+            XmlHtmDisplay2.Settings.XElement.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlElement>.<Color>.Value)
         Else
-            XmlHtmDisplay1.Settings.XElement.Color = Color.Blue
+            XmlHtmDisplay2.Settings.XElement.Color = Color.Blue
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlElement>.<HalfPointSize>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XElement.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlElement>.<HalfPointSize>.Value
+            XmlHtmDisplay2.Settings.XElement.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlElement>.<HalfPointSize>.Value
         Else
-            XmlHtmDisplay1.Settings.XElement.HalfPointSize = 20
+            XmlHtmDisplay2.Settings.XElement.HalfPointSize = 20
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlElement>.<Bold>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XElement.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlElement>.<Bold>.Value
+            XmlHtmDisplay2.Settings.XElement.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlElement>.<Bold>.Value
         Else
-            XmlHtmDisplay1.Settings.XElement.Bold = False
+            XmlHtmDisplay2.Settings.XElement.Bold = False
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlElement>.<Italic>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XElement.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlElement>.<Italic>.Value
+            XmlHtmDisplay2.Settings.XElement.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlElement>.<Italic>.Value
         Else
-            XmlHtmDisplay1.Settings.XElement.Italic = False
+            XmlHtmDisplay2.Settings.XElement.Italic = False
         End If
 
         'Set the XML Attribute Key font:
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeKey>.<FontName>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XAttributeKey.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeKey>.<FontName>.Value
+            XmlHtmDisplay2.Settings.XAttributeKey.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeKey>.<FontName>.Value
         Else
-            XmlHtmDisplay1.Settings.XAttributeKey.FontName = "Arial"
+            XmlHtmDisplay2.Settings.XAttributeKey.FontName = "Arial"
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeKey>.<Color>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XAttributeKey.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeKey>.<Color>.Value)
+            XmlHtmDisplay2.Settings.XAttributeKey.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeKey>.<Color>.Value)
         Else
-            XmlHtmDisplay1.Settings.XAttributeKey.Color = Color.Blue
+            XmlHtmDisplay2.Settings.XAttributeKey.Color = Color.Blue
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeKey>.<HalfPointSize>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XAttributeKey.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeKey>.<HalfPointSize>.Value
+            XmlHtmDisplay2.Settings.XAttributeKey.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeKey>.<HalfPointSize>.Value
         Else
-            XmlHtmDisplay1.Settings.XAttributeKey.HalfPointSize = 20
+            XmlHtmDisplay2.Settings.XAttributeKey.HalfPointSize = 20
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeKey>.<Bold>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XAttributeKey.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeKey>.<Bold>.Value
+            XmlHtmDisplay2.Settings.XAttributeKey.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeKey>.<Bold>.Value
         Else
-            XmlHtmDisplay1.Settings.XAttributeKey.Bold = False
+            XmlHtmDisplay2.Settings.XAttributeKey.Bold = False
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeKey>.<Italic>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XAttributeKey.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeKey>.<Italic>.Value
+            XmlHtmDisplay2.Settings.XAttributeKey.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeKey>.<Italic>.Value
         Else
-            XmlHtmDisplay1.Settings.XAttributeKey.Italic = False
+            XmlHtmDisplay2.Settings.XAttributeKey.Italic = False
         End If
 
         'Set the XML Attribute Value font:
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeValue>.<FontName>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XAttributeValue.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeValue>.<FontName>.Value
+            XmlHtmDisplay2.Settings.XAttributeValue.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeValue>.<FontName>.Value
         Else
-            XmlHtmDisplay1.Settings.XAttributeValue.FontName = "Arial"
+            XmlHtmDisplay2.Settings.XAttributeValue.FontName = "Arial"
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeValue>.<Color>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XAttributeValue.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeValue>.<Color>.Value)
+            XmlHtmDisplay2.Settings.XAttributeValue.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeValue>.<Color>.Value)
         Else
-            XmlHtmDisplay1.Settings.XAttributeValue.Color = Color.Blue
+            XmlHtmDisplay2.Settings.XAttributeValue.Color = Color.Blue
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeValue>.<HalfPointSize>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XAttributeValue.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeValue>.<HalfPointSize>.Value
+            XmlHtmDisplay2.Settings.XAttributeValue.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeValue>.<HalfPointSize>.Value
         Else
-            XmlHtmDisplay1.Settings.XAttributeValue.HalfPointSize = 20
+            XmlHtmDisplay2.Settings.XAttributeValue.HalfPointSize = 20
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeValue>.<Bold>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XAttributeValue.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeValue>.<Bold>.Value
+            XmlHtmDisplay2.Settings.XAttributeValue.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeValue>.<Bold>.Value
         Else
-            XmlHtmDisplay1.Settings.XAttributeValue.Bold = False
+            XmlHtmDisplay2.Settings.XAttributeValue.Bold = False
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeValue>.<Italic>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.XAttributeValue.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeValue>.<Italic>.Value
+            XmlHtmDisplay2.Settings.XAttributeValue.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<XmlSettings>.<XmlAttributeValue>.<Italic>.Value
         Else
-            XmlHtmDisplay1.Settings.XAttributeValue.Italic = False
+            XmlHtmDisplay2.Settings.XAttributeValue.Italic = False
         End If
 
         'Set the HTML Text font:
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlText>.<FontName>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HText.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlText>.<FontName>.Value
+            XmlHtmDisplay2.Settings.HText.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlText>.<FontName>.Value
         Else
-            XmlHtmDisplay1.Settings.HText.FontName = "Arial"
+            XmlHtmDisplay2.Settings.HText.FontName = "Arial"
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlText>.<Color>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HText.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlText>.<Color>.Value)
+            XmlHtmDisplay2.Settings.HText.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlText>.<Color>.Value)
         Else
-            XmlHtmDisplay1.Settings.HText.Color = Color.Blue
+            XmlHtmDisplay2.Settings.HText.Color = Color.Blue
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlText>.<HalfPointSize>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HText.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlText>.<HalfPointSize>.Value
+            XmlHtmDisplay2.Settings.HText.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlText>.<HalfPointSize>.Value
         Else
-            XmlHtmDisplay1.Settings.HText.HalfPointSize = 20
+            XmlHtmDisplay2.Settings.HText.HalfPointSize = 20
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlText>.<Bold>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HText.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlText>.<Bold>.Value
+            XmlHtmDisplay2.Settings.HText.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlText>.<Bold>.Value
         Else
-            XmlHtmDisplay1.Settings.HText.Bold = False
+            XmlHtmDisplay2.Settings.HText.Bold = False
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlText>.<Italic>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HText.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlText>.<Italic>.Value
+            XmlHtmDisplay2.Settings.HText.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlText>.<Italic>.Value
         Else
-            XmlHtmDisplay1.Settings.HText.Italic = False
+            XmlHtmDisplay2.Settings.HText.Italic = False
         End If
 
         'Set the HTML Element font:
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlElement>.<FontName>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HElement.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlElement>.<FontName>.Value
+            XmlHtmDisplay2.Settings.HElement.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlElement>.<FontName>.Value
         Else
-            XmlHtmDisplay1.Settings.HElement.FontName = "Arial"
+            XmlHtmDisplay2.Settings.HElement.FontName = "Arial"
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlElement>.<Color>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HElement.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlElement>.<Color>.Value)
+            XmlHtmDisplay2.Settings.HElement.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlElement>.<Color>.Value)
         Else
-            XmlHtmDisplay1.Settings.HElement.Color = Color.Blue
+            XmlHtmDisplay2.Settings.HElement.Color = Color.Blue
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlElement>.<HalfPointSize>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HElement.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlElement>.<HalfPointSize>.Value
+            XmlHtmDisplay2.Settings.HElement.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlElement>.<HalfPointSize>.Value
         Else
-            XmlHtmDisplay1.Settings.HElement.HalfPointSize = 20
+            XmlHtmDisplay2.Settings.HElement.HalfPointSize = 20
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlElement>.<Bold>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HElement.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlElement>.<Bold>.Value
+            XmlHtmDisplay2.Settings.HElement.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlElement>.<Bold>.Value
         Else
-            XmlHtmDisplay1.Settings.HElement.Bold = False
+            XmlHtmDisplay2.Settings.HElement.Bold = False
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlElement>.<Italic>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HElement.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlElement>.<Italic>.Value
+            XmlHtmDisplay2.Settings.HElement.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlElement>.<Italic>.Value
         Else
-            XmlHtmDisplay1.Settings.HElement.Italic = False
+            XmlHtmDisplay2.Settings.HElement.Italic = False
         End If
 
         'Set the HTML Attribute font:
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlAttribute>.<FontName>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HAttribute.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlAttribute>.<FontName>.Value
+            XmlHtmDisplay2.Settings.HAttribute.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlAttribute>.<FontName>.Value
         Else
-            XmlHtmDisplay1.Settings.HAttribute.FontName = "Arial"
+            XmlHtmDisplay2.Settings.HAttribute.FontName = "Arial"
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlAttribute>.<Color>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HAttribute.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlAttribute>.<Color>.Value)
+            XmlHtmDisplay2.Settings.HAttribute.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlAttribute>.<Color>.Value)
         Else
-            XmlHtmDisplay1.Settings.HAttribute.Color = Color.Blue
+            XmlHtmDisplay2.Settings.HAttribute.Color = Color.Blue
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlAttribute>.<HalfPointSize>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HAttribute.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlAttribute>.<HalfPointSize>.Value
+            XmlHtmDisplay2.Settings.HAttribute.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlAttribute>.<HalfPointSize>.Value
         Else
-            XmlHtmDisplay1.Settings.HAttribute.HalfPointSize = 20
+            XmlHtmDisplay2.Settings.HAttribute.HalfPointSize = 20
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlAttribute>.<Bold>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HAttribute.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlAttribute>.<Bold>.Value
+            XmlHtmDisplay2.Settings.HAttribute.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlAttribute>.<Bold>.Value
         Else
-            XmlHtmDisplay1.Settings.HAttribute.Bold = False
+            XmlHtmDisplay2.Settings.HAttribute.Bold = False
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlAttribute>.<Italic>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HAttribute.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlAttribute>.<Italic>.Value
+            XmlHtmDisplay2.Settings.HAttribute.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlAttribute>.<Italic>.Value
         Else
-            XmlHtmDisplay1.Settings.HAttribute.Italic = False
+            XmlHtmDisplay2.Settings.HAttribute.Italic = False
         End If
 
         'Set the HTML Comment font:
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlComment>.<FontName>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HComment.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlComment>.<FontName>.Value
+            XmlHtmDisplay2.Settings.HComment.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlComment>.<FontName>.Value
         Else
-            XmlHtmDisplay1.Settings.HComment.FontName = "Arial"
+            XmlHtmDisplay2.Settings.HComment.FontName = "Arial"
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlComment>.<Color>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HComment.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlComment>.<Color>.Value)
+            XmlHtmDisplay2.Settings.HComment.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlComment>.<Color>.Value)
         Else
-            XmlHtmDisplay1.Settings.HComment.Color = Color.Blue
+            XmlHtmDisplay2.Settings.HComment.Color = Color.Blue
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlComment>.<HalfPointSize>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HComment.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlComment>.<HalfPointSize>.Value
+            XmlHtmDisplay2.Settings.HComment.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlComment>.<HalfPointSize>.Value
         Else
-            XmlHtmDisplay1.Settings.HComment.HalfPointSize = 20
+            XmlHtmDisplay2.Settings.HComment.HalfPointSize = 20
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlComment>.<Bold>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HComment.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlComment>.<Bold>.Value
+            XmlHtmDisplay2.Settings.HComment.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlComment>.<Bold>.Value
         Else
-            XmlHtmDisplay1.Settings.HComment.Bold = False
+            XmlHtmDisplay2.Settings.HComment.Bold = False
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlComment>.<Italic>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HComment.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlComment>.<Italic>.Value
+            XmlHtmDisplay2.Settings.HComment.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlComment>.<Italic>.Value
         Else
-            XmlHtmDisplay1.Settings.HComment.Italic = False
+            XmlHtmDisplay2.Settings.HComment.Italic = False
         End If
 
         'Set the HTML Special Character font:
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlChar>.<FontName>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HChar.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlChar>.<FontName>.Value
+            XmlHtmDisplay2.Settings.HChar.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlChar>.<FontName>.Value
         Else
-            XmlHtmDisplay1.Settings.HChar.FontName = "Arial"
+            XmlHtmDisplay2.Settings.HChar.FontName = "Arial"
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlChar>.<Color>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HChar.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlChar>.<Color>.Value)
+            XmlHtmDisplay2.Settings.HChar.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlChar>.<Color>.Value)
         Else
-            XmlHtmDisplay1.Settings.HChar.Color = Color.Blue
+            XmlHtmDisplay2.Settings.HChar.Color = Color.Blue
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlChar>.<HalfPointSize>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HChar.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlChar>.<HalfPointSize>.Value
+            XmlHtmDisplay2.Settings.HChar.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlChar>.<HalfPointSize>.Value
         Else
-            XmlHtmDisplay1.Settings.HChar.HalfPointSize = 20
+            XmlHtmDisplay2.Settings.HChar.HalfPointSize = 20
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlChar>.<Bold>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HChar.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlChar>.<Bold>.Value
+            XmlHtmDisplay2.Settings.HChar.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlChar>.<Bold>.Value
         Else
-            XmlHtmDisplay1.Settings.HChar.Bold = False
+            XmlHtmDisplay2.Settings.HChar.Bold = False
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlChar>.<Italic>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HChar.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlChar>.<Italic>.Value
+            XmlHtmDisplay2.Settings.HChar.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlChar>.<Italic>.Value
         Else
-            XmlHtmDisplay1.Settings.HChar.Italic = False
+            XmlHtmDisplay2.Settings.HChar.Italic = False
         End If
 
         'Set the HTML Value font:
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlValue>.<FontName>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HValue.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlValue>.<FontName>.Value
+            XmlHtmDisplay2.Settings.HValue.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlValue>.<FontName>.Value
         Else
-            XmlHtmDisplay1.Settings.HValue.FontName = "Arial"
+            XmlHtmDisplay2.Settings.HValue.FontName = "Arial"
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlValue>.<Color>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HValue.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlValue>.<Color>.Value)
+            XmlHtmDisplay2.Settings.HValue.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlValue>.<Color>.Value)
         Else
-            XmlHtmDisplay1.Settings.HValue.Color = Color.Blue
+            XmlHtmDisplay2.Settings.HValue.Color = Color.Blue
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlValue>.<HalfPointSize>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HValue.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlValue>.<HalfPointSize>.Value
+            XmlHtmDisplay2.Settings.HValue.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlValue>.<HalfPointSize>.Value
         Else
-            XmlHtmDisplay1.Settings.HValue.HalfPointSize = 20
+            XmlHtmDisplay2.Settings.HValue.HalfPointSize = 20
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlValue>.<Bold>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HValue.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlValue>.<Bold>.Value
+            XmlHtmDisplay2.Settings.HValue.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlValue>.<Bold>.Value
         Else
-            XmlHtmDisplay1.Settings.HValue.Bold = False
+            XmlHtmDisplay2.Settings.HValue.Bold = False
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlValue>.<Italic>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HValue.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlValue>.<Italic>.Value
+            XmlHtmDisplay2.Settings.HValue.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlValue>.<Italic>.Value
         Else
-            XmlHtmDisplay1.Settings.HValue.Italic = False
+            XmlHtmDisplay2.Settings.HValue.Italic = False
         End If
 
         'Set the HTML Style font:
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlStyle>.<FontName>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HStyle.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlStyle>.<FontName>.Value
+            XmlHtmDisplay2.Settings.HStyle.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlStyle>.<FontName>.Value
         Else
-            XmlHtmDisplay1.Settings.HStyle.FontName = "Arial"
+            XmlHtmDisplay2.Settings.HStyle.FontName = "Arial"
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlStyle>.<Color>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HStyle.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlStyle>.<Color>.Value)
+            XmlHtmDisplay2.Settings.HStyle.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlStyle>.<Color>.Value)
         Else
-            XmlHtmDisplay1.Settings.HStyle.Color = Color.Blue
+            XmlHtmDisplay2.Settings.HStyle.Color = Color.Blue
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlStyle>.<HalfPointSize>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HStyle.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlStyle>.<HalfPointSize>.Value
+            XmlHtmDisplay2.Settings.HStyle.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlStyle>.<HalfPointSize>.Value
         Else
-            XmlHtmDisplay1.Settings.HStyle.HalfPointSize = 20
+            XmlHtmDisplay2.Settings.HStyle.HalfPointSize = 20
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlStyle>.<Bold>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HStyle.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlStyle>.<Bold>.Value
+            XmlHtmDisplay2.Settings.HStyle.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlStyle>.<Bold>.Value
         Else
-            XmlHtmDisplay1.Settings.HStyle.Bold = False
+            XmlHtmDisplay2.Settings.HStyle.Bold = False
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlStyle>.<Italic>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.HStyle.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlStyle>.<Italic>.Value
+            XmlHtmDisplay2.Settings.HStyle.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<HtmlSettings>.<HtmlStyle>.<Italic>.Value
         Else
-            XmlHtmDisplay1.Settings.HStyle.Italic = False
+            XmlHtmDisplay2.Settings.HStyle.Italic = False
         End If
 
         'Set the TXT Plain Text font:
         If XDoc.<ListOfXmlHmlRtfSettings>.<TxtPlainText>.<FontName>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.PlainText.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<TxtPlainText>.<FontName>.Value
+            XmlHtmDisplay2.Settings.PlainText.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<TxtPlainText>.<FontName>.Value
         Else
-            XmlHtmDisplay1.Settings.PlainText.FontName = "Arial"
+            XmlHtmDisplay2.Settings.PlainText.FontName = "Arial"
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<TxtPlainText>.<Color>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.PlainText.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<TxtPlainText>.<Color>.Value)
+            XmlHtmDisplay2.Settings.PlainText.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<TxtPlainText>.<Color>.Value)
         Else
-            XmlHtmDisplay1.Settings.PlainText.Color = Color.Blue
+            XmlHtmDisplay2.Settings.PlainText.Color = Color.Blue
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<TxtPlainText>.<HalfPointSize>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.PlainText.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<TxtPlainText>.<HalfPointSize>.Value
+            XmlHtmDisplay2.Settings.PlainText.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<TxtPlainText>.<HalfPointSize>.Value
         Else
-            XmlHtmDisplay1.Settings.PlainText.HalfPointSize = 20
+            XmlHtmDisplay2.Settings.PlainText.HalfPointSize = 20
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<TxtPlainText>.<Bold>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.PlainText.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<TxtPlainText>.<Bold>.Value
+            XmlHtmDisplay2.Settings.PlainText.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<TxtPlainText>.<Bold>.Value
         Else
-            XmlHtmDisplay1.Settings.PlainText.Bold = False
+            XmlHtmDisplay2.Settings.PlainText.Bold = False
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<TxtPlainText>.<Italic>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.PlainText.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<TxtPlainText>.<Italic>.Value
+            XmlHtmDisplay2.Settings.PlainText.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<TxtPlainText>.<Italic>.Value
         Else
-            XmlHtmDisplay1.Settings.PlainText.Italic = False
+            XmlHtmDisplay2.Settings.PlainText.Italic = False
         End If
 
         'Set the Default Text font:
         If XDoc.<ListOfXmlHmlRtfSettings>.<DefaultText>.<FontName>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.DefaultText.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<DefaultText>.<FontName>.Value
+            XmlHtmDisplay2.Settings.DefaultText.FontName = XDoc.<ListOfXmlHmlRtfSettings>.<DefaultText>.<FontName>.Value
         Else
-            XmlHtmDisplay1.Settings.DefaultText.FontName = "Arial"
+            XmlHtmDisplay2.Settings.DefaultText.FontName = "Arial"
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<DefaultText>.<Color>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.DefaultText.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<DefaultText>.<Color>.Value)
+            XmlHtmDisplay2.Settings.DefaultText.Color = Color.FromName(XDoc.<ListOfXmlHmlRtfSettings>.<DefaultText>.<Color>.Value)
         Else
-            XmlHtmDisplay1.Settings.DefaultText.Color = Color.Blue
+            XmlHtmDisplay2.Settings.DefaultText.Color = Color.Blue
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<DefaultText>.<HalfPointSize>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.DefaultText.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<DefaultText>.<HalfPointSize>.Value
+            XmlHtmDisplay2.Settings.DefaultText.HalfPointSize = XDoc.<ListOfXmlHmlRtfSettings>.<DefaultText>.<HalfPointSize>.Value
         Else
-            XmlHtmDisplay1.Settings.DefaultText.HalfPointSize = 20
+            XmlHtmDisplay2.Settings.DefaultText.HalfPointSize = 20
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<DefaultText>.<Bold>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.DefaultText.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<DefaultText>.<Bold>.Value
+            XmlHtmDisplay2.Settings.DefaultText.Bold = XDoc.<ListOfXmlHmlRtfSettings>.<DefaultText>.<Bold>.Value
         Else
-            XmlHtmDisplay1.Settings.DefaultText.Bold = False
+            XmlHtmDisplay2.Settings.DefaultText.Bold = False
         End If
         If XDoc.<ListOfXmlHmlRtfSettings>.<DefaultText>.<Italic>.Value <> Nothing Then
-            XmlHtmDisplay1.Settings.DefaultText.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<DefaultText>.<Italic>.Value
+            XmlHtmDisplay2.Settings.DefaultText.Italic = XDoc.<ListOfXmlHmlRtfSettings>.<DefaultText>.<Italic>.Value
         Else
-            XmlHtmDisplay1.Settings.DefaultText.Italic = False
+            XmlHtmDisplay2.Settings.DefaultText.Italic = False
         End If
 
         'Set other RTF text type fonts:
-        XmlHtmDisplay1.Settings.ClearAllTextTypes()
+        XmlHtmDisplay2.Settings.ClearAllTextTypes()
 
         Dim TextTypes = From item In XDoc.<ListOfXmlHmlRtfSettings>.<RtfSettings>.<TextType>
         Dim TextTypeName As String
         For Each item In TextTypes
             TextTypeName = item.<Name>.Value
-            XmlHtmDisplay1.Settings.AddNewTextType(TextTypeName)
-            XmlHtmDisplay1.Settings.TextType(TextTypeName).FontName = item.<FontName>.Value
-            XmlHtmDisplay1.Settings.TextType(TextTypeName).Color = Color.FromName(item.<Color>.Value)
-            XmlHtmDisplay1.Settings.TextType(TextTypeName).HalfPointSize = item.<HalfPointSize>.Value
-            XmlHtmDisplay1.Settings.TextType(TextTypeName).Bold = item.<Bold>.Value
-            XmlHtmDisplay1.Settings.TextType(TextTypeName).Italic = item.<Italic>.Value
+            XmlHtmDisplay2.Settings.AddNewTextType(TextTypeName)
+            XmlHtmDisplay2.Settings.TextType(TextTypeName).FontName = item.<FontName>.Value
+            XmlHtmDisplay2.Settings.TextType(TextTypeName).Color = Color.FromName(item.<Color>.Value)
+            XmlHtmDisplay2.Settings.TextType(TextTypeName).HalfPointSize = item.<HalfPointSize>.Value
+            XmlHtmDisplay2.Settings.TextType(TextTypeName).Bold = item.<Bold>.Value
+            XmlHtmDisplay2.Settings.TextType(TextTypeName).Italic = item.<Italic>.Value
         Next
 
         ShowSettings()
@@ -5051,127 +5497,127 @@ Public Class Main
         Dim I As Integer 'Loop index
 
         Dim TextTypeName As String
-        XmlHtmDisplay1.Settings.ClearAllTextTypes()
+        XmlHtmDisplay2.Settings.ClearAllTextTypes()
 
         DataGridView1.AllowUserToAddRows = False
 
-        XmlHtmDisplay1.Settings.XIndentSpaces = txtXmlIndentSpaces.Text
-        XmlHtmDisplay1.Settings.XmlLargeFileSizeLimit = txtXmlFileSizeLimit.Text
+        XmlHtmDisplay2.Settings.XIndentSpaces = txtXmlIndentSpaces.Text
+        XmlHtmDisplay2.Settings.XmlLargeFileSizeLimit = txtXmlFileSizeLimit.Text
 
         For I = 0 To DataGridView1.RowCount - 1
             Select Case DataGridView1.Rows(I).Cells(0).Value
                 Case "XML Tag"
-                    XmlHtmDisplay1.Settings.XTag.FontName = DataGridView1.Rows(I).Cells(1).Value
-                    XmlHtmDisplay1.Settings.XTag.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
-                    XmlHtmDisplay1.Settings.XTag.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
-                    XmlHtmDisplay1.Settings.XTag.Bold = DataGridView1.Rows(I).Cells(7).Value
-                    XmlHtmDisplay1.Settings.XTag.Italic = DataGridView1.Rows(I).Cells(8).Value
+                    XmlHtmDisplay2.Settings.XTag.FontName = DataGridView1.Rows(I).Cells(1).Value
+                    XmlHtmDisplay2.Settings.XTag.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
+                    XmlHtmDisplay2.Settings.XTag.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
+                    XmlHtmDisplay2.Settings.XTag.Bold = DataGridView1.Rows(I).Cells(7).Value
+                    XmlHtmDisplay2.Settings.XTag.Italic = DataGridView1.Rows(I).Cells(8).Value
                 Case "XML Value"
-                    XmlHtmDisplay1.Settings.XValue.FontName = DataGridView1.Rows(I).Cells(1).Value
-                    XmlHtmDisplay1.Settings.XValue.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
-                    XmlHtmDisplay1.Settings.XValue.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
-                    XmlHtmDisplay1.Settings.XValue.Bold = DataGridView1.Rows(I).Cells(7).Value
-                    XmlHtmDisplay1.Settings.XValue.Italic = DataGridView1.Rows(I).Cells(8).Value
+                    XmlHtmDisplay2.Settings.XValue.FontName = DataGridView1.Rows(I).Cells(1).Value
+                    XmlHtmDisplay2.Settings.XValue.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
+                    XmlHtmDisplay2.Settings.XValue.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
+                    XmlHtmDisplay2.Settings.XValue.Bold = DataGridView1.Rows(I).Cells(7).Value
+                    XmlHtmDisplay2.Settings.XValue.Italic = DataGridView1.Rows(I).Cells(8).Value
                 Case "XML Comment"
-                    XmlHtmDisplay1.Settings.XComment.FontName = DataGridView1.Rows(I).Cells(1).Value
-                    XmlHtmDisplay1.Settings.XComment.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
-                    XmlHtmDisplay1.Settings.XComment.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
-                    XmlHtmDisplay1.Settings.XComment.Bold = DataGridView1.Rows(I).Cells(7).Value
-                    XmlHtmDisplay1.Settings.XComment.Italic = DataGridView1.Rows(I).Cells(8).Value
+                    XmlHtmDisplay2.Settings.XComment.FontName = DataGridView1.Rows(I).Cells(1).Value
+                    XmlHtmDisplay2.Settings.XComment.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
+                    XmlHtmDisplay2.Settings.XComment.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
+                    XmlHtmDisplay2.Settings.XComment.Bold = DataGridView1.Rows(I).Cells(7).Value
+                    XmlHtmDisplay2.Settings.XComment.Italic = DataGridView1.Rows(I).Cells(8).Value
                 Case "XML Element"
-                    XmlHtmDisplay1.Settings.XElement.FontName = DataGridView1.Rows(I).Cells(1).Value
-                    XmlHtmDisplay1.Settings.XElement.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
-                    XmlHtmDisplay1.Settings.XElement.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
-                    XmlHtmDisplay1.Settings.XElement.Bold = DataGridView1.Rows(I).Cells(7).Value
-                    XmlHtmDisplay1.Settings.XElement.Italic = DataGridView1.Rows(I).Cells(8).Value
+                    XmlHtmDisplay2.Settings.XElement.FontName = DataGridView1.Rows(I).Cells(1).Value
+                    XmlHtmDisplay2.Settings.XElement.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
+                    XmlHtmDisplay2.Settings.XElement.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
+                    XmlHtmDisplay2.Settings.XElement.Bold = DataGridView1.Rows(I).Cells(7).Value
+                    XmlHtmDisplay2.Settings.XElement.Italic = DataGridView1.Rows(I).Cells(8).Value
                 Case "XML Attribute Key"
-                    XmlHtmDisplay1.Settings.XAttributeKey.FontName = DataGridView1.Rows(I).Cells(1).Value
-                    XmlHtmDisplay1.Settings.XAttributeKey.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
-                    XmlHtmDisplay1.Settings.XAttributeKey.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
-                    XmlHtmDisplay1.Settings.XAttributeKey.Bold = DataGridView1.Rows(I).Cells(7).Value
-                    XmlHtmDisplay1.Settings.XAttributeKey.Italic = DataGridView1.Rows(I).Cells(8).Value
+                    XmlHtmDisplay2.Settings.XAttributeKey.FontName = DataGridView1.Rows(I).Cells(1).Value
+                    XmlHtmDisplay2.Settings.XAttributeKey.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
+                    XmlHtmDisplay2.Settings.XAttributeKey.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
+                    XmlHtmDisplay2.Settings.XAttributeKey.Bold = DataGridView1.Rows(I).Cells(7).Value
+                    XmlHtmDisplay2.Settings.XAttributeKey.Italic = DataGridView1.Rows(I).Cells(8).Value
                 Case "XML Attribute Value"
-                    XmlHtmDisplay1.Settings.XAttributeValue.FontName = DataGridView1.Rows(I).Cells(1).Value
-                    XmlHtmDisplay1.Settings.XAttributeValue.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
-                    XmlHtmDisplay1.Settings.XAttributeValue.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
-                    XmlHtmDisplay1.Settings.XAttributeValue.Bold = DataGridView1.Rows(I).Cells(7).Value
-                    XmlHtmDisplay1.Settings.XAttributeValue.Italic = DataGridView1.Rows(I).Cells(8).Value
+                    XmlHtmDisplay2.Settings.XAttributeValue.FontName = DataGridView1.Rows(I).Cells(1).Value
+                    XmlHtmDisplay2.Settings.XAttributeValue.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
+                    XmlHtmDisplay2.Settings.XAttributeValue.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
+                    XmlHtmDisplay2.Settings.XAttributeValue.Bold = DataGridView1.Rows(I).Cells(7).Value
+                    XmlHtmDisplay2.Settings.XAttributeValue.Italic = DataGridView1.Rows(I).Cells(8).Value
                 Case "HTML Text"
-                    XmlHtmDisplay1.Settings.HText.FontName = DataGridView1.Rows(I).Cells(1).Value
-                    XmlHtmDisplay1.Settings.HText.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
-                    XmlHtmDisplay1.Settings.HText.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
-                    XmlHtmDisplay1.Settings.HText.Bold = DataGridView1.Rows(I).Cells(7).Value
-                    XmlHtmDisplay1.Settings.HText.Italic = DataGridView1.Rows(I).Cells(8).Value
+                    XmlHtmDisplay2.Settings.HText.FontName = DataGridView1.Rows(I).Cells(1).Value
+                    XmlHtmDisplay2.Settings.HText.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
+                    XmlHtmDisplay2.Settings.HText.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
+                    XmlHtmDisplay2.Settings.HText.Bold = DataGridView1.Rows(I).Cells(7).Value
+                    XmlHtmDisplay2.Settings.HText.Italic = DataGridView1.Rows(I).Cells(8).Value
                 Case "HTML Element"
-                    XmlHtmDisplay1.Settings.HElement.FontName = DataGridView1.Rows(I).Cells(1).Value
-                    XmlHtmDisplay1.Settings.HElement.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
-                    XmlHtmDisplay1.Settings.HElement.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
-                    XmlHtmDisplay1.Settings.HElement.Bold = DataGridView1.Rows(I).Cells(7).Value
-                    XmlHtmDisplay1.Settings.HElement.Italic = DataGridView1.Rows(I).Cells(8).Value
+                    XmlHtmDisplay2.Settings.HElement.FontName = DataGridView1.Rows(I).Cells(1).Value
+                    XmlHtmDisplay2.Settings.HElement.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
+                    XmlHtmDisplay2.Settings.HElement.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
+                    XmlHtmDisplay2.Settings.HElement.Bold = DataGridView1.Rows(I).Cells(7).Value
+                    XmlHtmDisplay2.Settings.HElement.Italic = DataGridView1.Rows(I).Cells(8).Value
                 Case "HTML Attribute"
-                    XmlHtmDisplay1.Settings.HAttribute.FontName = DataGridView1.Rows(I).Cells(1).Value
-                    XmlHtmDisplay1.Settings.HAttribute.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
-                    XmlHtmDisplay1.Settings.HAttribute.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
-                    XmlHtmDisplay1.Settings.HAttribute.Bold = DataGridView1.Rows(I).Cells(7).Value
-                    XmlHtmDisplay1.Settings.HAttribute.Italic = DataGridView1.Rows(I).Cells(8).Value
+                    XmlHtmDisplay2.Settings.HAttribute.FontName = DataGridView1.Rows(I).Cells(1).Value
+                    XmlHtmDisplay2.Settings.HAttribute.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
+                    XmlHtmDisplay2.Settings.HAttribute.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
+                    XmlHtmDisplay2.Settings.HAttribute.Bold = DataGridView1.Rows(I).Cells(7).Value
+                    XmlHtmDisplay2.Settings.HAttribute.Italic = DataGridView1.Rows(I).Cells(8).Value
                 Case "HTML Comment"
-                    XmlHtmDisplay1.Settings.HComment.FontName = DataGridView1.Rows(I).Cells(1).Value
-                    XmlHtmDisplay1.Settings.HComment.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
-                    XmlHtmDisplay1.Settings.HComment.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
-                    XmlHtmDisplay1.Settings.HComment.Bold = DataGridView1.Rows(I).Cells(7).Value
-                    XmlHtmDisplay1.Settings.HComment.Italic = DataGridView1.Rows(I).Cells(8).Value
+                    XmlHtmDisplay2.Settings.HComment.FontName = DataGridView1.Rows(I).Cells(1).Value
+                    XmlHtmDisplay2.Settings.HComment.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
+                    XmlHtmDisplay2.Settings.HComment.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
+                    XmlHtmDisplay2.Settings.HComment.Bold = DataGridView1.Rows(I).Cells(7).Value
+                    XmlHtmDisplay2.Settings.HComment.Italic = DataGridView1.Rows(I).Cells(8).Value
                 Case "HTML Special Chars"
-                    XmlHtmDisplay1.Settings.HChar.FontName = DataGridView1.Rows(I).Cells(1).Value
-                    XmlHtmDisplay1.Settings.HChar.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
-                    XmlHtmDisplay1.Settings.HChar.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
-                    XmlHtmDisplay1.Settings.HChar.Bold = DataGridView1.Rows(I).Cells(7).Value
-                    XmlHtmDisplay1.Settings.HChar.Italic = DataGridView1.Rows(I).Cells(8).Value
+                    XmlHtmDisplay2.Settings.HChar.FontName = DataGridView1.Rows(I).Cells(1).Value
+                    XmlHtmDisplay2.Settings.HChar.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
+                    XmlHtmDisplay2.Settings.HChar.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
+                    XmlHtmDisplay2.Settings.HChar.Bold = DataGridView1.Rows(I).Cells(7).Value
+                    XmlHtmDisplay2.Settings.HChar.Italic = DataGridView1.Rows(I).Cells(8).Value
                 Case "HTML Value"
-                    XmlHtmDisplay1.Settings.HValue.FontName = DataGridView1.Rows(I).Cells(1).Value
-                    XmlHtmDisplay1.Settings.HValue.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
-                    XmlHtmDisplay1.Settings.HValue.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
-                    XmlHtmDisplay1.Settings.HValue.Bold = DataGridView1.Rows(I).Cells(7).Value
-                    XmlHtmDisplay1.Settings.HValue.Italic = DataGridView1.Rows(I).Cells(8).Value
+                    XmlHtmDisplay2.Settings.HValue.FontName = DataGridView1.Rows(I).Cells(1).Value
+                    XmlHtmDisplay2.Settings.HValue.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
+                    XmlHtmDisplay2.Settings.HValue.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
+                    XmlHtmDisplay2.Settings.HValue.Bold = DataGridView1.Rows(I).Cells(7).Value
+                    XmlHtmDisplay2.Settings.HValue.Italic = DataGridView1.Rows(I).Cells(8).Value
                 Case "HTML Style"
-                    XmlHtmDisplay1.Settings.HStyle.FontName = DataGridView1.Rows(I).Cells(1).Value
-                    XmlHtmDisplay1.Settings.HStyle.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
-                    XmlHtmDisplay1.Settings.HStyle.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
-                    XmlHtmDisplay1.Settings.HStyle.Bold = DataGridView1.Rows(I).Cells(7).Value
-                    XmlHtmDisplay1.Settings.HStyle.Italic = DataGridView1.Rows(I).Cells(8).Value
+                    XmlHtmDisplay2.Settings.HStyle.FontName = DataGridView1.Rows(I).Cells(1).Value
+                    XmlHtmDisplay2.Settings.HStyle.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
+                    XmlHtmDisplay2.Settings.HStyle.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
+                    XmlHtmDisplay2.Settings.HStyle.Bold = DataGridView1.Rows(I).Cells(7).Value
+                    XmlHtmDisplay2.Settings.HStyle.Italic = DataGridView1.Rows(I).Cells(8).Value
 
                 Case "TXT Plain Text"
-                    XmlHtmDisplay1.Settings.PlainText.FontName = DataGridView1.Rows(I).Cells(1).Value
-                    XmlHtmDisplay1.Settings.PlainText.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
-                    XmlHtmDisplay1.Settings.PlainText.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
-                    XmlHtmDisplay1.Settings.PlainText.Bold = DataGridView1.Rows(I).Cells(7).Value
-                    XmlHtmDisplay1.Settings.PlainText.Italic = DataGridView1.Rows(I).Cells(8).Value
+                    XmlHtmDisplay2.Settings.PlainText.FontName = DataGridView1.Rows(I).Cells(1).Value
+                    XmlHtmDisplay2.Settings.PlainText.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
+                    XmlHtmDisplay2.Settings.PlainText.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
+                    XmlHtmDisplay2.Settings.PlainText.Bold = DataGridView1.Rows(I).Cells(7).Value
+                    XmlHtmDisplay2.Settings.PlainText.Italic = DataGridView1.Rows(I).Cells(8).Value
 
                 Case "Default Text"
-                    XmlHtmDisplay1.Settings.DefaultText.FontName = DataGridView1.Rows(I).Cells(1).Value
-                    XmlHtmDisplay1.Settings.DefaultText.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
-                    XmlHtmDisplay1.Settings.DefaultText.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
-                    XmlHtmDisplay1.Settings.DefaultText.Bold = DataGridView1.Rows(I).Cells(7).Value
-                    XmlHtmDisplay1.Settings.DefaultText.Italic = DataGridView1.Rows(I).Cells(8).Value
+                    XmlHtmDisplay2.Settings.DefaultText.FontName = DataGridView1.Rows(I).Cells(1).Value
+                    XmlHtmDisplay2.Settings.DefaultText.Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
+                    XmlHtmDisplay2.Settings.DefaultText.HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
+                    XmlHtmDisplay2.Settings.DefaultText.Bold = DataGridView1.Rows(I).Cells(7).Value
+                    XmlHtmDisplay2.Settings.DefaultText.Italic = DataGridView1.Rows(I).Cells(8).Value
 
                 Case Else
                     TextTypeName = DataGridView1.Rows(I).Cells(0).Value
-                    XmlHtmDisplay1.Settings.AddNewTextType(TextTypeName)
-                    XmlHtmDisplay1.Settings.TextType(TextTypeName).FontName = DataGridView1.Rows(I).Cells(1).Value
-                    XmlHtmDisplay1.Settings.TextType(TextTypeName).Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
-                    XmlHtmDisplay1.Settings.TextType(TextTypeName).HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
-                    XmlHtmDisplay1.Settings.TextType(TextTypeName).Bold = DataGridView1.Rows(I).Cells(7).Value
-                    XmlHtmDisplay1.Settings.TextType(TextTypeName).Italic = DataGridView1.Rows(I).Cells(8).Value
+                    XmlHtmDisplay2.Settings.AddNewTextType(TextTypeName)
+                    XmlHtmDisplay2.Settings.TextType(TextTypeName).FontName = DataGridView1.Rows(I).Cells(1).Value
+                    XmlHtmDisplay2.Settings.TextType(TextTypeName).Color = Color.FromName(DataGridView1.Rows(I).Cells(3).Value)
+                    XmlHtmDisplay2.Settings.TextType(TextTypeName).HalfPointSize = DataGridView1.Rows(I).Cells(5).Value
+                    XmlHtmDisplay2.Settings.TextType(TextTypeName).Bold = DataGridView1.Rows(I).Cells(7).Value
+                    XmlHtmDisplay2.Settings.TextType(TextTypeName).Italic = DataGridView1.Rows(I).Cells(8).Value
             End Select
         Next
 
-        XmlHtmDisplay1.Settings.UpdateColorIndexes()
-        XmlHtmDisplay1.Settings.UpdateFontIndexes()
+        XmlHtmDisplay2.Settings.UpdateColorIndexes()
+        XmlHtmDisplay2.Settings.UpdateFontIndexes()
 
         'The font and color indexes may have changed.
         'Update the DataGridView:
         ShowSettings()
 
-        XmlHtmDisplay2.Settings = XmlHtmDisplay1.Settings
+        XmlHtmDisplay2.Settings = XmlHtmDisplay2.Settings
 
         DataGridView1.AllowUserToAddRows = True
 
@@ -5187,8 +5633,8 @@ Public Class Main
         Message.Add("Text Types:" & vbCrLf)
 
         Dim I As Integer
-        For I = 0 To XmlHtmDisplay1.Settings.TextType.Count
-            Message.Add(XmlHtmDisplay1.Settings.TextType.Keys(I) & vbCrLf)
+        For I = 0 To XmlHtmDisplay2.Settings.TextType.Count
+            Message.Add(XmlHtmDisplay2.Settings.TextType.Keys(I) & vbCrLf)
         Next
     End Sub
 
@@ -5216,6 +5662,7 @@ Public Class Main
     '    SaveDocument()
     'End Sub
 
+    'UPDATED THIS AFTER XmlHtmDisplay1 was removed!!!
     Public Sub SaveDocument()
 
         Select Case FileType
@@ -5226,7 +5673,8 @@ Public Class Main
                         'Call the File Save dialog...
                         Message.AddWarning("The RTF file name is blank!" & vbCrLf)
                     Else
-                        If XmlHtmDisplay1.SaveRtfFile(RtfFileDirectory & "\" & RtfFileName) = True Then
+                        'If XmlHtmDisplay1.SaveRtfFile(RtfFileDirectory & "\" & RtfFileName) = True Then
+                        If XmlHtmDisplay2.SaveRtfFile(RtfFileDirectory & "\" & RtfFileName) = True Then
                             'File was saved OK.
                             LastRtfFileName = RtfFileName 'Update the LastRtfFilePath.
                             LastRtfFileLocationType = LocationTypes.FileSystem
@@ -5240,7 +5688,7 @@ Public Class Main
                         Message.AddWarning("The RTF file name is blank!" & vbCrLf)
                     Else
                         Dim rtbData As New IO.MemoryStream
-                        XmlHtmDisplay1.SaveFile(rtbData, RichTextBoxStreamType.RichText)
+                        XmlHtmDisplay2.SaveFile(rtbData, RichTextBoxStreamType.RichText)
                         rtbData.Position = 0
                         Project.SaveData(RtfFileName, rtbData)
                         LastRtfFileName = RtfFileName 'Update the LastRtfFilePath.
@@ -5258,7 +5706,7 @@ Public Class Main
                         'Call the File Save dialog...
                         Message.AddWarning("The XML file name is blank!" & vbCrLf)
                     Else
-                        If XmlHtmDisplay1.SaveXmlFile(XmlFileDirectory & "\" & XmlFileName) = True Then
+                        If XmlHtmDisplay2.SaveXmlFile(XmlFileDirectory & "\" & XmlFileName) = True Then
                             'File was saved OK.
                             LastXmlFileName = XmlFileName 'Update the LastXmlFilePath.
                             LastXmlFileLocationType = LocationTypes.FileSystem
@@ -5272,7 +5720,7 @@ Public Class Main
                         'Call the File Save dialog...
                         Message.AddWarning("The XML file name is blank!" & vbCrLf)
                     Else
-                        Dim XDoc As System.Xml.Linq.XDocument = XDocument.Parse(XmlHtmDisplay1.Text)
+                        Dim XDoc As System.Xml.Linq.XDocument = XDocument.Parse(XmlHtmDisplay2.Text)
                         Project.SaveXmlData(XmlFileName, XDoc)
                         LastXmlFileName = XmlFileName 'Update the LastXmlFilePath.
                         LastXmlFileLocationType = LocationTypes.Project
@@ -5287,7 +5735,7 @@ Public Class Main
                         'Call the file save dialog...
                         Message.AddWarning("The HTML file name is blank!" & vbCrLf)
                     Else
-                        XmlHtmDisplay1.SaveFile(FileDirectory & "\" & HtmlFileName, RichTextBoxStreamType.PlainText)
+                        XmlHtmDisplay2.SaveFile(FileDirectory & "\" & HtmlFileName, RichTextBoxStreamType.PlainText)
                         LastHtmlFileName = HtmlFileName 'Update the LastXmlFilePath.
                         LastHtmlFileLocationType = LocationTypes.Project
                         DocumentTextChanged = False
@@ -5299,7 +5747,7 @@ Public Class Main
                         Message.AddWarning("The HTML file name is blank!" & vbCrLf)
                     Else
                         Dim htmData As New IO.MemoryStream
-                        XmlHtmDisplay1.SaveFile(htmData, RichTextBoxStreamType.PlainText)
+                        XmlHtmDisplay2.SaveFile(htmData, RichTextBoxStreamType.PlainText)
                         htmData.Position = 0
                         Project.SaveData(FileName, htmData)
                         LastHtmlFileName = HtmlFileName 'Update the LastXmlFilePath.
@@ -5311,18 +5759,31 @@ Public Class Main
         End Select
     End Sub
 
-    Private Sub txtFileName2_LostFocus(sender As Object, e As EventArgs) Handles txtFileName2.LostFocus
-        _fileName = txtFileName2.Text 'CHECK IF THIS IS REQUIRED!!!
-    End Sub
+    'Private Sub txtFileName2_LostFocus(sender As Object, e As EventArgs) Handles txtFileName2.LostFocus
+    '    _fileName = txtFileName2.Text 'CHECK IF THIS IS REQUIRED!!!
+    'End Sub
 
-    Private Sub XmlDisplay1_MouseDown(sender As Object, e As MouseEventArgs)
+    'Private Sub XmlDisplay1_MouseDown(sender As Object, e As MouseEventArgs)
+    '    'Record the cursor line and position id if the EditXml window is open.
+
+    '    If IsNothing(EditXml) Then
+    '        'Exit XML window is not open
+    '    Else
+    '        EditXml.txtCursorLine.Text = XmlHtmDisplay1.GetLineFromCharIndex(XmlHtmDisplay1.SelectionStart) + 1
+    '        EditXml.txtCursorPosn.Text = XmlHtmDisplay1.SelectionStart - XmlHtmDisplay1.GetFirstCharIndexOfCurrentLine + 1
+    '    End If
+
+    'End Sub
+
+    'ADDED THIS AFTER XmlHmlDisplay1 was removed!!!
+    Private Sub XmlDisplay2_MouseDown(sender As Object, e As MouseEventArgs) Handles XmlHtmDisplay2.MouseDown
         'Record the cursor line and position id if the EditXml window is open.
 
         If IsNothing(EditXml) Then
             'Exit XML window is not open
         Else
-            EditXml.txtCursorLine.Text = XmlHtmDisplay1.GetLineFromCharIndex(XmlHtmDisplay1.SelectionStart) + 1
-            EditXml.txtCursorPosn.Text = XmlHtmDisplay1.SelectionStart - XmlHtmDisplay1.GetFirstCharIndexOfCurrentLine + 1
+            EditXml.txtCursorLine.Text = XmlHtmDisplay2.GetLineFromCharIndex(XmlHtmDisplay2.SelectionStart) + 1
+            EditXml.txtCursorPosn.Text = XmlHtmDisplay2.SelectionStart - XmlHtmDisplay2.GetFirstCharIndexOfCurrentLine + 1
         End If
 
     End Sub
@@ -5367,61 +5828,61 @@ Public Class Main
     'End Sub
 
 
-    Private Sub btnSaveAs_Click(sender As Object, e As EventArgs) Handles btnSaveAs.Click
+    'Private Sub btnSaveAs_Click(sender As Object, e As EventArgs) Handles btnSaveAs.Click
 
-        Select Case FileType
-            Case FileTypes.RTF
-                If FileLocationType = LocationTypes.FileSystem Then 'NOTE: LOOK AT THE CHECKBOX FOR THE FILE TYPE!!!
-                    SaveFileDialog1.InitialDirectory = FileDirectory
-                    SaveFileDialog1.FileName = FileName
-                    SaveFileDialog1.Filter = "Rich Text Format (*.rtf)| *.rtf"
-                    SendKeys.Send("{HOME}") 'To move the cursor to the start of the FileName
-                    If SaveFileDialog1.ShowDialog() = DialogResult.OK Then
-                        FileName = System.IO.Path.GetFileName(SaveFileDialog1.FileName)
-                        RtfFileName = FileName
-                        FileLocationType = LocationTypes.FileSystem
-                        FileDirectory = System.IO.Path.GetDirectoryName(SaveFileDialog1.FileName)
-                        RtfFileDirectory = FileDirectory
-                        If XmlHtmDisplay1.SaveRtfFile(RtfFileDirectory & "\" & RtfFileName) = True Then
-                            'File was saved OK.
-                            LastRtfFileName = FileName
-                            LastRtfFileLocationType = LocationTypes.FileSystem
-                            LastRtfFileDirectory = FileDirectory
-                            DocumentTextChanged = False
-                        End If
-                    End If
+    '    Select Case FileType
+    '        Case FileTypes.RTF
+    '            If FileLocationType = LocationTypes.FileSystem Then 'NOTE: LOOK AT THE CHECKBOX FOR THE FILE TYPE!!!
+    '                SaveFileDialog1.InitialDirectory = FileDirectory
+    '                SaveFileDialog1.FileName = FileName
+    '                SaveFileDialog1.Filter = "Rich Text Format (*.rtf)| *.rtf"
+    '                SendKeys.Send("{HOME}") 'To move the cursor to the start of the FileName
+    '                If SaveFileDialog1.ShowDialog() = DialogResult.OK Then
+    '                    FileName = System.IO.Path.GetFileName(SaveFileDialog1.FileName)
+    '                    RtfFileName = FileName
+    '                    FileLocationType = LocationTypes.FileSystem
+    '                    FileDirectory = System.IO.Path.GetDirectoryName(SaveFileDialog1.FileName)
+    '                    RtfFileDirectory = FileDirectory
+    '                    If XmlHtmDisplay1.SaveRtfFile(RtfFileDirectory & "\" & RtfFileName) = True Then
+    '                        'File was saved OK.
+    '                        LastRtfFileName = FileName
+    '                        LastRtfFileLocationType = LocationTypes.FileSystem
+    '                        LastRtfFileDirectory = FileDirectory
+    '                        DocumentTextChanged = False
+    '                    End If
+    '                End If
 
-                Else
+    '            Else
 
-                End If
+    '            End If
 
-            Case FileTypes.TXT
+    '        Case FileTypes.TXT
 
-            Case FileTypes.XML
-                If FileLocationType = LocationTypes.FileSystem Then
-                    SaveFileDialog1.InitialDirectory = FileDirectory
-                    SaveFileDialog1.FileName = FileName
-                    SaveFileDialog1.Filter = "All Files (*.*)| *.*"
-                    SendKeys.Send("{HOME}") 'To move the cursor to the start of the FileName
-                    If SaveFileDialog1.ShowDialog() = DialogResult.OK Then
-                        FileName = System.IO.Path.GetFileName(SaveFileDialog1.FileName)
-                        XmlFileName = FileName
-                        FileLocationType = LocationTypes.FileSystem
-                        FileDirectory = System.IO.Path.GetDirectoryName(SaveFileDialog1.FileName)
-                        XmlFileDirectory = FileDirectory
-                        If XmlHtmDisplay1.SaveXmlFile(XmlFileDirectory & "\" & XmlFileName) = True Then
-                            'File was saved OK.
-                            LastXmlFileName = FileName
-                            LastXmlFileLocationType = LocationTypes.FileSystem
-                            LastXmlFileDirectory = FileDirectory
-                            DocumentTextChanged = False
-                        End If
-                    End If
-                Else
+    '        Case FileTypes.XML
+    '            If FileLocationType = LocationTypes.FileSystem Then
+    '                SaveFileDialog1.InitialDirectory = FileDirectory
+    '                SaveFileDialog1.FileName = FileName
+    '                SaveFileDialog1.Filter = "All Files (*.*)| *.*"
+    '                SendKeys.Send("{HOME}") 'To move the cursor to the start of the FileName
+    '                If SaveFileDialog1.ShowDialog() = DialogResult.OK Then
+    '                    FileName = System.IO.Path.GetFileName(SaveFileDialog1.FileName)
+    '                    XmlFileName = FileName
+    '                    FileLocationType = LocationTypes.FileSystem
+    '                    FileDirectory = System.IO.Path.GetDirectoryName(SaveFileDialog1.FileName)
+    '                    XmlFileDirectory = FileDirectory
+    '                    If XmlHtmDisplay1.SaveXmlFile(XmlFileDirectory & "\" & XmlFileName) = True Then
+    '                        'File was saved OK.
+    '                        LastXmlFileName = FileName
+    '                        LastXmlFileLocationType = LocationTypes.FileSystem
+    '                        LastXmlFileDirectory = FileDirectory
+    '                        DocumentTextChanged = False
+    '                    End If
+    '                End If
+    '            Else
 
-                End If
-        End Select
-    End Sub
+    '            End If
+    '    End Select
+    'End Sub
 
     Private Sub btnAddDocument_Click_1(sender As Object, e As EventArgs)
 
@@ -5434,51 +5895,94 @@ Public Class Main
 
     'Edit Rtf Code =====================================================================================
 
+    'Private Sub EditRtf_Undo() Handles EditRtf.Undo
+    '    XmlHtmDisplay1.Undo()
+    '    XmlHtmDisplay1.Focus()
+    'End Sub
     Private Sub EditRtf_Undo() Handles EditRtf.Undo
-        XmlHtmDisplay1.Undo()
-        XmlHtmDisplay1.Focus()
+        XmlHtmDisplay2.Undo()
+        XmlHtmDisplay2.Focus()
     End Sub
 
+    'Private Sub EditRtf_Redo() Handles EditRtf.Redo
+    '    XmlHtmDisplay1.Redo()
+    '    XmlHtmDisplay1.Focus()
+    'End Sub
     Private Sub EditRtf_Redo() Handles EditRtf.Redo
-        XmlHtmDisplay1.Redo()
-        XmlHtmDisplay1.Focus()
+        XmlHtmDisplay2.Redo()
+        XmlHtmDisplay2.Focus()
     End Sub
 
+    'Private Sub EditRtf_Bold() Handles EditRtf.Bold
+    '    If XmlHtmDisplay1.SelectionFont.Bold = True Then
+    '        If XmlHtmDisplay1.SelectionFont.Italic = True Then
+    '            XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont, FontStyle.Regular + FontStyle.Italic)
+    '        Else
+    '            XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont, FontStyle.Regular)
+    '        End If
+
+    '    ElseIf XmlHtmDisplay1.SelectionFont.Bold = False Then
+    '        If XmlHtmDisplay1.SelectionFont.Italic = True Then
+    '            XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont, FontStyle.Bold + FontStyle.Italic)
+    '        Else
+    '            XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont, FontStyle.Bold)
+    '        End If
+    '    End If
+    '    XmlHtmDisplay1.Focus()
+
+    'End Sub
     Private Sub EditRtf_Bold() Handles EditRtf.Bold
-        If XmlHtmDisplay1.SelectionFont.Bold = True Then
-            If XmlHtmDisplay1.SelectionFont.Italic = True Then
-                XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont, FontStyle.Regular + FontStyle.Italic)
+        If XmlHtmDisplay2.SelectionFont.Bold = True Then
+            If XmlHtmDisplay2.SelectionFont.Italic = True Then
+                XmlHtmDisplay2.SelectionFont = New Font(XmlHtmDisplay2.SelectionFont, FontStyle.Regular + FontStyle.Italic)
             Else
-                XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont, FontStyle.Regular)
+                XmlHtmDisplay2.SelectionFont = New Font(XmlHtmDisplay2.SelectionFont, FontStyle.Regular)
             End If
 
-        ElseIf XmlHtmDisplay1.SelectionFont.Bold = False Then
-            If XmlHtmDisplay1.SelectionFont.Italic = True Then
-                XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont, FontStyle.Bold + FontStyle.Italic)
+        ElseIf XmlHtmDisplay2.SelectionFont.Bold = False Then
+            If XmlHtmDisplay2.SelectionFont.Italic = True Then
+                XmlHtmDisplay2.SelectionFont = New Font(XmlHtmDisplay2.SelectionFont, FontStyle.Bold + FontStyle.Italic)
             Else
-                XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont, FontStyle.Bold)
+                XmlHtmDisplay2.SelectionFont = New Font(XmlHtmDisplay2.SelectionFont, FontStyle.Bold)
             End If
         End If
-        XmlHtmDisplay1.Focus()
+        XmlHtmDisplay2.Focus()
 
     End Sub
+    'Private Sub EditRtf_Italic() Handles EditRtf.Italic
+    '    If XmlHtmDisplay1.SelectionFont.Italic = True Then
+    '        If XmlHtmDisplay1.SelectionFont.Bold = True Then
+    '            XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont, FontStyle.Regular + FontStyle.Bold)
+    '        Else
+    '            XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont, FontStyle.Regular)
+    '        End If
 
+    '    ElseIf XmlHtmDisplay1.SelectionFont.Italic = False Then
+    '        If XmlHtmDisplay1.SelectionFont.Bold = True Then
+    '            XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont, FontStyle.Italic + FontStyle.Bold)
+    '        Else
+    '            XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont, FontStyle.Italic)
+    '        End If
+    '    End If
+    '    XmlHtmDisplay1.Focus()
+
+    'End Sub
     Private Sub EditRtf_Italic() Handles EditRtf.Italic
-        If XmlHtmDisplay1.SelectionFont.Italic = True Then
-            If XmlHtmDisplay1.SelectionFont.Bold = True Then
-                XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont, FontStyle.Regular + FontStyle.Bold)
+        If XmlHtmDisplay2.SelectionFont.Italic = True Then
+            If XmlHtmDisplay2.SelectionFont.Bold = True Then
+                XmlHtmDisplay2.SelectionFont = New Font(XmlHtmDisplay2.SelectionFont, FontStyle.Regular + FontStyle.Bold)
             Else
-                XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont, FontStyle.Regular)
+                XmlHtmDisplay2.SelectionFont = New Font(XmlHtmDisplay2.SelectionFont, FontStyle.Regular)
             End If
 
-        ElseIf XmlHtmDisplay1.SelectionFont.Italic = False Then
-            If XmlHtmDisplay1.SelectionFont.Bold = True Then
-                XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont, FontStyle.Italic + FontStyle.Bold)
+        ElseIf XmlHtmDisplay2.SelectionFont.Italic = False Then
+            If XmlHtmDisplay2.SelectionFont.Bold = True Then
+                XmlHtmDisplay2.SelectionFont = New Font(XmlHtmDisplay2.SelectionFont, FontStyle.Italic + FontStyle.Bold)
             Else
-                XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont, FontStyle.Italic)
+                XmlHtmDisplay2.SelectionFont = New Font(XmlHtmDisplay2.SelectionFont, FontStyle.Italic)
             End If
         End If
-        XmlHtmDisplay1.Focus()
+        XmlHtmDisplay2.Focus()
 
     End Sub
 
@@ -5486,87 +5990,157 @@ Public Class Main
 
     End Sub
 
+    'Private Sub EditRtf_AlignLeft() Handles EditRtf.AlignLeft
+    '    XmlHtmDisplay1.SelectionAlignment = HorizontalAlignment.Left
+    'End Sub
     Private Sub EditRtf_AlignLeft() Handles EditRtf.AlignLeft
-        XmlHtmDisplay1.SelectionAlignment = HorizontalAlignment.Left
+        XmlHtmDisplay2.SelectionAlignment = HorizontalAlignment.Left
     End Sub
 
+    'Private Sub EditRtf_AlignCenter() Handles EditRtf.AlignCenter
+    '    XmlHtm
     Private Sub EditRtf_AlignCenter() Handles EditRtf.AlignCenter
-        XmlHtmDisplay1.SelectionAlignment = HorizontalAlignment.Center
+        XmlHtmDisplay2.SelectionAlignment = HorizontalAlignment.Center
     End Sub
 
+    'Private Sub EditRtf_AlignRight() Handles EditRtf.AlignRight
+    '    XmlHtmD
     Private Sub EditRtf_AlignRight() Handles EditRtf.AlignRight
-        XmlHtmDisplay1.SelectionAlignment = HorizontalAlignment.Right
+        XmlHtmDisplay2.SelectionAlignment = HorizontalAlignment.Right
     End Sub
 
+    'Private Sub EditRtf_SelectFont() Handles EditRtf.SelectFont
+    '    Dim myFontDialog As New FontDialog
+    '    myFontDialog.Font = XmlHtmDisplay1.SelectionFont
+    '    myFontDialog.ShowDialog()
+    '    XmlHtmDisplay1.SelectionFont = myFontDialog.Font
+    '    XmlHtmDisplay1.Focus()
+    'End Sub
     Private Sub EditRtf_SelectFont() Handles EditRtf.SelectFont
         Dim myFontDialog As New FontDialog
-        myFontDialog.Font = XmlHtmDisplay1.SelectionFont
+        myFontDialog.Font = XmlHtmDisplay2.SelectionFont
         myFontDialog.ShowDialog()
-        XmlHtmDisplay1.SelectionFont = myFontDialog.Font
-        XmlHtmDisplay1.Focus()
+        XmlHtmDisplay2.SelectionFont = myFontDialog.Font
+        XmlHtmDisplay2.Focus()
     End Sub
 
+    'Private Sub EditRtf_IncreaseFontSize() Handles EditRtf.IncreaseFontSize
+    '    Try
+    '        XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont.FontFamily, XmlHtmDisplay1.SelectionFont.SizeInPoints + 1)
+    '    Catch ex As Exception
+    '    End Try
+    '    XmlHtmDisplay1.Focus()
+    'End Sub
     Private Sub EditRtf_IncreaseFontSize() Handles EditRtf.IncreaseFontSize
         Try
-            XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont.FontFamily, XmlHtmDisplay1.SelectionFont.SizeInPoints + 1)
+            XmlHtmDisplay2.SelectionFont = New Font(XmlHtmDisplay2.SelectionFont.FontFamily, XmlHtmDisplay2.SelectionFont.SizeInPoints + 1)
         Catch ex As Exception
         End Try
-        XmlHtmDisplay1.Focus()
+        XmlHtmDisplay2.Focus()
     End Sub
 
+    'Private Sub EditRtf_DecreaseFontSize() Handles EditRtf.DecreaseFontSize
+    '    Try
+    '        XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont.FontFamily, XmlHtmDisplay1.SelectionFont.SizeInPoints - 1)
+    '    Catch ex As Exception
+    '    End Try
+    '    XmlHtmDisplay1.Focus()
+    'End Sub
     Private Sub EditRtf_DecreaseFontSize() Handles EditRtf.DecreaseFontSize
         Try
-            XmlHtmDisplay1.SelectionFont = New Font(XmlHtmDisplay1.SelectionFont.FontFamily, XmlHtmDisplay1.SelectionFont.SizeInPoints - 1)
+            XmlHtmDisplay2.SelectionFont = New Font(XmlHtmDisplay2.SelectionFont.FontFamily, XmlHtmDisplay2.SelectionFont.SizeInPoints - 1)
         Catch ex As Exception
         End Try
-        XmlHtmDisplay1.Focus()
+        XmlHtmDisplay2.Focus()
     End Sub
 
+    'Private Sub EditRtf_SelectTextColor() Handles EditRtf.SelectTextColor
+    '    Dim colorDialog As New ColorDialog
+    '    colorDialog.Color = XmlHtmDisplay1.SelectionColor
+    '    colorDialog.ShowDialog()
+    '    XmlHtmDisplay1.SelectionColor = colorDialog.Color
+    '    XmlHtmDisplay1.Focus()
+    'End Sub
     Private Sub EditRtf_SelectTextColor() Handles EditRtf.SelectTextColor
         Dim colorDialog As New ColorDialog
-        colorDialog.Color = XmlHtmDisplay1.SelectionColor
+        colorDialog.Color = XmlHtmDisplay2.SelectionColor
         colorDialog.ShowDialog()
-        XmlHtmDisplay1.SelectionColor = colorDialog.Color
-        XmlHtmDisplay1.Focus()
+        XmlHtmDisplay2.SelectionColor = colorDialog.Color
+        XmlHtmDisplay2.Focus()
     End Sub
 
+    'Private Sub EditRtf_SelectBackgroundColor() Handles EditRtf.SelectBackgroundColor
+    '    Dim colorDialog As New ColorDialog
+    '    colorDialog.Color = XmlHtmDisplay1.BackColor
+    '    colorDialog.ShowDialog()
+    '    XmlHtmDisplay1.BackColor = colorDialog.Color
+    '    XmlHtmDisplay1.Focus()
+    'End Sub
     Private Sub EditRtf_SelectBackgroundColor() Handles EditRtf.SelectBackgroundColor
         Dim colorDialog As New ColorDialog
-        colorDialog.Color = XmlHtmDisplay1.BackColor
+        colorDialog.Color = XmlHtmDisplay2.BackColor
         colorDialog.ShowDialog()
-        XmlHtmDisplay1.BackColor = colorDialog.Color
-        XmlHtmDisplay1.Focus()
+        XmlHtmDisplay2.BackColor = colorDialog.Color
+        XmlHtmDisplay2.Focus()
     End Sub
 
+    'Private Sub EditRtf_SelectHighlightColor() Handles EditRtf.SelectHighlightColor
+    '    Dim colorDialog As New ColorDialog
+    '    colorDialog.Color = XmlHtmDisplay1.SelectionBackColor
+    '    colorDialog.ShowDialog()
+    '    XmlHtmDisplay1.SelectionBackColor = colorDialog.Color
+    '    XmlHtmDisplay1.Focus()
+    'End Sub
     Private Sub EditRtf_SelectHighlightColor() Handles EditRtf.SelectHighlightColor
         Dim colorDialog As New ColorDialog
-        colorDialog.Color = XmlHtmDisplay1.SelectionBackColor
+        colorDialog.Color = XmlHtmDisplay2.SelectionBackColor
         colorDialog.ShowDialog()
-        XmlHtmDisplay1.SelectionBackColor = colorDialog.Color
-        XmlHtmDisplay1.Focus()
+        XmlHtmDisplay2.SelectionBackColor = colorDialog.Color
+        XmlHtmDisplay2.Focus()
     End Sub
 
+    'Private Sub EditRtf_Copy() Handles EditRtf.Copy
+    '    My.Computer.Clipboard.Clear()
+    '    Try
+    '        Clipboard.SetText(XmlHtmDisplay1.SelectedText)
+    '    Catch ex As Exception
+    '    End Try
+    'End Sub
     Private Sub EditRtf_Copy() Handles EditRtf.Copy
         My.Computer.Clipboard.Clear()
         Try
-            Clipboard.SetText(XmlHtmDisplay1.SelectedText)
+            Clipboard.SetText(XmlHtmDisplay2.SelectedText)
         Catch ex As Exception
         End Try
     End Sub
 
+    'Private Sub EditRtf_Cut() Handles EditRtf.Cut
+    '    My.Computer.Clipboard.Clear()
+    '    Try
+    '        Clipboard.SetText(XmlHtmDisplay1.SelectedText)
+    '        XmlHtmDisplay1.SelectedText = ""
+    '    Catch ex As Exception
+
+    '    End Try
+    'End Sub
     Private Sub EditRtf_Cut() Handles EditRtf.Cut
         My.Computer.Clipboard.Clear()
         Try
-            Clipboard.SetText(XmlHtmDisplay1.SelectedText)
-            XmlHtmDisplay1.SelectedText = ""
+            Clipboard.SetText(XmlHtmDisplay2.SelectedText)
+            XmlHtmDisplay2.SelectedText = ""
         Catch ex As Exception
 
         End Try
     End Sub
 
+    'Private Sub EditRtf_Paste() Handles EditRtf.Paste
+    '    If My.Computer.Clipboard.ContainsText Then
+    '        XmlHtmDisplay1.Paste()
+    '    End If
+    'End Sub
     Private Sub EditRtf_Paste() Handles EditRtf.Paste
         If My.Computer.Clipboard.ContainsText Then
-            XmlHtmDisplay1.Paste()
+            XmlHtmDisplay2.Paste()
         End If
     End Sub
 
@@ -6396,7 +6970,7 @@ Public Class Main
                                     XmlHtmDisplay2.LoadFile(ItemInfo(FileName).Directory & "\" & FileName, RichTextBoxStreamType.PlainText)
                                     If chkPlainText.Checked = True Then
                                     Else
-                                        Dim htmText As String = XmlHtmDisplay1.Text
+                                        Dim htmText As String = XmlHtmDisplay2.Text
                                         XmlHtmDisplay2.Rtf = XmlHtmDisplay2.HmlToRtf(htmText)
                                     End If
                                 End If
@@ -6811,7 +7385,8 @@ Public Class Main
                             End If
                         End If
                         'Clear the default view and create the blank HTML file:
-                        XmlHtmDisplay1.Clear()
+                        'XmlHtmDisplay1.Clear()
+                        XmlHtmDisplay2.Clear()
                         FileName = NodeKey
                         HtmlFileName = NodeKey
                         FileType = FileTypes.HTML
@@ -6886,7 +7461,8 @@ Public Class Main
                             End If
                         End If
                         'Clear the default view and create the blank RTF file:
-                        XmlHtmDisplay1.Clear()
+                        'XmlHtmDisplay1.Clear()
+                        XmlHtmDisplay2.Clear()
                         FileName = NodeKey
                         RtfFileName = NodeKey
                         FileType = FileTypes.RTF
@@ -6909,7 +7485,7 @@ Public Class Main
                     Else
                         'Dont display the new RTF document.
                         Dim rtfString As String
-                        rtfString = XmlHtmDisplay1.DefaultTextToRtf("") 'Create a blank rtf string using the default font settings.
+                        rtfString = XmlHtmDisplay2.DefaultTextToRtf("") 'Create a blank rtf string using the default font settings.
                         Message.Add("rtfString = " & vbCrLf & rtfString & vbCrLf)
                         Dim rtfData As New IO.MemoryStream
                         Dim sw As New IO.StreamWriter(rtfData)
@@ -7153,23 +7729,24 @@ Public Class Main
                             'cmbDocType.SelectedIndex = cmbDocType.FindStringExact("RTF")
                             FileType = FileTypes.RTF 'Setting this property also displays the appropriate text in txtDocType
                             RtfFileName = FileName
-                            txtFileName2.Text = FileName
-                            txtFileType.Text = "RTF"
+                            'txtFileName2.Text = FileName
+                            'txtFileType.Text = "RTF"
                             txtFileDescription.Text = ItemInfo(FileName).Description
                             If ItemInfo(FileName).Directory = "" Then
                                 RtfFileLocationType = LocationTypes.Project
                                 RtfFileDirectory = ""
                                 Dim rtbData As New IO.MemoryStream
                                 Project.ReadData(RtfFileName, rtbData)
-                                XmlHtmDisplay1.Clear()
+                                'XmlHtmDisplay1.Clear()
+                                XmlHtmDisplay2.Clear()
                                 rtbData.Position = 0
-                                XmlHtmDisplay1.LoadFile(rtbData, RichTextBoxStreamType.RichText)
+                                XmlHtmDisplay2.LoadFile(rtbData, RichTextBoxStreamType.RichText)
                                 DocumentTextChanged = False
                                 TabControl1.SelectedIndex = 1 'Open the document tab.
                             Else
                                 RtfFileLocationType = LocationTypes.FileSystem
                                 RtfFileDirectory = ItemInfo(FileName).Directory
-                                XmlHtmDisplay1.LoadFile(RtfFileDirectory & "\" & RtfFileName)
+                                XmlHtmDisplay2.LoadFile(RtfFileDirectory & "\" & RtfFileName)
                                 DocumentTextChanged = False
                                 TabControl1.SelectedIndex = 1 'Open the document tab.
                             End If
@@ -7177,22 +7754,22 @@ Public Class Main
                             'cmbDocType.SelectedIndex = cmbDocType.FindStringExact("XML")
                             FileType = FileTypes.XML 'Setting this property also displays the appropriate text in txtDocType
                             XmlFileName = FileName
-                            txtFileName2.Text = FileName
-                            txtFileType.Text = "XML"
+                            'txtFileName2.Text = FileName
+                            'txtFileType.Text = "XML"
                             txtFileDescription.Text = ItemInfo(FileName).Description
                             If ItemInfo(FileName).Directory = "" Then
                                 XmlFileLocationType = LocationTypes.Project
                                 XmlFileDirectory = ""
                                 Dim xmlDoc As New System.Xml.XmlDocument
                                 Project.ReadXmlDocData(XmlFileName, xmlDoc)
-                                XmlHtmDisplay1.Clear()
-                                XmlHtmDisplay1.Rtf = XmlHtmDisplay1.XmlToRtf(xmlDoc, True)
+                                XmlHtmDisplay2.Clear()
+                                XmlHtmDisplay2.Rtf = XmlHtmDisplay2.XmlToRtf(xmlDoc, True)
                                 DocumentTextChanged = False
                                 TabControl1.SelectedIndex = 1 'Open the document tab.
                             Else
                                 XmlFileLocationType = LocationTypes.FileSystem
                                 XmlFileDirectory = ItemInfo(FileName).Directory
-                                XmlHtmDisplay1.ReadXmlFile(XmlFileDirectory & "\" & FileName, False)
+                                XmlHtmDisplay2.ReadXmlFile(XmlFileDirectory & "\" & FileName, False)
                                 DocumentTextChanged = False
                                 TabControl1.SelectedIndex = 1 'Open the document tab.
                             End If
@@ -7200,23 +7777,23 @@ Public Class Main
                             FileType = FileTypes.HTML 'Setting this property also displays the appropriate text in txtDocType
                             'cmbDocType.SelectedIndex = cmbDocType.FindStringExact("HTML")
                             HtmlFileName = FileName
-                            txtFileName2.Text = FileName
-                            txtFileType.Text = "HTML"
+                            'txtFileName2.Text = FileName
+                            'txtFileType.Text = "HTML"
                             txtFileDescription.Text = ItemInfo(FileName).Description
                             If ItemInfo(FileName).Directory = "" Then
                                 HtmlFileLocationType = LocationTypes.Project
                                 HtmlFileDirectory = ""
                                 Dim rtbData As New IO.MemoryStream
                                 Project.ReadData(FileName, rtbData)
-                                XmlHtmDisplay1.Clear()
+                                XmlHtmDisplay2.Clear()
                                 rtbData.Position = 0
-                                XmlHtmDisplay1.LoadFile(rtbData, RichTextBoxStreamType.PlainText)
+                                XmlHtmDisplay2.LoadFile(rtbData, RichTextBoxStreamType.PlainText)
 
                                 If chkPlainText.Checked = True Then
                                     PlainTextDisplay = True
                                 Else
-                                    Dim htmText As String = XmlHtmDisplay1.Text
-                                    XmlHtmDisplay1.Rtf = XmlHtmDisplay1.HmlToRtf(htmText)
+                                    Dim htmText As String = XmlHtmDisplay2.Text
+                                    XmlHtmDisplay2.Rtf = XmlHtmDisplay2.HmlToRtf(htmText)
                                     PlainTextDisplay = False
                                 End If
 
@@ -7225,13 +7802,13 @@ Public Class Main
                             Else
                                 HtmlFileLocationType = LocationTypes.FileSystem
                                 HtmlFileDirectory = ItemInfo(FileName).Directory
-                                XmlHtmDisplay1.LoadFile(HtmlFileDirectory & "\" & FileName, RichTextBoxStreamType.PlainText)
+                                XmlHtmDisplay2.LoadFile(HtmlFileDirectory & "\" & FileName, RichTextBoxStreamType.PlainText)
 
                                 If chkPlainText.Checked = True Then
                                     PlainTextDisplay = True
                                 Else
-                                    Dim htmText As String = XmlHtmDisplay1.Text
-                                    XmlHtmDisplay1.Rtf = XmlHtmDisplay1.HmlToRtf(htmText)
+                                    Dim htmText As String = XmlHtmDisplay2.Text
+                                    XmlHtmDisplay2.Rtf = XmlHtmDisplay2.HmlToRtf(htmText)
                                     PlainTextDisplay = False
                                 End If
 
@@ -7245,8 +7822,8 @@ Public Class Main
                             FileType = FileTypes.TXT 'Setting this property also displays the appropriate text in txtDocType
                             'cmbDocType.SelectedIndex = cmbDocType.FindStringExact("TXT")
                             TextFileName = FileName
-                            txtFileName2.Text = FileName
-                            txtFileType.Text = "TXT"
+                            'txtFileName2.Text = FileName
+                            'txtFileType.Text = "TXT"
                             txtFileDescription.Text = ItemInfo(FileName).Description
                             If ItemInfo(FileName).Directory = "" Then
                                 TextFileLocationType = LocationTypes.Project
@@ -7254,16 +7831,16 @@ Public Class Main
 
                                 Dim rtbData As New IO.MemoryStream
                                 Project.ReadData(FileName, rtbData)
-                                XmlHtmDisplay1.Clear()
+                                XmlHtmDisplay2.Clear()
                                 rtbData.Position = 0
-                                XmlHtmDisplay1.LoadFile(rtbData, RichTextBoxStreamType.PlainText)
+                                XmlHtmDisplay2.LoadFile(rtbData, RichTextBoxStreamType.PlainText)
 
                                 DocumentTextChanged = False
                                 TabControl1.SelectedIndex = 1 'Open the document tab.
                             Else
                                 HtmlFileLocationType = LocationTypes.FileSystem
                                 HtmlFileDirectory = ItemInfo(FileName).Directory
-                                XmlHtmDisplay1.LoadFile(HtmlFileDirectory & "\" & FileName, RichTextBoxStreamType.PlainText)
+                                XmlHtmDisplay2.LoadFile(HtmlFileDirectory & "\" & FileName, RichTextBoxStreamType.PlainText)
 
                                 DocumentTextChanged = False
                                 TabControl1.SelectedIndex = 1 'Open the document tab.
@@ -7552,29 +8129,45 @@ Public Class Main
 
     End Sub
 
+    'Private Sub btnDefaultXml_Click(sender As Object, e As EventArgs) Handles btnDefaultXml.Click
+    '    'Set the XML display settings to default values.
+    '    XmlHtmDisplay1.DefaultXmlSettings()
+    '    ShowSettings()
+    'End Sub
     Private Sub btnDefaultXml_Click(sender As Object, e As EventArgs) Handles btnDefaultXml.Click
         'Set the XML display settings to default values.
-        XmlHtmDisplay1.DefaultXmlSettings()
+        XmlHtmDisplay2.DefaultXmlSettings()
         ShowSettings()
     End Sub
 
+    'Private Sub btnDefaultHtml_Click(sender As Object, e As EventArgs) Handles btnDefaultHtml.Click
+    '    'Set the HTML display settings to default values.
+    '    XmlHtmDisplay1.DefaultHtmlSettings()
+    '    ShowSettings()
+    'End Sub
     Private Sub btnDefaultHtml_Click(sender As Object, e As EventArgs) Handles btnDefaultHtml.Click
         'Set the HTML display settings to default values.
-        XmlHtmDisplay1.DefaultHtmlSettings()
+        XmlHtmDisplay2.DefaultHtmlSettings()
         ShowSettings()
     End Sub
 
+    'Private Sub btnDefaultText_Click(sender As Object, e As EventArgs) Handles btnDefaultText.Click
+    '    'Set the Plain Text display settings to default values.
+    '    XmlHtmDisplay1.DefaultPlainTextSettings()
+    '    ShowSettings()
+    'End Sub
     Private Sub btnDefaultText_Click(sender As Object, e As EventArgs) Handles btnDefaultText.Click
         'Set the Plain Text display settings to default values.
-        XmlHtmDisplay1.DefaultPlainTextSettings()
+        XmlHtmDisplay2.DefaultPlainTextSettings()
         ShowSettings()
     End Sub
 
-    Private Sub XmlHtmDisplay1_ErrorMessage(Msg As String) Handles XmlHtmDisplay1.ErrorMessage
+
+    Private Sub XmlHtmDisplay1_ErrorMessage(Msg As String)
         Message.AddWarning(Msg)
     End Sub
 
-    Private Sub XmlHtmDisplay1_Message(Msg As String) Handles XmlHtmDisplay1.Message
+    Private Sub XmlHtmDisplay1_Message(Msg As String)
         Message.Add(Msg)
     End Sub
 
@@ -8199,10 +8792,16 @@ Public Class Main
     Private Sub TabPage2_Enter(sender As Object, e As EventArgs) Handles TabPage2.Enter
         'Update the current duration:
 
-        txtCurrentDuration.Text = Project.Usage.CurrentDuration.Days.ToString.PadLeft(5, "0"c) & ":" &
-                                  Project.Usage.CurrentDuration.Hours.ToString.PadLeft(2, "0"c) & ":" &
-                                  Project.Usage.CurrentDuration.Minutes.ToString.PadLeft(2, "0"c) & ":" &
-                                  Project.Usage.CurrentDuration.Seconds.ToString.PadLeft(2, "0"c)
+        'txtCurrentDuration.Text = Project.Usage.CurrentDuration.Days.ToString.PadLeft(5, "0"c) & ":" &
+        '                          Project.Usage.CurrentDuration.Hours.ToString.PadLeft(2, "0"c) & ":" &
+        '                          Project.Usage.CurrentDuration.Minutes.ToString.PadLeft(2, "0"c) & ":" &
+        '                          Project.Usage.CurrentDuration.Seconds.ToString.PadLeft(2, "0"c)
+
+        txtCurrentDuration.Text = Project.Usage.CurrentDuration.Days.ToString.PadLeft(5, "0"c) & "d:" &
+                                   Project.Usage.CurrentDuration.Hours.ToString.PadLeft(2, "0"c) & "h:" &
+                                   Project.Usage.CurrentDuration.Minutes.ToString.PadLeft(2, "0"c) & "m:" &
+                                   Project.Usage.CurrentDuration.Seconds.ToString.PadLeft(2, "0"c) & "s"
+
 
         Timer2.Interval = 5000 '5 seconds
         Timer2.Enabled = True
@@ -8213,10 +8812,16 @@ Public Class Main
     Private Sub Timer2_Tick(sender As Object, e As EventArgs) Handles Timer2.Tick
         'Update the current duration:
 
-        txtCurrentDuration.Text = Project.Usage.CurrentDuration.Days.ToString.PadLeft(5, "0"c) & ":" &
-                                  Project.Usage.CurrentDuration.Hours.ToString.PadLeft(2, "0"c) & ":" &
-                                  Project.Usage.CurrentDuration.Minutes.ToString.PadLeft(2, "0"c) & ":" &
-                                  Project.Usage.CurrentDuration.Seconds.ToString.PadLeft(2, "0"c)
+        'txtCurrentDuration.Text = Project.Usage.CurrentDuration.Days.ToString.PadLeft(5, "0"c) & ":" &
+        '                          Project.Usage.CurrentDuration.Hours.ToString.PadLeft(2, "0"c) & ":" &
+        '                          Project.Usage.CurrentDuration.Minutes.ToString.PadLeft(2, "0"c) & ":" &
+        '                          Project.Usage.CurrentDuration.Seconds.ToString.PadLeft(2, "0"c)
+
+        txtCurrentDuration.Text = Project.Usage.CurrentDuration.Days.ToString.PadLeft(5, "0"c) & "d:" &
+                           Project.Usage.CurrentDuration.Hours.ToString.PadLeft(2, "0"c) & "h:" &
+                           Project.Usage.CurrentDuration.Minutes.ToString.PadLeft(2, "0"c) & "m:" &
+                           Project.Usage.CurrentDuration.Seconds.ToString.PadLeft(2, "0"c) & "s"
+
     End Sub
 
     Private Sub TabPage2_Leave(sender As Object, e As EventArgs) Handles TabPage2.Leave
@@ -8864,7 +9469,8 @@ Public Class Main
         If FindFirst Then
             StartPos = 0
         Else
-            StartPos = XmlHtmDisplay1.SelectionStart + 1
+            'StartPos = XmlHtmDisplay1.SelectionStart + 1
+            StartPos = XmlHtmDisplay2.SelectionStart + 1
         End If
 
         XmlHtmDisplay2.Focus()
@@ -9203,6 +9809,52 @@ Public Class Main
         End If
     End Sub
 
+    Private Sub btnAddToNode_Click(sender As Object, e As EventArgs) Handles btnAddToNode.Click
+        'Add the selected file to the selected node.
+
+        If LibraryName = "" Then
+            Message.AddWarning("There is no library open." & vbCrLf)
+            Message.AddWarning("Please open or create a new library." & vbCrLf)
+            Exit Sub
+        End If
+
+        'Dim NodeKey As String = Trim(txtNewNodeFileName.Text) '(Node Key) The name of the file. (Stored in the current Project.)
+        Dim NodeKey As String = Trim(txtFileName.Text) '(Node Key) The name of the file. (Stored in the current Project.)
+        If NodeKey = "" Then
+            Message.AddWarning("The file name is blank!" & vbCrLf)
+            Exit Sub
+        End If
+
+        Select Case FileTypeSelection
+            Case FileTypes.RTF
+                If ItemInfo.ContainsKey(NodeKey) Then
+                    Message.AddWarning("The name of the file is already used: " & NodeKey & vbCrLf)
+                Else
+                    ItemInfo.Add(NodeKey, New clsItemInfo)
+                    Dim NodeText As String = Trim(txtFileItemText.Text) 'The text that appears on the node in the treeview.
+
+                    If trvLibrary.SelectedNode Is Nothing Then
+                        'trvLibrary.Nodes.Add(NodeKey, NodeText, 2, 3) 'key As String, text As String, imageIndex As Integer, selectedImageIndex As Integer
+                        trvLibrary.Nodes.Add(NodeKey, NodeText, 4, 5) 'key As String, text As String, imageIndex As Integer, selectedImageIndex As Integer
+                    Else
+                        'trvLibrary.SelectedNode.Nodes.Add(NodeKey, NodeText, 2, 3) 'key As String, text As String, imageIndex As Integer, selectedImageIndex As Integer
+                        trvLibrary.SelectedNode.Nodes.Add(NodeKey, NodeText, 4, 5) 'key As String, text As String, imageIndex As Integer, selectedImageIndex As Integer
+                    End If
+
+                    ItemInfo(NodeKey).Type = "RTF"
+                    'ItemInfo(NodeKey).Description = txtNewNodeDescr.Text
+                    ItemInfo(NodeKey).Description = txtFileDescription.Text
+                    ItemInfo(NodeKey).CreationDate = Format(Now, "d-MMM-yyyy H:mm:ss")
+                    ItemInfo(NodeKey).LastEditDate = Format(Now, "d-MMM-yyyy H:mm:ss")
+                    ItemInfo(NodeKey).Directory = ""
+                End If
+
+        End Select
+
+
+
+    End Sub
+
 
 #End Region 'Form Methods ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -9213,9 +9865,7 @@ Public Class Main
         Public Message As String
     End Class
 
-    Private Sub btnAddToCollection_Click(sender As Object, e As EventArgs) Handles btnAddToCollection.Click
 
-    End Sub
 
     Private Sub btnNewFile_Click(sender As Object, e As EventArgs) Handles btnNewFile.Click
 
@@ -9223,6 +9873,14 @@ Public Class Main
 
     Private Sub txtNewNodeFileName_TextChanged(sender As Object, e As EventArgs) Handles txtNewNodeFileName.TextChanged
 
+    End Sub
+
+    Private Sub chkWordWrap_CheckedChanged(sender As Object, e As EventArgs) Handles chkWordWrap.CheckedChanged
+        If chkWordWrap.Checked Then
+            XmlHtmDisplay2.WordWrap = True
+        Else
+            XmlHtmDisplay2.WordWrap = False
+        End If
     End Sub
 
 

@@ -265,7 +265,8 @@
         Timer1.Enabled = True
 
         XmlHtmDisplay1.WordWrap = False
-        XmlHtmDisplay1.Settings = Main.XmlHtmDisplay1.Settings
+        'XmlHtmDisplay1.Settings = Main.XmlHtmDisplay1.Settings
+        XmlHtmDisplay1.Settings = Main.XmlHtmDisplay2.Settings
 
     End Sub
 

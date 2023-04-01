@@ -248,7 +248,8 @@
         RestoreFormSettings()   'Restore the form settings
 
         XmlHtmDisplay1.WordWrap = False
-        XmlHtmDisplay1.Settings = Main.XmlHtmDisplay1.Settings
+        'XmlHtmDisplay1.Settings = Main.XmlHtmDisplay1.Settings
+        XmlHtmDisplay1.Settings = Main.XmlHtmDisplay2.Settings
 
         Dim FontName As String = XmlHtmDisplay1.Settings.PlainText.FontName
         Dim FontSize As Single = XmlHtmDisplay1.Settings.PlainText.PointSize

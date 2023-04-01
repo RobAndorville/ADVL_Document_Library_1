@@ -247,7 +247,8 @@
 
         'Testing XmlHtmlDisplay1:
         XmlHtmDisplay1.WordWrap = False
-        XmlHtmDisplay1.Settings = Main.XmlHtmDisplay1.Settings
+        'XmlHtmDisplay1.Settings = Main.XmlHtmDisplay1.Settings
+        XmlHtmDisplay1.Settings = Main.XmlHtmDisplay2.Settings
 
     End Sub
 

@@ -315,14 +315,16 @@
                 End If
             End If
             If FileLocation = LocationTypes.Project Then 'Document file will be saved in the current Project.
-                Main.XmlHtmDisplay1.Clear()
+                'Main.XmlHtmDisplay1.Clear()
+                Main.XmlHtmDisplay2.Clear()
                 Main.FileName = FileName
                 Main.RtfFileName = FileName
                 Main.FileLocationType = Main.LocationTypes.Project
                 Main.FileDirectory = Directory
                 Main.SaveDocument()
             Else 'Document file will be saved in the File System.
-                Main.XmlHtmDisplay1.Clear()
+                'Main.XmlHtmDisplay1.Clear()
+                Main.XmlHtmDisplay2.Clear()
                 Main.FileName = FileName
                 Main.RtfFileName = FileName
                 Main.FileLocationType = Main.LocationTypes.FileSystem

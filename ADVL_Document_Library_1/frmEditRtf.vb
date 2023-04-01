@@ -171,8 +171,11 @@
         cmbTextType.Items.Clear()
         cmbTextType.Items.Add("XML")
 
-        For I = 0 To Main.XmlHtmDisplay1.Settings.TextType.Count - 1
-            cmbTextType.Items.Add(Main.XmlHtmDisplay1.Settings.TextType.Keys(I))
+        'For I = 0 To Main.XmlHtmDisplay1.Settings.TextType.Count - 1
+        '    cmbTextType.Items.Add(Main.XmlHtmDisplay1.Settings.TextType.Keys(I))
+        'Next
+        For I = 0 To Main.XmlHtmDisplay2.Settings.TextType.Count - 1
+            cmbTextType.Items.Add(Main.XmlHtmDisplay2.Settings.TextType.Keys(I))
         Next
 
     End Sub
